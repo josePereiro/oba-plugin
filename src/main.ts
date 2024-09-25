@@ -25,7 +25,12 @@ export default class ObA extends Plugin {
 					console.log("backend signaled. file: ", signal_file)
 					console.log("backend signaled. id: ", signal_id)
 					console.log("backend signaled. dirname: ", plugin_dir)
-					writeFileSync(signal_file, signal_id)
+					
+					const fileobj = this.app.workspace.getActiveFile();
+					writeFileSync(signal_file, JSON.stringify({
+						hash: signal_id, 
+						path: fileobj.path, 
+					}))
 				}, SIGNAL_DELAY);
 			}
 		});
