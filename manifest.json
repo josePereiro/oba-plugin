@@ -3,8 +3,8 @@
 	"name": "Oba Plugin",
 	"version": "1.0.0",
 	"minAppVersion": "0.12.0",
-	"description": "A plugin to interact giv ObA's cli",
-	"author": "Me",
+	"description": "A plugin to interact with ObA's cli",
+	"author": "jose.pereiro.lab@gmail.com",
 	"authorUrl": "https://TODO.com",
 	"isDesktopOnly": false
 }
