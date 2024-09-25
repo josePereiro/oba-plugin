@@ -1,6 +1,6 @@
 import { FileSystemAdapter, Notice, Plugin } from 'obsidian';
 import { existsSync, writeFileSync, mkdirSync } from 'fs';
-import { dirname } from 'path';
+import { dirname, join } from 'path';
 
 // Add a simple command 'Signal backend' which update a file in the plugin folder 
 // that can be use as trigger for different backends
@@ -15,22 +15,26 @@ export default class ObA extends Plugin {
 			name: 'Signal backend',
 			callback: () => {
 				setTimeout(() => { 
-					const signal_id = randstring(SIGNAL_LENGTH)
+					const signal_id = `O.${randstring(RAND_ID_LEN)}`
 					const signal_file = this.getSignalPath();
 					const plugin_dir = dirname(signal_file);
 					new Notice("Oba: backend signaled");
 					if (!existsSync(plugin_dir)) {
 						mkdirSync(plugin_dir, { recursive: true })
 					}
-					console.log("backend signaled. file: ", signal_file)
-					console.log("backend signaled. id: ", signal_id)
-					console.log("backend signaled. dirname: ", plugin_dir)
+					console.log("backend signaled. signal_file: ", signal_file)
+					console.log("backend signaled. signal_id: ", signal_id)
+					console.log("backend signaled. plugin_dir: ", plugin_dir)
 					
-					const fileobj = this.app.workspace.getActiveFile();
-					writeFileSync(signal_file, JSON.stringify({
+					const currfile = this.app.workspace.getActiveFile();
+					const currpath = (currfile === null) ? "" : currfile.path
+					console.log("backend signaled. currpath: ", currpath)
+					const trigger_json = JSON.stringify({
 						hash: signal_id, 
-						path: fileobj.path, 
-					}))
+						path: currpath, 
+					})
+					console.log("backend signaled. trigger_json: ", trigger_json)
+					writeFileSync(signal_file, trigger_json)
 				}, SIGNAL_DELAY);
 			}
 		});
@@ -51,15 +55,21 @@ export default class ObA extends Plugin {
 			throw new Error('Cannot determine base path.');
 		}
 		// relative path
-		const relativePath = `${this.app.vault.configDir}/plugins/oba-plugin/${fileName}`;
+		// const relativePath = `${this.app.vault.configDir}/plugins/oba-plugin/${fileName}`;
+		const path = join(
+			basePath, this.app.vault.configDir, 
+			'plugins', "oba-plugin", fileName
+	)
+		// const relativePath = `${this.app.vault.configDir}/plugins/oba-plugin/${fileName}`;
 		// absolute path
-		return `${basePath}/${relativePath}`;
+		// return `${basePath}/${relativePath}`;
+		return path
 	}
 }
 
 // ------------------------------------------------------------------
 // Utils
-const SIGNAL_LENGTH = 8;
+const RAND_ID_LEN = 8;
 const SIGNAL_DELAY = 300; // let obsidian to save
 const CHARACTERS  = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
