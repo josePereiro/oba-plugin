@@ -7,6 +7,5 @@ This is intended as a primitive source of comunication with the backends so they
 `git clone` this repo, `cd` into it, and run:
 
 ```bash
-npm i
-node install-plugin.js path/to/vault
+npm i; node install-plugin.js path/to/vault
 ```

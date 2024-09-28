@@ -53,7 +53,7 @@ function copy_file() {
     log_newsection("copying files");
     const tocopy = ["dist/main.js", "manifest.json"]
     tocopy.forEach(function (file, idx) {
-            var src = path.join(src_plugin_dir, file)
+        var src = path.join(src_plugin_dir, file)
         var dest = path.join(obsidian_target_plugin_folder, path.basename(file))
         fs.copyFileSync(src, dest)
         if (!fs.existsSync(dest)) { throw {msg: "copy failed!"}; }
