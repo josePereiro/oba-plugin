@@ -40,46 +40,43 @@ export default class ObA extends Plugin {
 			// -- Maybe just to have an action repo
 			// --- "callback.oba-signal" : ["signalBackendCmd", "gitCommitCmd"]
 			// ---- You can just use bracket notation
-			const callkey = "callback.oba-signal";
-			this.callbackService.registerCallback(callkey, () => this.cmds.signalBackendCmd())
-			this.callbackService.registerCallback(callkey, () => this.cmds.gitCommitCmd())
+			this.callbackService.registerCallback("callback.oba-signal", () => this.cmds.signalBackendCmd())
+			this.callbackService.registerCallback("callback.oba-signal", () => this.cmds.gitCommitCmd())
 			this.addCommand({
 				id: 'oba-signal',
 				name: 'Signal backend',
 				callback: () => {
-					console.log(callkey);
-					this.callbackService.runCallbacks(callkey)
+					console.log("callback.oba-signal");
+					this.callbackService.runCallbacks("callback.oba-signal")
 				}
 			});
 		}
 
-		// {
-		// 	const callkey = "callback.oba-code-vault";
-		// 	this.callbackService.registerCallback(callkey, () => this.cmds.codeVaultCmd())
-		// 	this.addCommand({
-		// 		id: 'oba-code-vault',
-		// 		name: 'Open the vault in an IDE, ej: vscode',
-		// 		callback: () => {
-		// 			console.log(callkey);
-		// 			this.callbackService.runCallbacks(callkey)
-		// 		}
-		// 	});
-		// }
+		{
+			this.callbackService.registerCallback("callback.oba-code-vault", () => this.cmds.codeVaultCmd())
+			this.addCommand({
+				id: 'oba-code-vault',
+				name: 'Open the vault in an IDE, ej: vscode',
+				callback: () => {
+					console.log("callback.oba-code-vault");
+					this.callbackService.runCallbacks("callback.oba-code-vault")
+				}
+			});
+		}
 
-		// {
-		// 	const callkey = "callback.oba-code-vault";
-		// 	this.callbackService.registerCallback(callkey, () => {
-		// 		new Notice(`${this}`)
-		// 	})
-		// 	this.addCommand({
-		// 		id: 'oba-dev-cmd',
-		// 		name: 'Dev cmd',
-		// 		callback: () => {
-		// 			console.log(callkey);
-		// 			this.callbackService.runCallbacks(callkey)
-		// 		}
-		// 	});
-		// }
+		{
+			this.callbackService.registerCallback("callback.oba-code-vault", () => {
+				new Notice(`${this}`)
+			})
+			this.addCommand({
+				id: 'oba-dev-cmd',
+				name: 'Dev cmd',
+				callback: () => {
+					console.log("callback.oba-code-vault");
+					this.callbackService.runCallbacks("callback.oba-code-vault")
+				}
+			});
+		}
 
 	}
 
