@@ -49,4 +49,5 @@ esbuild.build({
 	sourcemap: prod ? false : 'inline',
 	treeShaking: true,
 	outfile: 'dist/main.js',
+	platform: 'node', // Specify the platform as Node.js
 }).catch(() => process.exit(1));
