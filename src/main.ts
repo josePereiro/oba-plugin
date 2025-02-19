@@ -3,6 +3,7 @@ import { ToolBox } from './tools';
 import { Commands } from './commands';
 import { GitService } from './gitService';
 import { Callbacks } from './callbacks';
+import { CrossrefService } from './crossref';
 
 // This do:
 // Add a simple command 'Signal backend' which update a file in the plugin folder 
@@ -15,6 +16,7 @@ export default class ObA extends Plugin {
 	cmds: Commands;
 	gitService: GitService;
 	callbackService: Callbacks;
+	crossrefService: CrossrefService;
 	
 	// TODO: use unknown
 	state: { [key: string]: any };
@@ -30,6 +32,7 @@ export default class ObA extends Plugin {
 		this.gitService = new GitService(this);
 		this.callbacks = {};
 		this.callbackService = new Callbacks(this);
+		this.crossrefService = new CrossrefService(this);
 		this.state = {};
 
 		// register commands/callbacks
@@ -65,15 +68,29 @@ export default class ObA extends Plugin {
 		}
 
 		{
-			this.callbackService.registerCallback("callback.oba-code-vault", () => {
-				new Notice(`${this}`)
+			this.callbackService.registerCallback("callback.oba-crossref-seach-cmd", () => {
+				this.crossrefService.fetchDoiReference();
+			})
+			this.addCommand({
+				id: 'oba-crossref-seach-cmd',
+				name: 'Search references',
+				callback: () => {
+					console.log("callback.oba-crossref-seach-cmd");
+					this.callbackService.runCallbacks("callback.oba-crossref-seach-cmd")
+				}
+			});
+		}
+
+		{
+			this.callbackService.registerCallback("callback.oba-dev-cmd", () => {
+				new Notice('hello oba')
 			})
 			this.addCommand({
 				id: 'oba-dev-cmd',
 				name: 'Dev cmd',
 				callback: () => {
-					console.log("callback.oba-code-vault");
-					this.callbackService.runCallbacks("callback.oba-code-vault")
+					console.log("callback.oba-dev-cmd");
+					this.callbackService.runCallbacks("callback.oba-dev-cmd")
 				}
 			});
 		}

@@ -76,5 +76,26 @@ export class ToolBox {
         }
     }
 
+	async copyToClipboard(text: string) {
+        try {
+            await navigator.clipboard.writeText(text);
+            console.log('Text copied to clipboard:', text);
+        } catch (err) {
+            console.error('Failed to copy text:', err);
+        }
+    }
+
+	getSelectedText() : string {
+        const editor = this.oba.app.workspace.activeEditor?.editor;
+        if (editor) {
+            const selectedText = editor.getSelection();
+            if (selectedText) {
+                return selectedText;
+            } else {
+                return '';
+            }
+        }
+    }
+
 }
 
