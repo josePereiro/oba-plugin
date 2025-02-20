@@ -1,9 +1,11 @@
 import { Notice, Plugin } from 'obsidian';
 import { ToolBox } from './tools';
 import { Commands } from './commands';
-import { GitService } from './gitService';
 import { Callbacks } from './callbacks';
-import { CrossrefService } from './crossref';
+import { CrossRef } from './crossref';
+import { BackEnds } from './backends';
+import { Git } from './git';
+import { ConfigFile } from './configFile';
 
 // This do:
 // Add a simple command 'Signal backend' which update a file in the plugin folder 
@@ -12,28 +14,30 @@ import { CrossrefService } from './crossref';
 export default class ObA extends Plugin {
 
 	// services
+	git: Git;
 	tools: ToolBox;
 	cmds: Commands;
-	gitService: GitService;
-	callbackService: Callbacks;
-	crossrefService: CrossrefService;
+	crossref: CrossRef;
+	backends: BackEnds;
+	callbacks: Callbacks;
+	configfile: ConfigFile;
 	
 	// TODO: use unknown
-	state: { [key: string]: any };
-	callbacks: { [key: string]: (() => void)[] };
+	// state: { [key: string]: any };
 	
 	// MARK: onload
 	async onload() {
 
-		console.log("onload")
+		console.log("ObA:onload")
 
-		this.tools = new ToolBox(this);
+		this.tools = new ToolBox(this); // Must be first
+		
+		this.git = new Git(this);
 		this.cmds = new Commands(this);
-		this.gitService = new GitService(this);
-		this.callbacks = {};
-		this.callbackService = new Callbacks(this);
-		this.crossrefService = new CrossrefService(this);
-		this.state = {};
+		this.crossref = new CrossRef(this);
+		this.backends = new BackEnds(this);
+		this.callbacks = new Callbacks(this);
+		this.configfile = new ConfigFile(this);
 
 		// register commands/callbacks
 		{
@@ -43,54 +47,57 @@ export default class ObA extends Plugin {
 			// -- Maybe just to have an action repo
 			// --- "callback.oba-signal" : ["signalBackendCmd", "gitCommitCmd"]
 			// ---- You can just use bracket notation
-			this.callbackService.registerCallback("callback.oba-signal", () => this.cmds.signalBackendCmd())
-			this.callbackService.registerCallback("callback.oba-signal", () => this.cmds.gitCommitCmd())
+			this.callbacks.registerCallback("callback.oba-signal", 
+				() => this.backends.signalBackend(),
+				() => this.git.gitCommitCmd()
+			)
 			this.addCommand({
 				id: 'oba-signal',
 				name: 'Signal backend',
 				callback: () => {
-					console.log("callback.oba-signal");
-					this.callbackService.runCallbacks("callback.oba-signal")
+					this.callbacks.runCallbacks("callback.oba-signal")
 				}
 			});
 		}
 
 		{
-			this.callbackService.registerCallback("callback.oba-code-vault", () => this.cmds.codeVaultCmd())
+			this.callbacks.registerCallback("callback.oba-code-vault", 
+				() => this.cmds.codeVaultCmd()
+			)
 			this.addCommand({
 				id: 'oba-code-vault',
 				name: 'Open the vault in an IDE, ej: vscode',
 				callback: () => {
-					console.log("callback.oba-code-vault");
-					this.callbackService.runCallbacks("callback.oba-code-vault")
+					this.callbacks.runCallbacks("callback.oba-code-vault")
 				}
 			});
 		}
 
 		{
-			this.callbackService.registerCallback("callback.oba-crossref-seach-cmd", () => {
-				this.crossrefService.fetchDoiReference();
-			})
+			this.callbacks.registerCallback("callback.oba-crossref-search-cmd", 
+				() => this.crossref.fetchDoiReference()
+			)
 			this.addCommand({
-				id: 'oba-crossref-seach-cmd',
-				name: 'Search references',
+				id: 'oba-crossref-search-cmd',
+				name: 'Search references for the selected doi',
 				callback: () => {
-					console.log("callback.oba-crossref-seach-cmd");
-					this.callbackService.runCallbacks("callback.oba-crossref-seach-cmd")
+					this.callbacks.runCallbacks("callback.oba-crossref-search-cmd")
 				}
 			});
 		}
 
 		{
-			this.callbackService.registerCallback("callback.oba-dev-cmd", () => {
-				new Notice('hello oba')
-			})
+			this.callbacks.registerCallback("callback.oba-dev-cmd", 
+				() => { new Notice('hello oba') }, 
+				() => {
+					this.tools.insertAtCursor(this.tools.randstring("test.", 8))
+				}
+			)
 			this.addCommand({
 				id: 'oba-dev-cmd',
 				name: 'Dev cmd',
 				callback: () => {
-					console.log("callback.oba-dev-cmd");
-					this.callbackService.runCallbacks("callback.oba-dev-cmd")
+					this.callbacks.runCallbacks("callback.oba-dev-cmd")
 				}
 			});
 		}
@@ -98,7 +105,7 @@ export default class ObA extends Plugin {
 	}
 
 	onunload() {
-		console.log('oba-plugin: onunload');
+		console.log('Oba:onunload');
 	}
 }
 

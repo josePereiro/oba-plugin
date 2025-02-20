@@ -2,15 +2,11 @@
 import { Notice } from 'obsidian';
 import ObA from './main';
 
-export class CrossrefService {
+export class CrossRef {
     private readonly baseUrl = 'https://api.crossref.org/works';
-    mailto: string;
 
     constructor(private oba: ObA) {
-        // const mailto = oba.tools.readConfig("crossref.mailto", null)
-        // if (!mailto) throw new Error('Mailto parameter is required for Crossref API. See "crossref.mailto"');
-        // if (!mailto) new Notice('mailto parameter is required for Crossref API. See "crossref.mailto"');
-        this.mailto = "";
+        console.log("CrossRef:constructor");
     }
 
     async fetchDoiReference() {
@@ -24,6 +20,7 @@ export class CrossrefService {
 
         const url = `https://api.crossref.org/works/${doi}`;
         try {
+            new Notice('Sending request');
             const response = await fetch(url);
             if (!response.ok) {
                 new Notice(`Server error, check selected doi.\ndoi: ${doi}`);
@@ -89,7 +86,7 @@ export class CrossrefService {
 }
 
 // Example usage:
-// const service = new CrossrefService('your@email.com');
+// const service = new CrossRef('your@email.com');
 // const references = await service.fetchReferencesByDOI('10.1038/nature12345');
 // console.log(references);
 

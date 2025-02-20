@@ -3,10 +3,11 @@ import simpleGit, { SimpleGit, StatusResult } from 'simple-git';
 import { Notice } from 'obsidian';
 import ObA from './main';
 
-export class GitService {
+export class Git {
     private git: SimpleGit;
 
     constructor(private oba: ObA) {
+        console.log("Git:constructor");
         this.git = simpleGit(this.oba.tools.getVaultDir());
     }
 
@@ -19,11 +20,21 @@ export class GitService {
         }
     }
 
+    async gitCommitCmd() {
+        const isRepo = await this.isGitRepo();
+        if (!isRepo) {
+            new Notice('This vault is not a Git repository.');
+            return;
+        }
+
+        await this.commitToBranch();
+    }
+
     async commitToBranch(): Promise<void> {
         try {
-            const targetBranch = this.oba.tools.readConfig("git.commit.branch.target")
+            const targetBranch = this.oba.configfile.readConfig("git.commit.branch.target")
             if (!targetBranch) {
-                new Notice(`Target brach not setup. See ObaServer.json "git.commit.branch.target"`)
+                new Notice(`Target brach not setup. See Oba.json "git.commit.branch.target"`)
                 return;
             }
 

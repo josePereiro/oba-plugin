@@ -2,12 +2,15 @@ import { Notice } from 'obsidian';
 import ObA from './main';
 
 export class Callbacks {
+    registry: { [key: string]: (() => void)[] };
 
     constructor(private oba: ObA) {
         console.log("Callbacks:constructor");
+        this.registry = {};
     }
 
     runCallbacks(key: string): void {
+        console.log(`runCallbacks:${key}`);
         const calls = this.getCallbacks(key);
         console.log(key)
         console.log(calls)
@@ -22,15 +25,17 @@ export class Callbacks {
     }
 
     getCallbacks(key: string, mk = false): (() => void)[] {
-        if (!mk) { return this.oba.callbacks?.[key] }
-        const calls = this.oba.callbacks?.[key] ?? [] as (() => void)[];
-        this.oba.callbacks[key] = calls;
+        if (!mk) { return this.registry?.[key] }
+        const calls = this.registry?.[key] ?? [] as (() => void)[];
+        this.registry[key] = calls;
         return calls;
     }
 
-    registerCallback(key: string, fn: () => void): void {
+    registerCallback(key: string, ...fns: (() => void)[]): void {
         const calls = this.getCallbacks(key, true);
-        calls.push(fn); // Add the function to the array
+        fns.forEach((fn, _index) => {
+            calls.push(fn); // Add the function to the array
+        });
     }
 }
 

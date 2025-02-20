@@ -1,17 +1,21 @@
-import { FileSystemAdapter } from 'obsidian';
+import { Editor, EditorPosition, FileSystemAdapter, MarkdownView, Notice, TFile } from 'obsidian';
 import { join } from 'path';
 import ObA from './main';
-import { existsSync, readFileSync } from 'fs';
 
 export class ToolBox {
-    constructor(private oba: ObA) {}
+    constructor(private oba: ObA) {
+		console.log("ToolBox:constructor")
+	}
   
     // ----..--.- .-. -.- .-. -.- ... . -- - 
 	// MARK: Obsidian
 
-	getCurrNote():string  {
-		const currfile = this.oba.app.workspace.getActiveFile();
-		return (currfile === null) ? "" : currfile.path
+	getCurrNote(): TFile | null  {
+		return this.oba.app.workspace.getActiveFile();
+	}
+	getCurrNotePath(): string  {
+		const _note = this.oba.tools.getCurrNote();
+		return _note ? _note.path : '';
 	}
 
 	getVaultDir(): string {
@@ -24,57 +28,6 @@ export class ToolBox {
 		}
 		return path
 	}
-
-    // ----..--.- .-. -.- .-. -.- ... . -- - 
-    // MARK: Oba
-
-	getObaConfigFile(): string {
-		const vaultDir = this.getVaultDir()
-		return join(vaultDir, "ObaServer.json")
-	}
-
-	getObaPluginDir(): string {
-		const vaultDir = this.getVaultDir()
-		const path = join(
-			vaultDir, this.oba.app.vault.configDir, 
-			'plugins', "oba-plugin"
-		)
-		return path
-	}
-
-	// https://github.com/tillahoffmann/obsidian-jupyter/blob/e1e28db25fd74cd16844b37d0fe2eda9c3f2b1ee/main.ts#L175
-	getObaSignalPath(): string {
-		const fileName = "trigger-signal.json"
-		const pluginDir = this.getObaPluginDir()
-		const path = join(pluginDir, fileName)
-		return path
-	}
-
-    // read a key in the config file
-    // TODO: only read if file change
-    readConfig(key: string, dflt: any = null) {
-        // load config file
-        const configFile = this.oba.tools.getObaConfigFile()
-        if (!existsSync(configFile)) {
-            console.log("Config file missing!, configFile: ", configFile)
-            return
-        }
-        try {
-            const data = readFileSync(configFile, 'utf8')
-            // try parse
-            const config = JSON.parse(data);
-            console.log("config json:", config);
-
-            if (!(key in config)) { 
-                console.log(`Unknown key, key: `, key)
-                return
-            } 
-            return config?.[key] ?? dflt
-        } catch (err) {
-            console.error("Error loading config", err);
-            return
-        }
-    }
 
 	async copyToClipboard(text: string) {
         try {
@@ -89,13 +42,62 @@ export class ToolBox {
         const editor = this.oba.app.workspace.activeEditor?.editor;
         if (editor) {
             const selectedText = editor.getSelection();
-            if (selectedText) {
-                return selectedText;
-            } else {
-                return '';
-            }
+            return selectedText ? selectedText : ''
         }
     }
+
+	randstring(p: string, length: number): string {
+
+		console.log("length ", length)
+		const CHARACTERS  = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+
+		if (length < 1) { length = 1; }
+		let rand = '';
+		const charactersLength = CHARACTERS.length;
+		for ( let i = 0; i < length; i++ ) {
+			const rinx = Math.floor(Math.random() * charactersLength)
+			rand += CHARACTERS.charAt(rinx);
+		}
+		console.log("rand ", rand)
+		return `${p}${rand}`
+	}
+
+	insertAtCursor(txt: string) {
+		const view = this.oba.app.workspace.getActiveViewOfType(MarkdownView);
+		if (!view) {
+			new Notice("Nessuna nota aperta.");
+			return;
+		}
+		
+		const cursor: EditorPosition = view.editor.getCursor()
+		view.editor.replaceRange(txt, cursor);
+	}
+
+	getTagsForFile(file: TFile): string[] | null {
+        const metadata = this.oba.app.metadataCache.getFileCache(file);
+        if (metadata && metadata.tags) {
+            return metadata.tags.map((tag) => tag.tag);
+        }
+        return null;
+    }
+
+	
+    // ----..--.- .-. -.- .-. -.- ... . -- - 
+    // MARK: Oba
+
+	getObaPluginDir(): string {
+		const vaultDir = this.getVaultDir()
+		const path = join(
+			vaultDir, this.oba.app.vault.configDir, 
+			'plugins', "oba-plugin"
+		)
+		return path
+	}
+
+
+	readJsonMd(file: string) {
+
+	}
 
 }
 
