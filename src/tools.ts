@@ -1,7 +1,7 @@
 import { EditorPosition, FileSystemAdapter, MarkdownView, Notice, TFile } from 'obsidian';
 import { join } from 'path';
 import ObA from './main';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'fs';
 
 export class ToolBox {
     constructor(private oba: ObA) {
@@ -174,6 +174,41 @@ export class ToolBox {
 			console.log(`Object successfully stored as JSON at: ${path}`);
 		} catch (error) {
 			console.error('Error storing object as JSON:', error);
+		}
+	}
+
+	uriToFilename(url: string): string {
+        // Replace invalid characters with underscores
+        let filename = url
+            .replace(/[/\\:*?"<>|#]/g, '_') // Replace invalid characters
+            .replace(/https?:\/\//, '')       // Remove 'http://' or 'https://'
+            .replace(/\./g, '_')              // Replace dots with underscores
+            .replace(/\s+/g, '_');            // Replace spaces with underscores
+    
+        // Trim the filename to a reasonable length (e.g., 255 characters)
+        const maxLength = 255;
+        if (filename.length > maxLength) {
+            filename = filename.substring(0, maxLength);
+        }
+    
+        return filename;
+    }
+
+	getMoreRecentlyModified(file1: string, file2: string): string {
+		try {
+			// Get stats for both files
+			const stats1 = statSync(file1);
+			const stats2 = statSync(file2);
+	
+			// Compare modification times
+			if (stats1.mtimeMs > stats2.mtimeMs) {
+				return file1;
+			} else {
+				return file2;
+			}
+		} catch (error) {
+			console.error('Error comparing file modification times:', error);
+			return '';
 		}
 	}
 

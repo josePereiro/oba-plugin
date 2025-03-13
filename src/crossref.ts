@@ -18,33 +18,9 @@ export class CrossRef {
             new Notice('Select a doi');
             return;
         }
-
-        const url = `https://api.crossref.org/works/${doi}`;
         
         // check cache
-        const data = this.loadCache(doi)
-        if (data) {
-            console.log("Cache hit");
-            console.log(data);
-        } else {
-            // fetch new
-            console.log("Cache missing");
-            try {
-                new Notice('Sending request');
-                const response = await fetch(url);
-                if (!response.ok) {
-                    new Notice(`Server error, check selected doi.\ndoi: ${doi}`);
-                }
-                const data = await response.json();
-
-                // store in cache
-                this.writeCache(doi, data);
-
-            } catch (error) {
-                console.error('Error fetching DOI reference:', error);
-                new Notice(`Server error, check selected doi. ${doi}`);
-            }
-        }
+        const data = this.getRefData(doi)
 
         // Process data
         console.log("data");
@@ -67,10 +43,22 @@ export class CrossRef {
         }
 
         const refcites = [];
+        const bib_entries = this.oba.bibtex.getLocalBib()
+
         for (let i = 0; i < refobjs.length; i++) {
             let _ref_str = `[${i + 1}]`;
-            const __doi = refobjs[i]['DOI'] ?? refobjs[i]['doi'] ?? '';
+            const __doi = refobjs?.[i]?.['DOI'] ?? refobjs?.[i]?.['doi'] ?? '';
             const _doi = this.formatDoi(__doi);
+            
+            // search citekey in bibtex
+            let _citekey = '';
+            const _entry = this.oba.bibtex.findDoi(_doi, bib_entries);
+            if (_entry) {
+                _citekey = _entry?.["key"] ?? ''
+                _citekey = "@" + _citekey
+            }
+            if (_citekey) { _ref_str += ` [[${_citekey}]]`; }
+
             if (_doi) { _ref_str += ` ${_doi}`; }
             const _year = refobjs[i]['year'] ?? '';
             if (_year) { _ref_str += ` (${_year})`; }
@@ -79,50 +67,72 @@ export class CrossRef {
             console.log(_ref_str);
             refcites.push(_ref_str);
         }
-        const reference_section = refcites.join('\n');
+        const reference_section = refcites.join('\n\n');
         this.oba.tools.copyToClipboard(reference_section);
         new Notice(`SUCESS!!! Reference copied to clipboard.\ndoi: ${doi}`)
     }
 
-    getCrossrefDir(): string {
-        const obaDir = this.oba.tools.getObaDir();
-        const crossrefDir = join(obaDir, "crossref");
-        if (!existsSync(crossrefDir)) {
-            mkdirSync(crossrefDir, { recursive: true });
-        }
-        return crossrefDir;
+    getRefObjs(url: string) {
+        const data = this.getRefData(url)
+        return data?.['message']?.['reference']
+    }
+    getRefObj(url: string, num: number) {
+        const data = this.getRefData(url)
+        return data?.['message']?.['reference']?.[num]
     }
 
-    cachePath(url: string): string {
+    getCrossrefDir(): string {
+        const obaDir = this.oba.tools.getObaDir();
+        const _dir = join(obaDir, "crossref");
+        if (!existsSync(_dir)) {
+            mkdirSync(_dir, { recursive: true });
+        }
+        return _dir;
+    }
+
+    cachePath(doi: string): string {
         return join(
             this.getCrossrefDir(),
-            this.urlToFilename(url)
+            this.oba.tools.uriToFilename(doi)
         )
     }
 
-    loadCache(url: string): any {
-        return this.oba.tools.loadJSON(this.cachePath(url));
+    getRefData(doi: string) {
+        let data;
+        data = this._loadCache(doi);
+        if (!data) {
+            data = this._fetchData(doi)
+            if (!data) {
+                // store in cache
+                this.writeCache(doi, data);
+            }
+        }
+        return data
+    }
+
+    _loadCache(doi: string) {
+        return this.oba.tools.loadJSON(this.cachePath(doi));
+    }
+
+    async _fetchData(doi: string) {
+        try {
+            new Notice('Sending request');
+            const url = `https://api.crossref.org/works/${doi}`;
+            const response = await fetch(url);
+            if (!response.ok) {
+                new Notice(`Server error, check selected doi.\ndoi: ${doi}`);
+            }
+            const data = await response.json();
+            return data
+        } catch (error) {
+            console.error('Error fetching DOI reference:', error);
+            new Notice(`Server error, check selected doi. ${doi}`);
+            return null
+        }
     }
 
     writeCache(url: string, cache) {
         return this.oba.tools.writeJSON(this.cachePath(url), cache);
-    }
-
-    urlToFilename(url: string): string {
-        // Replace invalid characters with underscores
-        let filename = url
-            .replace(/[/\\:*?"<>|#]/g, '_') // Replace invalid characters
-            .replace(/https?:\/\//, '')       // Remove 'http://' or 'https://'
-            .replace(/\./g, '_')              // Replace dots with underscores
-            .replace(/\s+/g, '_');            // Replace spaces with underscores
-    
-        // Trim the filename to a reasonable length (e.g., 255 characters)
-        const maxLength = 255;
-        if (filename.length > maxLength) {
-            filename = filename.substring(0, maxLength);
-        }
-    
-        return filename;
     }
 
     formatDoi(doi: string): string {
