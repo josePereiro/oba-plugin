@@ -3,13 +3,14 @@ import simpleGit, { SimpleGit, StatusResult } from 'simple-git';
 import { Notice } from 'obsidian';
 import ObA from './main';
 
+// TODO: Add checkout current file git cmd
 export class Git {
     private git: SimpleGit;
 
     constructor(private oba: ObA) {
         console.log("Git:constructor");
         this.git = simpleGit(this.oba.tools.getVaultDir());
-    }
+    } 
 
     async isGitRepo(): Promise<boolean> {
         try {

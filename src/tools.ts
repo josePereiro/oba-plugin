@@ -1,6 +1,7 @@
-import { Editor, EditorPosition, FileSystemAdapter, MarkdownView, Notice, TFile } from 'obsidian';
+import { EditorPosition, FileSystemAdapter, MarkdownView, Notice, TFile } from 'obsidian';
 import { join } from 'path';
 import ObA from './main';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 
 export class ToolBox {
     constructor(private oba: ObA) {
@@ -26,7 +27,16 @@ export class ToolBox {
 		} else {
 			throw new Error('Cannot determine base path.');
 		}
-		return path
+		return path;
+	}
+
+	getObaDir(): string {
+		const vault = this.getVaultDir();
+		const obaDir = join(vault, ".Oba");
+		if (!existsSync(obaDir)) {
+			mkdirSync(obaDir, { recursive: true });
+		}
+		return obaDir;
 	}
 
 	async copyToClipboard(text: string) {
@@ -65,7 +75,7 @@ export class ToolBox {
 	insertAtCursor(txt: string) {
 		const view = this.oba.app.workspace.getActiveViewOfType(MarkdownView);
 		if (!view) {
-			new Notice("Nessuna nota aperta.");
+			new Notice("No note opened.");
 			return;
 		}
 		
@@ -94,9 +104,77 @@ export class ToolBox {
 		return path
 	}
 
+	getTags(file: TFile) {
+		const metadata = this.oba.app.metadataCache.getFileCache(file);
+		return metadata?.tags
+	}
 
-	readJsonMd(file: string) {
+	hasTag(file: TFile, tag0: string) {
+        const tags = this.getTags(file);
+        // console.log("tags: ", metadata?.tags)
+        return tags?.some(tag => tag.tag === tag0);
+    }
 
+	getNotePath(noteName: string) {
+		this.oba.app.metadataCache.getFirstLinkpathDest(noteName, '')
+	}
+
+	// TODO: Move to Dev
+	async askLLM(question: string): Promise<string> {
+		// const API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1";
+		// const API_URL = "https://api-inference.huggingface.co/models/gpt2";
+		// const API_URL = "https://api-inference.huggingface.co/models/deepseek-ai/DeepSeek-R1";
+		const API_URL = "https://api-inference.huggingface.co/models/";
+		
+		// const API_TOKEN = "YOUR_HUGGINGFACE_API_KEY"; // Sostituiscilo con la tua chiave API gratuita
+		const API_TOKEN = this.oba.configfile.readConfig("huggingface.access.token", null)
+		if (!API_TOKEN) {
+			new Notice("'huggingface.access.token' missing")
+			return;
+		}
+	
+		const response = await fetch(API_URL, {
+			method: "POST",
+			headers: {
+				"Authorization": `Bearer ${API_TOKEN}`,
+				"Content-Type": "application/json"
+			},
+			body: JSON.stringify({ inputs: question })
+		});
+	
+		const data = await response.json();
+		
+		if (data.error) {
+			throw new Error(`Errore API: ${data.error}`);
+		}
+	
+		return data[0]?.generated_text || "No response";
+	}
+
+
+	loadJSON(path: string) {
+		try {
+			if (!existsSync(path)) {
+				console.error("File missing", path);
+				return null
+			}
+			const data = readFileSync(path, 'utf8')
+			const obj = JSON.parse(data); // try parse
+			return obj
+		} catch (err) {
+			console.error("Error loading", err);
+			return null
+		}
+	}
+
+	writeJSON(path: string, obj) {
+		try {
+			const jsonString = JSON.stringify(obj, null, 2);
+			writeFileSync(path, jsonString, 'utf-8');
+			console.log(`Object successfully stored as JSON at: ${path}`);
+		} catch (error) {
+			console.error('Error storing object as JSON:', error);
+		}
 	}
 
 }

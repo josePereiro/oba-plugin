@@ -1,4 +1,3 @@
-import { Notice } from 'obsidian';
 import ObA from './main';
 import { exec } from 'child_process';
 

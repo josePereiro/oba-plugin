@@ -6,10 +6,18 @@ import { CrossRef } from './crossref';
 import { BackEnds } from './backends';
 import { Git } from './git';
 import { ConfigFile } from './configFile';
+import { TagNotices } from './tag.notices';
+import { SelectorModal } from './modals';
+import { RangeView } from './view';
+import { OpenPdf } from './open.pdf';
+import { BibTex } from './bibtex';
 
-// This do:
-// Add a simple command 'Signal backend' which update a file in the plugin folder 
-// that can be use as trigger for different backends
+// NOTES
+
+// TODO:
+// Create an universal template system
+// That is, any subsystem can inject stuff from the current state of Oba
+// example: An TagNotice which message is "{{ACTIVE_FILE}} contains TODOs"
 
 export default class ObA extends Plugin {
 
@@ -21,9 +29,10 @@ export default class ObA extends Plugin {
 	backends: BackEnds;
 	callbacks: Callbacks;
 	configfile: ConfigFile;
-	
-	// TODO: use unknown
-	// state: { [key: string]: any };
+	tagnotices: TagNotices;
+	rangeview: RangeView;
+	openpdfs: OpenPdf;
+	bibtex: BibTex;
 	
 	// MARK: onload
 	async onload() {
@@ -38,7 +47,12 @@ export default class ObA extends Plugin {
 		this.backends = new BackEnds(this);
 		this.callbacks = new Callbacks(this);
 		this.configfile = new ConfigFile(this);
+		this.tagnotices = new TagNotices(this);
+		this.openpdfs = new OpenPdf(this);
+		this.bibtex = new BibTex(this);
+		// this.rangeview = new RangeView(this);
 
+		// MARK: # commands
 		// register commands/callbacks
 		{
 			// TODO: Think about it.
@@ -60,6 +74,8 @@ export default class ObA extends Plugin {
 			});
 		}
 
+		// TODO: Move to general commands
+		// register callbacks in each servise constructor
 		{
 			this.callbacks.registerCallback("callback.oba-code-vault", 
 				() => this.cmds.codeVaultCmd()
@@ -89,8 +105,17 @@ export default class ObA extends Plugin {
 		{
 			this.callbacks.registerCallback("callback.oba-dev-cmd", 
 				() => { new Notice('hello oba') }, 
+				// () => {
+				// 	const question = this.tools.getSelectedText();
+				// 	this.tools.askLLM(question).then(console.log).catch(console.error);
+				// },
+				// () => {
+				// 	this.tools.insertAtCursor(this.tools.randstring("test.", 8))
+				// }
 				() => {
-					this.tools.insertAtCursor(this.tools.randstring("test.", 8))
+					// Usage
+					const colorModal = new SelectorModal(this, ["A", "B", "C"]);
+					colorModal.open();
 				}
 			)
 			this.addCommand({
@@ -101,7 +126,6 @@ export default class ObA extends Plugin {
 				}
 			});
 		}
-
 	}
 
 	onunload() {
