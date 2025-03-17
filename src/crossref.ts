@@ -39,12 +39,18 @@ export class CrossRef {
 
     // TODO: Test this
     async downloadAll() {
-        const entries = await this.oba.bibtex.getLocalBib();
+        const entries = await this.oba.localbibs.getLocalBib();
+        console.log("entries");
+        console.log(entries);
         for (const entry of entries) {
+            console.log("entry");
+            console.log(entry);
             const doi = this.oba.tools.getFirst(entry?.["fields"], 
                 ["doi", "DOI", "Doi"]
             )
-            await this.getCrossrefData(doi);
+            const crossref = await this.getCrossrefData(doi);
+            console.log("crossref");
+            console.log(crossref);
             this.oba.tools.sleep(100);
         }
     }
@@ -124,10 +130,10 @@ export class CrossRef {
         )
     }
 
-    async promptForDoi() {
-        const doi = await this.oba.app.workspace.activeEditor?.editor?.getSelection() || prompt('Enter the DOI:');
-        return doi?.trim();
-    }
+    // async promptForDoi() {
+    //     const doi = await this.oba.app.workspace.activeEditor?.editor?.getSelection() || prompt('Enter the DOI:');
+    //     return doi?.trim();
+    // }
 
 }
 

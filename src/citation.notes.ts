@@ -77,7 +77,7 @@ export class CitationNotes {
         }
 
         const refcites = [];
-        const bib_entries = await this.oba.bibtex.getLocalBib();
+        const bib_entries = await this.oba.localbibs.getLocalBib();
 
         for (let i = 0; i < refobjs.length; i++) {
 
@@ -86,11 +86,11 @@ export class CitationNotes {
             const _doi = this.oba.tools.formatDoi(__doi);
             
             // search citekey from local bibtex
-            const _entry = await this.oba.bibtex.findByDoi({
+            const _entry = await this.oba.localbibs.findByDoi({
                 doi: _doi, 
                 objList: bib_entries
             });
-            const _citekey = this.oba.bibtex.extractCiteKey(_entry);
+            const _citekey = this.oba.localbibs.extractCiteKey(_entry);
             console.log("_citekey: ", _citekey)
             if (_citekey) { _ref_str += ` [[@${_citekey}]]`; }
 
@@ -120,14 +120,14 @@ export class CitationNotes {
     async getBibTex(note: TFile = this.oba.tools.getCurrNote()) {
         const citekey = this.extractCiteKey(note);
         // console.log(citekey)
-        const entry = await this.oba.bibtex.findById(citekey);
+        const entry = await this.oba.localbibs.findById(citekey);
         // console.log(entry)
         return entry
     }
 
     async getBibTexDoi(note: TFile = this.oba.tools.getCurrNote()) {
         const entry = await this.getBibTex(note);
-        return this.oba.bibtex.extractDoi(entry);
+        return this.oba.localbibs.extractDoi(entry);
     }
 
 
@@ -148,9 +148,9 @@ export class CitationNotes {
             new Notice("ERROR: Missing doi")
             return
         }
-        const bibtex_data = await this.oba.bibtex.findByDoi({
+        const bibtex_data = await this.oba.localbibs.findByDoi({
             doi: doi1, 
-            objList: await this.oba.bibtex.getLocalBib()
+            objList: await this.oba.localbibs.getLocalBib()
         });
         if (!bibtex_data) {
             new Notice(`ERROR: Bibtex missing, doi ${doi1}`)
@@ -162,7 +162,7 @@ export class CitationNotes {
         }
 
         console.log('bibtex_data: ', bibtex_data)
-        const citekey1 = this.oba.bibtex.extractCiteKey(bibtex_data);
+        const citekey1 = this.oba.localbibs.extractCiteKey(bibtex_data);
         console.log('citekey1: ', citekey1)
         const link = `\\[[[@${citekey1}|${refnum}]]\\]`
         console.log(link)

@@ -10,7 +10,7 @@ import { TagNotices } from './tag.notices';
 import { SelectorModal } from './modals';
 import { RangeView } from './view';
 import { OpenPdf } from './open.pdf';
-import { BibTex } from './bibtex';
+import { LocalBibs } from './localbibs';
 import { Dev } from './dev';
 import { CitationNotes } from './citation.notes';
 
@@ -34,7 +34,7 @@ export default class ObA extends Plugin {
 	tagnotices: TagNotices;
 	rangeview: RangeView;
 	openpdfs: OpenPdf;
-	bibtex: BibTex;
+	localbibs: LocalBibs;
 	citnotes: CitationNotes;
 	dev: Dev;
 	
@@ -54,7 +54,7 @@ export default class ObA extends Plugin {
 		this.configfile = new ConfigFile(this);
 		this.tagnotices = new TagNotices(this);
 		this.openpdfs = new OpenPdf(this);
-		this.bibtex = new BibTex(this);
+		this.localbibs = new LocalBibs(this);
 		this.citnotes = new CitationNotes(this);
 		this.dev = new Dev(this);
 		// this.rangeview = new RangeView(this);

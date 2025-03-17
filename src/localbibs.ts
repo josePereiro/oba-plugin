@@ -13,10 +13,10 @@ import { join } from 'path';
     #TODO: Add multiple source support
     #TODO/DONE: Add automatic recache if source is updated
 */
-export class BibTex {
+export class LocalBibs {
 
     constructor(private oba: ObA) {
-        console.log("BibTex:constructor");
+        console.log("LocalBibs:constructor");
 
         this.oba.addCommand({
             id: "load-bib",
@@ -28,8 +28,8 @@ export class BibTex {
         });
 
         this.oba.addCommand({
-            id: "BibTex-dev",
-            name: "BibTex-dev",
+            id: "LocalBibs-dev",
+            name: "LocalBibs-dev",
             callback: async () => {
                 console.clear();
             },
