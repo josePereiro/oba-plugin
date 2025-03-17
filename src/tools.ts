@@ -14,9 +14,8 @@ export class ToolBox {
 	getCurrNote(): TFile | null  {
 		return this.oba.app.workspace.getActiveFile();
 	}
-	getCurrNotePath(): string  {
-		const _note = this.oba.tools.getCurrNote();
-		return _note ? _note.path : '';
+	getCurrNotePath(): string | null  {
+		return this.oba.tools.getCurrNote()?.path;
 	}
 
 	getVaultDir(): string {
@@ -42,9 +41,9 @@ export class ToolBox {
 	async copyToClipboard(text: string) {
         try {
             await navigator.clipboard.writeText(text);
-            console.log('Text copied to clipboard:', text);
+            console.log('Text copied to clipboard:\n', text);
         } catch (err) {
-            console.error('Failed to copy text:', err);
+            console.error('Failed to copy text:\n', err);
         }
     }
 
@@ -52,6 +51,7 @@ export class ToolBox {
         const editor = this.oba.app.workspace.activeEditor?.editor;
         if (editor) {
             const selectedText = editor.getSelection();
+			console.log("selectedText:\n ", selectedText);
             return selectedText ? selectedText : ''
         }
     }
@@ -138,16 +138,16 @@ export class ToolBox {
 		try {
 			const jsonString = JSON.stringify(obj, null, 2);
 			writeFileSync(path, jsonString, 'utf-8');
-			console.log(`Object successfully stored as JSON at: ${path}`);
+			console.log(`JSON written at: ${path}`);
 		} catch (error) {
-			console.error('Error storing object as JSON:', error);
+			console.error(`Error writing JSON: ${error}`);
 		}
 	}
 
 	uriToFilename(url: string): string {
         // Replace invalid characters with underscores
         let filename = url
-            .replace(/[/\\:*?"<>|#]/g, '_') // Replace invalid characters
+            .replace(/[/\\:*?"<>|#]/g, '_')   // Replace invalid characters
             .replace(/https?:\/\//, '')       // Remove 'http://' or 'https://'
             .replace(/\./g, '_')              // Replace dots with underscores
             .replace(/\s+/g, '_');            // Replace spaces with underscores
@@ -200,6 +200,75 @@ export class ToolBox {
 
 	sleep(ms: number) {
 		setTimeout(() => {}, ms); // 1000 milliseconds = 1 second
+	}
+
+	_identity(obj) {
+        return obj
+    }
+
+	findStr(
+        {   
+            str0 = null,
+            keys = null,
+            objList = null,
+            foundFun = this._identity,
+            getEntry = this._identity 
+        } : {
+            str0?: string | null;
+            keys?: string[] | null;
+            objList?: any[] | null;
+            foundFun?: (str0: string, str1: string) => boolean;
+            getEntry?: (entry: any) => any;
+        } = {}
+    ){
+        if (!str0) { return null; } 
+        if (!keys) { return null; } 
+        if (!objList) { return null; }
+        for (const entry0 of objList) {
+            const entry = getEntry(entry0);
+            const str1 = this.getFirst( entry, keys)
+			if (typeof str1 !== "string") { continue; }
+			const ret = foundFun(str0, str1);
+			if (ret) { return entry0 }
+        }
+        return null
+    }
+
+
+	hasPrefix(str0: string, str1: string) {
+		if (!str1) { return false; }
+		if (str0.startsWith(str1)) { return true; }
+		if (str1.startsWith(str0)) { return true; }
+		return false
+	}
+
+	hasSuffix(str0: string, str1: string) {
+		if (!str1) { return false; }
+		if (str0.endsWith(str1)) { return true; }
+		if (str1.endsWith(str0)) { return true; }
+		return false
+	}
+
+	formatDoi(doi: string): string {
+        if (doi == '') { return '' }
+        if (!doi.startsWith('https://doi.org/')) {
+            return 'https://doi.org/' + doi;
+        }
+        return doi
+    }
+
+	hash64(input: string): string {
+		console.log("input");
+		console.log(input);
+		let hash = 0n; // Use BigInt for 64-bit precision
+	
+		for (let i = 0; i < input.length; i++) {
+			const charCode = BigInt(input.charCodeAt(i));
+			hash = (hash << 5n) - hash + charCode; // Simple hash algorithm
+			hash &= 0xFFFFFFFFFFFFFFFFn; // Ensure it stays 64-bit
+		}
+	
+		return hash.toString(32).padStart(32, '0'); // Convert to 16-character hex string
 	}
 
 }

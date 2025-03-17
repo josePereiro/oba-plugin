@@ -12,6 +12,7 @@ import { RangeView } from './view';
 import { OpenPdf } from './open.pdf';
 import { BibTex } from './bibtex';
 import { Dev } from './dev';
+import { CitationNotes } from './citation.notes';
 
 // NOTES
 
@@ -34,6 +35,7 @@ export default class ObA extends Plugin {
 	rangeview: RangeView;
 	openpdfs: OpenPdf;
 	bibtex: BibTex;
+	citnotes: CitationNotes;
 	dev: Dev;
 	
 	// MARK: onload
@@ -53,6 +55,7 @@ export default class ObA extends Plugin {
 		this.tagnotices = new TagNotices(this);
 		this.openpdfs = new OpenPdf(this);
 		this.bibtex = new BibTex(this);
+		this.citnotes = new CitationNotes(this);
 		this.dev = new Dev(this);
 		// this.rangeview = new RangeView(this);
 

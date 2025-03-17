@@ -4,7 +4,8 @@
     "inlineSourceMap": true,
     "inlineSources": true,
     "module": "ESNext",
-    "target": "ES6",
+    // "target": "ES6",
+    "target": "es2020",
     "allowJs": true,
     // "strict": true,
     "noImplicitAny": true,
@@ -30,5 +31,5 @@
   "include": [
     "**/*.ts",
     "types/**/*"
-  ]
+, "src/test.js"  ]
 }

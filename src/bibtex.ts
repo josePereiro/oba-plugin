@@ -1,12 +1,18 @@
 // DeepSeek
 import ObA from './main';
 import { parse } from '@retorquere/bibtex-parser';
-import { existsSync, mkdirSync, readFileSync } from 'fs';
+import { existsSync, mkdirSync } from 'fs';
+import { readFile } from 'fs/promises';
 import Fuse from 'fuse.js';
 import { join } from 'path';
 
 
-
+/*
+    Manage a .bib database
+    #TODO: rename 
+    #TODO: Add multiple source support
+    #TODO/DONE: Add automatic recache if source is updated
+*/
 export class BibTex {
 
     constructor(private oba: ObA) {
@@ -15,8 +21,8 @@ export class BibTex {
         this.oba.addCommand({
             id: "load-bib",
             name: "Load local .bib",
-            callback: () => {
-                const ret = this.getLocalBib();
+            callback: async () => {
+                const ret = await this.getLocalBib();
                 console.log(ret);
             },
         });
@@ -24,84 +30,84 @@ export class BibTex {
         this.oba.addCommand({
             id: "BibTex-dev",
             name: "BibTex-dev",
-            callback: () => {
-                const hint = this.oba.tools.getSelectedText();
-                console.log(hint);
-                // console.log(this.fussySearch(hint));
-                console.log(this.findByDoi(hint));
+            callback: async () => {
+                console.clear();
             },
         });
     }
 
-    _loadBibCache(filePath: string = this.cachePath()) {
+    _loadBibCache(filePath: string) {
         return this.oba.tools.loadJSON(filePath);
     }
 
-    _getLocalBib() {
-        const bibfile = this.oba.configfile.getConfig("local.bib.file")
-        const bibcache = this.cachePath()
+    // MARK: copyReferenceLink
+    async getLocalBib() {
+        const bibfiles = this.oba.configfile.getConfig("local.bib.files")
 
-        const newest = this.oba.tools.getMoreRecentlyModified(bibfile, bibcache);
-        if (newest != bibcache) {
-            // update cache
-            const parsedBib = this._parseBibFile(bibfile)
-            // write cache
-            this.oba.tools.writeJSON(bibcache, parsedBib);
-            return parsedBib
-        } else {
-            return this._loadBibCache(bibcache);
-        }
-    }
+        const rawBib = [];
+        for (const bibfile of bibfiles) {
+            const bibcache = this.cachePath(bibfile)
+            console.log("bibcache");
+            console.log(bibcache);
 
-    fussySearch(hint: string, entries = this.getLocalBib()) {
-
-        // TODO: integrate with this.oba.config
-        const options = {
-            keys: [
-                'input', 'key', 
-                'fields.author',
-                'fields.author.lastName',
-                'fields.author.firstName',
-                'fields.date',
-                'fields.doi',
-                'fields.title',
-            ], // Fields to search in
-            threshold: 0.4, // Adjust matching sensitivity
-        };
-        const fuse = new Fuse(entries, options);
-        return fuse.search(hint);
-    }
-
-    findSuffix(str0: string, keys: string[], entries = this.getLocalBib()) {
-        if (!str0) { return null; } 
-        if (!entries) { return null }
-        for (const entry of entries) {
-            const str1 = this.oba.tools.getFirst(
-                entry?.['fields'], 
-                keys, 
-            )
-            if (typeof str1 !== "string") { continue; }
-            if (!str1) { continue; }
-            if (str0.endsWith(str1) || str1.endsWith(str0)) {
-                return entry
+            const newest = this.oba.tools.getMoreRecentlyModified(bibfile, bibcache);
+            let bibdb = null;
+            if (newest == '' || newest != bibcache) {
+                // update cache
+                bibdb = await this._parseBibFile(bibfile)
+                console.log("bibdb");
+                console.log(bibdb);
+                // write cache
+                this.oba.tools.writeJSON(bibcache, bibdb);
+            } else {
+                bibdb = this._loadBibCache(bibcache);
+            }
+            // merge
+            const entries = bibdb?.['entries'];
+            if (!entries) { continue; } 
+            for (const elm of entries) {
+                rawBib.push(elm); // Efficient for large arrays
             }
         }
-        return null
+        return rawBib
     }
 
-    findByDoi(str0: string, entries = this.getLocalBib()) {
-        return this.findSuffix(str0, ["doi", "Doi", "DOI"], entries)
+    async findByDoi({
+        doi = "",
+        objList = [],
+    } : {
+        doi?: string 
+        objList?: any[]
+    }
+    ) {
+        return this.oba.tools.findStr({
+            str0: doi,
+            keys: ["doi", "Doi", "DOI"],
+            objList: objList,
+            getEntry: (entry) => {
+                return entry?.['fields'] 
+            },
+            foundFun: (str0: string, str1: string) => {
+                return this.oba.tools.hasSuffix(str0, str1);
+            }
+        })
     }
 
-    getLocalBib() {
-        const data = this._getLocalBib();
-        return data?.['entries']
+    async findById(citekey: string) {
+        return this.oba.tools.findStr({
+            str0: citekey,
+            keys: ["key", "Key", "KEY"],
+            objList: await this.getLocalBib(),
+            foundFun: (str0: string, str1: string) => {
+                return this.oba.tools.hasSuffix(str0, str1);
+            }
+        })
     }
 
-    _parseBibFile(filePath: string = this.cachePath()): any {
+    async _parseBibFile(filePath: string) {
         try {
             // Read the .bib file
-            const bibContent = readFileSync(filePath, 'utf-8');
+            const bibContent = await readFile(filePath, 'utf-8');
             // Parse the .bib content into JSON
             // const parsedBib = BibtexParser.parseToJSON(bibContent);
             const parsedBib = parse(bibContent);
@@ -122,10 +128,88 @@ export class BibTex {
         return _dir;
     }
 
-    cachePath() {
+    cachePath(sourceFile: string) {
+        console.log("sourceFile");
+        console.log(sourceFile);
+        const hash = this.oba.tools.hash64(sourceFile);
         return join(
             this.getBibTexDir(),
-            "cache.bib.json"
+            `${hash}.cache.bib.json`
+        )
+    }
+
+    async fussySearch(hint: string) {
+        const entries = await this.getLocalBib();
+        // TODO: integrate with this.oba.config
+        const options = {
+            keys: [
+                'input', 'key', 
+                'fields.author',
+                'fields.author.lastName',
+                'fields.author.firstName',
+                'fields.date',
+                'fields.doi',
+                'fields.title',
+            ], // Fields to search in
+            threshold: 0.4, // Adjust matching sensitivity
+        };
+        const fuse = new Fuse(entries, options);
+        return fuse.search(hint);
+    }
+
+    extractDoi(entry: any) {
+        console.log("entry:\n", entry);
+        const fields = this.oba.tools.getFirst(entry, 
+            ['fields', 'Fields', 'FIELDS']
+        )
+        console.log("fields:\n", fields);
+        return this.oba.tools.getFirst(fields, 
+            ["doi", "Doi", "DOI"]
+        )
+    }
+
+    extractCiteKey(entry: any) {
+        return this.oba.tools.getFirst(entry, 
+            ["key", "Key", "KEY"]
+        )
+    }
+
+    extractDate(entry: any) {
+        const fields = this.oba.tools.getFirst(entry, 
+            ['fields', 'Fields', 'FIELDS']
+        )
+        return this.oba.tools.getFirst(fields, 
+            ["date", "Date", "DATE"]
+        )
+    }
+
+    extractTitle(entry: any) {
+        const fields = this.oba.tools.getFirst(entry, 
+            ['fields', 'Fields', 'FIELDS']
+        )
+        return this.oba.tools.getFirst(fields, 
+            ["title", "Title", "TITLE"]
+        )
+    }
+
+    extractKeywords(entry: any) {
+        const fields = this.oba.tools.getFirst(entry, 
+            ['fields', 'Fields', 'FIELDS']
+        )
+        return this.oba.tools.getFirst(fields, 
+            ["keywords", "Keywords", "KEYWORDS"]
+        )
+    }
+
+    extractBIBText(entry: any) {
+        return this.oba.tools.getFirst(entry, 
+            ["input", "Input", "INPUT"]
+        )
+    }
+
+    extractType(entry: any) {
+        return this.oba.tools.getFirst(entry, 
+            ["type", "Type", "TYPE"]
         )
     }
 }

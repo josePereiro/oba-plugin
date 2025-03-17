@@ -12,6 +12,26 @@ export class Dev {
         console.log("Dev:constructor");
 
         this.oba.addCommand({
+            id: 'oba-sel-text',
+            name: 'Dev: test selected text',
+            callback: () => {
+                console.clear();
+
+                const selectedText = this.oba.tools.getSelectedText();
+                this.oba.tools.copyToClipboard(selectedText);
+                
+
+
+                // const editor = this.oba.app.workspace.activeEditor?.editor;
+                // if (editor) {
+                //     const selectedText = editor.getSelection();
+                //     console.log("selectedText");
+                //     console.log(selectedText);
+                // }
+            }
+        });
+
+        this.oba.addCommand({
             id: 'oba-code-vault',
             name: 'Dev: Open the vault in an IDE, ej: vscode',
             callback: () => {
