@@ -3,7 +3,13 @@ import simpleGit, { SimpleGit, StatusResult } from 'simple-git';
 import { Notice } from 'obsidian';
 import ObA from './main';
 
-// TODO: Add checkout current file git cmd
+/*
+    Add a few git utilities
+    #TODO:
+    - a method which checkout a given note
+        - This can be use for making a read only lock
+        - If edition is detected, the note is restore to its last git version.
+*/
 export class Git {
     private git: SimpleGit;
 
@@ -33,7 +39,7 @@ export class Git {
 
     async commitToBranch(): Promise<void> {
         try {
-            const targetBranch = this.oba.configfile.readConfig("git.commit.branch.target")
+            const targetBranch = this.oba.configfile.getConfig("git.commit.branch.target")
             if (!targetBranch) {
                 new Notice(`Target brach not setup. See Oba.json "git.commit.branch.target"`)
                 return;

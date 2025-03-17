@@ -1,14 +1,17 @@
 // DeepSeek
 import ObA from './main';
-// import {BibtexParser} from "bibtex-js-parser";
 import { parse } from '@retorquere/bibtex-parser';
 import { existsSync, mkdirSync, readFileSync } from 'fs';
+import Fuse from 'fuse.js';
 import { join } from 'path';
+
+
 
 export class BibTex {
 
     constructor(private oba: ObA) {
         console.log("BibTex:constructor");
+
         this.oba.addCommand({
             id: "load-bib",
             name: "Load local .bib",
@@ -19,12 +22,13 @@ export class BibTex {
         });
 
         this.oba.addCommand({
-            id: "find-doi",
-            name: "Find doi",
+            id: "BibTex-dev",
+            name: "BibTex-dev",
             callback: () => {
-                const doi = this.oba.tools.getSelectedText();
-                console.log(doi);
-                console.log(this.findDoi(doi));
+                const hint = this.oba.tools.getSelectedText();
+                console.log(hint);
+                // console.log(this.fussySearch(hint));
+                console.log(this.findByDoi(hint));
             },
         });
     }
@@ -34,7 +38,7 @@ export class BibTex {
     }
 
     _getLocalBib() {
-        const bibfile = this.oba.configfile.readConfig("local.bib.file")
+        const bibfile = this.oba.configfile.getConfig("local.bib.file")
         const bibcache = this.cachePath()
 
         const newest = this.oba.tools.getMoreRecentlyModified(bibfile, bibcache);
@@ -49,19 +53,44 @@ export class BibTex {
         }
     }
 
-    findDoi(doi0: string, entries = this.getLocalBib()) {
-        if (doi0 == '') { return null; } 
-        if (!doi0) { return null; } 
+    fussySearch(hint: string, entries = this.getLocalBib()) {
+
+        // TODO: integrate with this.oba.config
+        const options = {
+            keys: [
+                'input', 'key', 
+                'fields.author',
+                'fields.author.lastName',
+                'fields.author.firstName',
+                'fields.date',
+                'fields.doi',
+                'fields.title',
+            ], // Fields to search in
+            threshold: 0.4, // Adjust matching sensitivity
+        };
+        const fuse = new Fuse(entries, options);
+        return fuse.search(hint);
+    }
+
+    findSuffix(str0: string, keys: string[], entries = this.getLocalBib()) {
+        if (!str0) { return null; } 
         if (!entries) { return null }
         for (const entry of entries) {
-            const doi1 = entry?.["fields"]?.["doi"] ?? entry?.["fields"]?.["DOI"] ?? entry?.["fields"]?.["Doi"]
-            if (doi1 == '') { continue; } 
-            if (!doi1) { continue; }
-            if (doi0.endsWith(doi1) || doi1.endsWith(doi0)) {
+            const str1 = this.oba.tools.getFirst(
+                entry?.['fields'], 
+                keys, 
+            )
+            if (typeof str1 !== "string") { continue; }
+            if (!str1) { continue; }
+            if (str0.endsWith(str1) || str1.endsWith(str0)) {
                 return entry
             }
         }
         return null
+    }
+
+    findByDoi(str0: string, entries = this.getLocalBib()) {
+        return this.findSuffix(str0, ["doi", "Doi", "DOI"], entries)
     }
 
     getLocalBib() {

@@ -6,6 +6,9 @@ import { exec } from 'child_process';
 import { platform } from "os";
 import { existsSync } from 'fs';
 
+/*
+    Given a path, open a pdf related with the note
+*/
 export class OpenPdf {
 
     constructor(private oba: ObA) {
@@ -35,7 +38,7 @@ export class OpenPdf {
         noteName = noteName.replace("@", "");
         noteName = noteName.replace(".md", "");
         const pdfFileName = `${noteName}.pdf`;
-        const pdfsDir = this.oba.configfile.readConfig("local.pdfs.dir")
+        const pdfsDir = this.oba.configfile.getConfig("local.pdfs.dir")
         const pdfFilePath = join(
             pdfsDir, pdfFileName
         );

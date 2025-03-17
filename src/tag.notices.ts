@@ -28,7 +28,7 @@ export class TagNotices {
     }
 
     tagNoticesConfig() {
-        return this.oba.configfile.readConfig("tag.notices", null)
+        return this.oba.configfile.getConfig("tag.notices", null)
     }
 
     execNotices(file: TFile, event0: string) {

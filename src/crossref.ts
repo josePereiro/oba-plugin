@@ -3,14 +3,62 @@ import ObA from './main';
 import { join } from 'path';
 import { existsSync, mkdirSync } from 'fs';
 
+// TODO: Make a command for downloading (caching)
+// The refs for all entries at bibtex
+
+/*
+    Use CrossRef API to download papers metadata
+*/
 export class CrossRef {
-    private readonly baseUrl = 'https://api.crossref.org/works';
 
     constructor(private oba: ObA) {
         console.log("CrossRef:constructor");
+
+        // Commands
+        this.oba.addCommand({
+            id: "CrossRef-dev",
+            name: "CrossRef dev",
+            callback: async () => {
+                console.clear();
+                const sel = this.oba.tools.getSelectedText();
+                console.log(sel);
+                const data = await this._fetchCrossrefData(sel)
+                console.log(data);
+            },
+        });
+
+        this.oba.addCommand({
+            id: 'oba-crossref-search-cmd',
+            name: 'Crossref copy references',
+            callback: () => {
+                console.clear();
+                this.copyDoiReferences()
+            }
+        });
+
+        this.oba.addCommand({
+            id: 'oba-crossref-fetch-all',
+            name: 'Crossref fetch all bibtex',
+            callback: () => {
+                console.clear();
+                this.downloadAll()
+            }
+        });
     }
 
-    async fetchDoiReference() {
+    // TODO: Test this make it 
+    async downloadAll() {
+        const entries = this.oba.bibtex.getLocalBib();
+        for (const entry of entries) {
+            const doi = this.oba.tools.getFirst(entry?.["fields"], 
+                ["doi", "DOI", "Doi"]
+            )
+            await this.getCrossrefData(doi);
+            this.oba.tools.sleep(100);
+        }
+    }
+
+    async copyDoiReferences() {
         // const doi = await this.promptForDoi();
         // const doi = "https://doi.org/10.1038/srep45303";
         const doi = this.oba.tools.getSelectedText()
@@ -20,15 +68,16 @@ export class CrossRef {
         }
         
         // check cache
-        const data = this.getRefData(doi)
+        const data = await this.getCrossrefData(doi)
+        console.log("data")
+        console.log(data)
 
         // Process data
-        console.log("data");
-        console.log(data);
-
-        const msg = data['message'] ?? null
+        const msg = data?.['message']
+        console.log("msg")
+        console.log(msg)
         if (!msg) {
-            console.log('message missing')
+            console.error('message missing');
             return;
         }
 
@@ -46,13 +95,14 @@ export class CrossRef {
         const bib_entries = this.oba.bibtex.getLocalBib()
 
         for (let i = 0; i < refobjs.length; i++) {
+
             let _ref_str = `[${i + 1}]`;
             const __doi = refobjs?.[i]?.['DOI'] ?? refobjs?.[i]?.['doi'] ?? '';
             const _doi = this.formatDoi(__doi);
             
             // search citekey in bibtex
             let _citekey = '';
-            const _entry = this.oba.bibtex.findDoi(_doi, bib_entries);
+            const _entry = this.oba.bibtex.findByDoi(_doi, bib_entries);
             if (_entry) {
                 _citekey = _entry?.["key"] ?? ''
                 _citekey = "@" + _citekey
@@ -64,21 +114,20 @@ export class CrossRef {
             if (_year) { _ref_str += ` (${_year})`; }
             const _cite = refobjs[i]['unstructured'] ?? 'missing';
             _ref_str += ` ${_cite}`
+            
             console.log(_ref_str);
             refcites.push(_ref_str);
         }
+
         const reference_section = refcites.join('\n\n');
         this.oba.tools.copyToClipboard(reference_section);
+
         new Notice(`SUCESS!!! Reference copied to clipboard.\ndoi: ${doi}`)
     }
 
-    getRefObjs(url: string) {
-        const data = this.getRefData(url)
+    async getReferences(url: string) {
+        const data = await this.getCrossrefData(url)
         return data?.['message']?.['reference']
-    }
-    getRefObj(url: string, num: number) {
-        const data = this.getRefData(url)
-        return data?.['message']?.['reference']?.[num]
     }
 
     getCrossrefDir(): string {
@@ -90,39 +139,33 @@ export class CrossRef {
         return _dir;
     }
 
-    cachePath(doi: string): string {
-        return join(
-            this.getCrossrefDir(),
-            this.oba.tools.uriToFilename(doi)
-        )
-    }
-
-    getRefData(doi: string) {
+    async getCrossrefData(doi: string) {
         let data;
-        data = this._loadCache(doi);
+        data = this._loadCrossrefCache(doi);
         if (!data) {
-            data = this._fetchData(doi)
-            if (!data) {
-                // store in cache
-                this.writeCache(doi, data);
-            }
+            data = await this._fetchCrossrefData(doi)
+            // store in cache
+            if (data) { this.writeCache(doi, data); } 
         }
         return data
     }
 
-    _loadCache(doi: string) {
+    _loadCrossrefCache(doi: string) {
         return this.oba.tools.loadJSON(this.cachePath(doi));
     }
 
-    async _fetchData(doi: string) {
+    async _fetchCrossrefData(doi: string) {
         try {
             new Notice('Sending request');
             const url = `https://api.crossref.org/works/${doi}`;
             const response = await fetch(url);
-            if (!response.ok) {
+            console.log('_fetchCrossrefData.response ', response)
+            if (!response?.['ok']) {
                 new Notice(`Server error, check selected doi.\ndoi: ${doi}`);
+                return null
             }
             const data = await response.json();
+            console.log('_fetchCrossrefData.data ', data)
             return data
         } catch (error) {
             console.error('Error fetching DOI reference:', error);
@@ -133,6 +176,18 @@ export class CrossRef {
 
     writeCache(url: string, cache) {
         return this.oba.tools.writeJSON(this.cachePath(url), cache);
+    }
+
+    hasCache(doi: string) {
+        const path = this.cachePath(doi)
+        return existsSync(path)
+    }
+
+    cachePath(doi: string): string {
+        return join(
+            this.getCrossrefDir(),
+            this.oba.tools.uriToFilename(doi)
+        )
     }
 
     formatDoi(doi: string): string {
@@ -153,47 +208,3 @@ export class CrossRef {
 
 }
 
-// Example usage:
-// const service = new CrossRef('your@email.com');
-// const references = await service.fetchReferencesByDOI('10.1038/nature12345');
-// console.log(references);
-
-
-
-// import { App, Plugin, PluginSettingTab, Setting } from 'obsidian';
-
-// export default class DoiReferencePlugin extends Plugin {
-//     async onload() {
-//         this.addCommand({
-//             id: 'fetch-doi-reference',
-//             name: 'Fetch DOI Reference',
-//             callback: () => this.fetchDoiReference(),
-//         });
-//     }
-
-
-
-//     async promptForDoi() {
-//         const doi = await this.app.workspace.activeEditor?.editor?.getSelection() || prompt('Enter the DOI:');
-//         return doi?.trim();
-//     }
-
-//     formatReference(data) {
-//         const authors = data.author.map(a => `${a.given} ${a.family}`).join(', ');
-//         const title = data.title[0];
-//         const journal = data['container-title'][0];
-//         const year = data.issued['date-parts'][0][0];
-//         const volume = data.volume;
-//         const issue = data.issue;
-//         const pages = data.page;
-
-//         return `**${authors}** (${year}). ${title}. *${journal}*, ${volume}(${issue}), ${pages}. https://doi.org/${data.DOI}`;
-//     }
-
-//     insertReferenceIntoNote(reference) {
-//         const editor = this.app.workspace.activeEditor?.editor;
-//         if (editor) {
-//             editor.replaceSelection(reference);
-//         }
-//     }
-// }

@@ -1,7 +1,10 @@
 import { FuzzySuggestModal, Notice } from "obsidian";
 import ObA from "./main";
 
-// simple selector modal
+
+/*
+  A few modals utils
+*/
 export class SelectorModal extends FuzzySuggestModal<string> {
   items: string[] = [];
 

@@ -23,6 +23,7 @@
 	},
 	"dependencies": {
 		"@retorquere/bibtex-parser": "^9.0.17",
+		"fuse.js": "^7.1.0",
 		"simple-git": "^3.27.0"
 	}
 }

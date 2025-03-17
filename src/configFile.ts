@@ -1,8 +1,12 @@
 import ObA from './main';
-import { existsSync, readFileSync } from 'fs';
+import { existsSync, readFileSync, statSync } from 'fs';
 import { join } from 'path';
 
+/*
+    Handle Oba confg file
+*/
 export class ConfigFile {
+    
     config: { [key: string]: any };
     configPath: string;
 
@@ -10,34 +14,35 @@ export class ConfigFile {
         console.log("ConfigFile:constructor");
 
         this.config = {}
-        this.configPath = this.getObaConfigFile();
+        this.configPath = this.getObaConfigPath();
 
         // first load
         this.loadConfig()
-        
-        // load on changed
-        this.oba.registerEvent(
-            this.oba.app.vault.on('modify', (file) => {
-                if (file.path === this.configPath) {
-                    console.log('configfile changed!');
-                    this.loadConfig()
-                }
-            })
-        );
     }
 
-    // TODO: implement ram cache
-    // TODO: only config file is it was changed
     loadConfig() : boolean {
         try {
             if (!existsSync(this.configPath)) {
-                console.log("Config file missing!, configPath: ", this.configPath)
+                console.log("Config file missing!, configPath: ", this.configPath);
                 return false
             }
+
+            // Check modified
+            const lastMtimeMs = this.config?.["Oba.ConfigFile.last.load.mtimeMs"];
+            const currMtimeMs = this.obaConfigMtimeMs();
+            const doUpdate = lastMtimeMs == null || lastMtimeMs != currMtimeMs
+            if (!doUpdate) {
+                console.log("Config file non modified!");
+                return false
+            }
+
+            // load
             const data = readFileSync(this.configPath, 'utf8')
             this.config = JSON.parse(data); // try parse
+            this.config["Oba.ConfigFile.last.load.mtimeMs"] = currMtimeMs;
             console.log("config loaded!");
             console.log(this.config);
+
         } catch (err) {
             console.error("Error loading config", err);
             return false
@@ -46,8 +51,9 @@ export class ConfigFile {
     }   
 
     // read a key in the config file
-    readConfig(key: string, dflt: any = null) {
+    getConfig(key: string, dflt: any = null) {
         try {
+            this.loadConfig();
             if (!(key in this.config)) { 
                 console.warn(`Unknown key, key: `, key)
                 return dflt
@@ -61,7 +67,14 @@ export class ConfigFile {
         }
     }
 
-    getObaConfigFile(): string {
+    obaConfigMtimeMs() {
+        const file = this.getObaConfigPath();
+        const stats = statSync(file);
+        return stats.mtimeMs
+    }
+    
+
+    getObaConfigPath(): string {
 		const vaultDir = this.oba.tools.getVaultDir()
 		return join(vaultDir, "Oba.json")
 	}

@@ -21,10 +21,10 @@ export class BackEnds {
 	// TODO Move to backEnds
 	signalBackend() {
 		console.log("signalBackend");
-		const signalDelay = this.oba.configfile.readConfig("signal.delay", 300);
+		const signalDelay = this.oba.configfile.getConfig("signal.delay", 300);
 		setTimeout(() => { 
-			const rlen = this.oba.configfile.readConfig("signal.rand.id.len", 8);
-			console.log("rlen ", rlen)
+			const rlen = this.oba.configfile.getConfig("signal.rand.id.len", 8);
+			// console.log("rlen ", rlen)
 			const signal_id = this.oba.tools.randstring('O.', rlen)
 			const signal_file = this.getObaBackEndSgnalPath();
 			const plugin_dir = this.oba.tools.getObaPluginDir();
