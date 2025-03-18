@@ -28,8 +28,9 @@ export class Telegram {
 // 		console.log("Caricamento del plugin Telegram per Obsidian...");
 
 // 		// Lettura delle credenziali dal file .env
-// 		const apiId = "25421528"; //process.env.API_ID;
-// 		const apiHash = "585e51d1844a2598cb4da0adc7ede7e3"; // process.env.API_HASH;
+
+// 		const apiId = this.oba.configfile.getConfig("telegram.api.id", null); //process.env.API_ID;
+// 		const apiHash = this.oba.configfile.getConfig("telegram.api.hash", null); // process.env.API_HASH;
 
 // 		if (!apiId || !apiHash) {
 // 			console.error("API_ID o API_HASH non sono stati trovati nel file .env.");
