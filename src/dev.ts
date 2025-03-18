@@ -19,8 +19,6 @@ export class Dev {
 
                 const selectedText = this.oba.tools.getSelectedText();
                 this.oba.tools.copyToClipboard(selectedText);
-                
-
 
                 // const editor = this.oba.app.workspace.activeEditor?.editor;
                 // if (editor) {

@@ -66,7 +66,7 @@ export class CrossRef {
         return this.oba.tools.formatDoi(doi);
     }
 
-    // MARK: data
+    // MARK: get
     async getCrossrefData(doi: string) {
         let cr_data;
         cr_data = this._loadCrossrefCache(doi);

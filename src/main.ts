@@ -12,6 +12,7 @@ import { OpenPdf } from './open.pdf';
 import { LocalBibs } from './localbibs';
 import { Dev } from './dev';
 import { CitationNotes } from './citation.notes';
+import { VSCode } from './vscode';
 
 // NOTES
 
@@ -34,6 +35,7 @@ export default class ObA extends Plugin {
 	rangeview: RangeView;
 	openpdfs: OpenPdf;
 	localbibs: LocalBibs;
+	vscode: VSCode;
 	citnotes: CitationNotes;
 	dev: Dev;
 	
@@ -54,6 +56,7 @@ export default class ObA extends Plugin {
 		this.tagnotices = new TagNotices(this);
 		this.openpdfs = new OpenPdf(this);
 		this.localbibs = new LocalBibs(this);
+		this.vscode = new VSCode(this);
 		this.citnotes = new CitationNotes(this);
 		this.dev = new Dev(this);
 		// this.rangeview = new RangeView(this);

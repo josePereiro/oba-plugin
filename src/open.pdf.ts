@@ -67,7 +67,6 @@ export class OpenPdf {
         }
 
         if (!command) { return; }
-        
         exec(command, (error, stdout, stderr) => {
             if (error) {
                 new Notice(`Error: ${error.message}`);

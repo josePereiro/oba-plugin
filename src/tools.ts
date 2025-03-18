@@ -16,7 +16,12 @@ export class ToolBox {
 		return this.oba.app.workspace.getActiveFile();
 	}
 	getCurrNotePath(): string | null  {
-		return this.oba.tools.getCurrNote()?.path;
+		const path = this.oba.tools.getCurrNote()?.path;
+		if (!path) { return null; }
+		return join(
+			this.getVaultDir(),
+			path
+		)
 	}
 
 	getVaultDir(): string {

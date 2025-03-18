@@ -13,8 +13,6 @@ export class TagNotices {
                 const activeFile = this.oba.app.workspace.getActiveFile();
                 if (activeFile) {
                     this.execNotices(activeFile, 'changed');
-                    // console.log("Active file was edited:", activeFile.path);
-                    // console.log("Change details:", info);
                 }
             })
         );

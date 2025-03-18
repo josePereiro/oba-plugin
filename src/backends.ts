@@ -1,7 +1,7 @@
 import { join } from 'path';
 import ObA from './main';
 import { Notice } from 'obsidian';
-import { existsSync, mkdirSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync } from 'fs';
 
 /*
 	Deal with signals to backends.
@@ -14,14 +14,10 @@ import { existsSync, mkdirSync, writeFileSync } from 'fs';
 			- selected text positions
 			- opened notes
 			- recent files
-		- All the rest it must be handle by the backends
-			- for instance
-				- parsing
-				- editing notes
-	TODO: Add commands state
-		- Which command was called
-			- Maybe just some important commands
-			- Like the general purpose in commads.js
+	- All the rest must be handled by the backends
+		- for instance
+			- parsing
+			- editing notes
 */
 export class BackEnds {
 	// For others to store extra data to send to backends
@@ -62,7 +58,10 @@ export class BackEnds {
 	}
 
 	// MARK: signalBackend
-	signalBackend() {
+	/*
+		Call this to signal backends
+	*/ 
+	signalBackend(extras = this.extras) {
 		console.log("signalBackend");
 
 		const rlen = 15;
@@ -83,8 +82,8 @@ export class BackEnds {
 			"selection.text": selectionText,
 			"selection.range": selectionRange,
 			"cursor.pos": cursorPos,
-			"callback.last": callbackLast,
-			"backends.extras": this.extras,
+			"callbacks.last": callbackLast,
+			"backends.extras": extras,
 		}
 
 		// Order is important

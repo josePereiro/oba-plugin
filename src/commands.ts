@@ -37,7 +37,7 @@ export class Commands {
         return result;
     }
 
-    getCommandName(i: number) { return `oba-command-${i}` }
+    getCommandName(i: number) { return `General Command ${i}` }
     getCommandNames(): string[] {
         const result: string[] = [];
         for (const i of this.getCommandRange()) {
