@@ -26,7 +26,7 @@ export default class ObA extends Plugin {
 	// services
 	git: Git;
 	tools: ToolBox;
-	cmds: Commands;
+	commands: Commands;
 	crossref: CrossRef;
 	backends: BackEnds;
 	callbacks: Callbacks;
@@ -46,9 +46,9 @@ export default class ObA extends Plugin {
 
 		// Order matter
 		this.tools = new ToolBox(this); // 1
+		this.commands = new Commands(this);
 		this.callbacks = new Callbacks(this);
 		this.git = new Git(this);
-		this.cmds = new Commands(this);
 		this.crossref = new CrossRef(this);
 		this.backends = new BackEnds(this);
 		this.configfile = new ConfigFile(this);

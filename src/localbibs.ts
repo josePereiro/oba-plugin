@@ -121,7 +121,7 @@ export class LocalBibs {
 
     getBibTexDir(): string {
         const obaDir = this.oba.tools.getObaDir();
-        const _dir = join(obaDir, "bibtex");
+        const _dir = join(obaDir, "localbibs");
         if (!existsSync(_dir)) {
             mkdirSync(_dir, { recursive: true });
         }

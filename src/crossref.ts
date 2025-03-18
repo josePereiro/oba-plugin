@@ -14,7 +14,7 @@ export class CrossRef {
     constructor(private oba: ObA) {
         console.log("CrossRef:constructor");
 
-        // Commands
+        // MARK: Commands
         this.oba.addCommand({
             id: "CrossRef-dev",
             name: "CrossRef dev",

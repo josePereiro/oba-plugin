@@ -2,6 +2,7 @@ import { EditorPosition, FileSystemAdapter, MarkdownView, Notice, TFile } from '
 import { join } from 'path';
 import ObA from './main';
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'fs';
+import * as path from 'path';
 
 export class ToolBox {
     constructor(private oba: ObA) {
@@ -49,27 +50,27 @@ export class ToolBox {
 
 	getSelectedText() : string {
         const editor = this.oba.app.workspace.activeEditor?.editor;
-        if (editor) {
-            const selectedText = editor.getSelection();
-			console.log("selectedText:\n ", selectedText);
-            return selectedText ? selectedText : ''
-        }
+        if (!editor) { return '' }
+		const selectedText = editor.getSelection();
+		console.log("selectedText:\n ", selectedText);
+		return selectedText ? selectedText : ''
     }
 
-	randstring(p: string, length: number): string {
+	getSelectionRange(): { start: number, end: number } {
+		const editor = this.oba.app.workspace.activeEditor?.editor;
+		if (!editor) { return {start: -1, end: -1} }
+		const selection = editor.getSelection();
+		if (!selection) { return {start: -1, end: -1} }
+		const start = editor.posToOffset(editor.getCursor('from'));
+		const end = editor.posToOffset(editor.getCursor('to'));
+		return { start, end };
+	}
 
-		console.log("length ", length)
-		const CHARACTERS  = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-
-		if (length < 1) { length = 1; }
-		let rand = '';
-		const charactersLength = CHARACTERS.length;
-		for ( let i = 0; i < length; i++ ) {
-			const rinx = Math.floor(Math.random() * charactersLength)
-			rand += CHARACTERS.charAt(rinx);
-		}
-		console.log("rand ", rand)
-		return `${p}${rand}`
+	getCursorPosition(): { line: number, ch: number } {
+		const editor = this.oba.app.workspace.activeEditor?.editor;
+		if (!editor) { return {line: -1, ch: -1} }
+		// Get the cursor's position in { line, ch } format
+		return editor.getCursor();
 	}
 
 	insertAtCursor(txt: string) {
@@ -90,6 +91,12 @@ export class ToolBox {
         }
         return null;
     }
+
+	mkdirParent(filePath: string): void {
+		const parentFolder = path.dirname(filePath);
+		if (existsSync(parentFolder)) { return; }
+		mkdirSync(parentFolder, { recursive: true });
+	}
 
 	
     // ----..--.- .-. -.- .-. -.- ... . -- - 
@@ -136,6 +143,7 @@ export class ToolBox {
 
 	writeJSON(path: string, obj) {
 		try {
+			this.mkdirParent(path);
 			const jsonString = JSON.stringify(obj, null, 2);
 			writeFileSync(path, jsonString, 'utf-8');
 			console.log(`JSON written at: ${path}`);
@@ -269,6 +277,21 @@ export class ToolBox {
 		}
 	
 		return hash.toString(32).padStart(32, '0'); // Convert to 16-character hex string
+	}
+
+	randstring(p: string, length: number): string {
+
+		console.log("length ", length)
+		const CHARACTERS  = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+
+		if (length < 1) { length = 1; }
+		let rand = '';
+		const charactersLength = CHARACTERS.length;
+		for ( let i = 0; i < length; i++ ) {
+			const rinx = Math.floor(Math.random() * charactersLength)
+			rand += CHARACTERS.charAt(rinx);
+		}
+		return `${p}${rand}`
 	}
 
 }

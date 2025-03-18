@@ -81,7 +81,7 @@ export class CitationNotes {
 
         for (let i = 0; i < refobjs.length; i++) {
 
-            let _ref_str = `[${i + 1}]`;
+            let _ref_str = `> [${i + 1}]  `;
             const __doi = refobjs?.[i]?.['DOI'] ?? refobjs?.[i]?.['doi'] ?? '';
             const _doi = this.oba.tools.formatDoi(__doi);
             
@@ -92,19 +92,19 @@ export class CitationNotes {
             });
             const _citekey = this.oba.localbibs.extractCiteKey(_entry);
             console.log("_citekey: ", _citekey)
-            if (_citekey) { _ref_str += ` [[@${_citekey}]]`; }
+            if (_citekey) { _ref_str += `[[@${_citekey}]] `; }
 
-            if (_doi) { _ref_str += ` ${_doi}`; }
+            if (_doi) { _ref_str += `${_doi} `; }
             const _year = refobjs[i]['year'] ?? '';
-            if (_year) { _ref_str += ` (${_year})`; }
-            const _cite = refobjs[i]['unstructured'] ?? 'missing';
-            _ref_str += ` ${_cite}`
+            if (_year) { _ref_str += `(${_year}) `; }
+            const _cite = refobjs[i]['unstructured'] ?? '';
+            _ref_str += `${_cite} `
             
             console.log(_ref_str);
             refcites.push(_ref_str);
         }
 
-        const reference_section = refcites.join('\n\n');
+        const reference_section = refcites.join('\n');
         this.oba.tools.copyToClipboard(reference_section);
 
         new Notice(`SUCESS!!! Reference copied to clipboard.\ndoi: ${doi}`)

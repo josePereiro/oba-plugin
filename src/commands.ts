@@ -1,21 +1,58 @@
 import ObA from './main';
 
-// TODO: DEPRECATE
+/*
+    General purpose commands.
+    - The commands use callbacks so other servises can use them as entry point
+    - Also it is useful for bundling commands 
+*/
 export class Commands {
+    ncommands = 10;
     
     constructor(private oba: ObA) {
         console.log("Commands:constructor");
 
-        for (let i = 0; i < 10; i++) {
+        for (const i of this.getCommandRange()) {
             this.oba.addCommand({
-                id: `oba-command-${i}`,
-                name: `Command ${i}`,
+                id: this.getCommandId(i),
+                name: this.getCommandName(i),
                 callback: () => {
                     // console.clear();
-                    this.oba.callbacks.runCallbacks(`callback.command.${i}`)
+                    const callid = this.getCommandCallbackId(i);
+                    this.oba.callbacks.runCallbacks(callid);
                 }
             });
         }
+    }
+
+    getCommandRange() {
+        return Array.from({ length: this.ncommands }, (_, i) => i + 1);
+    }
+
+    getCommandId(i: number) { return `oba-command-${i}` }
+    getCommandIds(): string[] {
+        const result: string[] = [];
+        for (const i of this.getCommandRange()) {
+            result.push(this.getCommandId(i));
+        }
+        return result;
+    }
+
+    getCommandName(i: number) { return `oba-command-${i}` }
+    getCommandNames(): string[] {
+        const result: string[] = [];
+        for (const i of this.getCommandRange()) {
+            result.push(this.getCommandName(i));
+        }
+        return result;
+    }
+
+    getCommandCallbackId(i: number) { return `callback.command.${i}` }
+    getCommandCallbackIds(): string[] {
+        const result: string[] = [];
+        for (const i of this.getCommandRange()) {
+            result.push(this.getCommandCallbackId(i));
+        }
+        return result;
     }
 
 }

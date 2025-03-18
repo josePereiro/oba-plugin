@@ -3,52 +3,97 @@ import ObA from './main';
 import { Notice } from 'obsidian';
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
 
+/*
+	Deal with signals to backends.
+	- signals are just json files on the .oba/backends folders
+	- signals should include only useful state variables from Obsidian
+		- for instance
+			- active note
+			- cursor position
+			- selected text
+			- selected text positions
+			- opened notes
+			- recent files
+		- All the rest it must be handle by the backends
+			- for instance
+				- parsing
+				- editing notes
+	TODO: Add commands state
+		- Which command was called
+			- Maybe just some important commands
+			- Like the general purpose in commads.js
+*/
 export class BackEnds {
+	// For others to store extra data to send to backends
+	extras: { [key: string]: any };
 
     constructor(private oba: ObA) {
 		console.log("BackEnds:constructor");
+		this.extras = {}
     }
 
-    // https://github.com/tillahoffmann/obsidian-jupyter/blob/e1e28db25fd74cd16844b37d0fe2eda9c3f2b1ee/main.ts#L175
-	getObaBackEndSgnalPath(): string {
-		const fileName = "backend-signal.json"
-		const pluginDir = this.oba.tools.getObaPluginDir()
-		const path = join(pluginDir, fileName)
-		return path
+	getBackEndsDir(): string {
+        const obaDir = this.oba.tools.getObaDir();
+        const _dir = join(obaDir, "backends");
+        if (!existsSync(_dir)) {
+            mkdirSync(_dir, { recursive: true });
+        }
+        return _dir;
+    }
+
+	/*
+		Will contain just the dummy-hash
+	*/
+	getHashSignalPath(): string {
+		return join(
+			this.getBackEndsDir(), 
+			"hash-signal.json"
+		)
+	}
+
+	/*
+		Will contain all signal data
+	*/
+	getStateSignalPath(): string {
+		return join(
+            this.getBackEndsDir(),
+            "state-signal.json"
+        )
 	}
 
 	// MARK: signalBackend
-	// TODO Move to backEnds
 	signalBackend() {
 		console.log("signalBackend");
-		const signalDelay = this.oba.configfile.getConfig("signal.delay", 300);
-		setTimeout(() => { 
-			const rlen = this.oba.configfile.getConfig("signal.rand.id.len", 8);
-			// console.log("rlen ", rlen)
-			const signal_id = this.oba.tools.randstring('O.', rlen)
-			const signal_file = this.getObaBackEndSgnalPath();
-			const plugin_dir = this.oba.tools.getObaPluginDir();
-			new Notice("Oba: backend signaled");
-			if (!existsSync(plugin_dir)) {
-				mkdirSync(plugin_dir, { recursive: true })
-			}
-			console.log("backend signaled. signal_file: ", signal_file);
-			console.log("backend signaled. signal_id: ", signal_id);
-			console.log("backend signaled. plugin_dir: ", plugin_dir);
-			
-			const notepath = this.oba.tools.getCurrNotePath();
-			console.log("backend signaled. notepath: ", notepath)
 
-			const selection = this.oba.tools.getSelectedText();
-			console.log("backend signaled. selection: ", selection)
+		const rlen = 15;
+		const hash = this.oba.tools.randstring('O.', rlen)
+		
+		const notepath = this.oba.tools.getCurrNotePath();
+		const selectionText = this.oba.tools.getSelectedText();
+		const selectionRange = this.oba.tools.getSelectionRange();
+		const cursorPos = this.oba.tools.getCursorPosition();
+		const callbackLast = this.oba.callbacks.lastCalled;
 
-			const triggerJSON = JSON.stringify({
-				hash: signal_id, 
-				path: notepath, 
-				selection: selection
-			})
-			console.log("backend signaled. triggerJSON: ", triggerJSON)
-			writeFileSync(signal_file, triggerJSON)
-		}, signalDelay);
+		const hashsignal = { 
+			"signal.hash": hash
+		}
+		const statesignal = { 
+			"signal.hash": hash, 
+			"active.note.path": notepath, 
+			"selection.text": selectionText,
+			"selection.range": selectionRange,
+			"cursor.pos": cursorPos,
+			"callback.last": callbackLast,
+			"backends.extras": this.extras,
+		}
+
+		// Order is important
+		// backends must be listening 
+		this.oba.tools.writeJSON(this.getStateSignalPath(), statesignal)
+		this.oba.tools.writeJSON(this.getHashSignalPath(), hashsignal)
+		console.log("hashsignal:\n", hashsignal)
+		console.log("statesignal:\n", statesignal)
+
+		new Notice("Oba: backend signaled");
 	}
 }
