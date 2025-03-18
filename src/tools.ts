@@ -197,8 +197,8 @@ export class ToolBox {
         return str0
     }
 
-	getFirst(obj0, keys) {
-        let elm = undefined;
+	getFirst(obj0, keys: string[]) {
+        let elm = null;
         for (const key of keys) {
             if (elm) { return elm; }
             elm = obj0?.[key]
@@ -258,7 +258,7 @@ export class ToolBox {
 	}
 
 	formatDoi(doi: string): string {
-        if (doi == '') { return '' }
+        if (!doi) { return '' }
         if (!doi.startsWith('https://doi.org/')) {
             return 'https://doi.org/' + doi;
         }

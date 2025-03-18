@@ -71,7 +71,7 @@ export class CitationNotes {
         
         const refobjs = await this.oba.crossref.getReferencesData(doi);
         if (!refobjs) {
-            console.log('refobjs missing')
+            console.error('crossref data missing')
             new Notice(`Sorry, references missing.\ndoi: ${doi}`);
             return;
         }
@@ -82,8 +82,7 @@ export class CitationNotes {
         for (let i = 0; i < refobjs.length; i++) {
 
             let _ref_str = `> [${i + 1}]  `;
-            const __doi = refobjs?.[i]?.['DOI'] ?? refobjs?.[i]?.['doi'] ?? '';
-            const _doi = this.oba.tools.formatDoi(__doi);
+            const _doi = this.oba.crossref.extractDoi(refobjs?.[i]);
             
             // search citekey from local bibtex
             const _entry = await this.oba.localbibs.findByDoi({
@@ -93,6 +92,45 @@ export class CitationNotes {
             const _citekey = this.oba.localbibs.extractCiteKey(_entry);
             console.log("_citekey: ", _citekey)
             if (_citekey) { _ref_str += `[[@${_citekey}]] `; }
+
+            if (_doi) { _ref_str += `${_doi} `; }
+            const _year = refobjs[i]['year'] ?? '';
+            if (_year) { _ref_str += `(${_year}) `; }
+            const _cite = refobjs[i]['unstructured'] ?? '';
+            _ref_str += `${_cite} `
+            
+            console.log(_ref_str);
+            refcites.push(_ref_str);
+        }
+
+        const reference_section = refcites.join('\n');
+        this.oba.tools.copyToClipboard(reference_section);
+
+        new Notice(`SUCESS!!! Reference copied to clipboard.\ndoi: ${doi}`)
+    }
+
+    async copyBiblessReferences(doi: string) {
+        const refobjs = await this.oba.crossref.getReferencesData(doi);
+        if (!refobjs) {
+            console.error('crossref data missing')
+            new Notice(`Sorry, references missing.\ndoi: ${doi}`);
+            return;
+        }
+
+        const refcites = [];
+        const bib_entries = await this.oba.localbibs.getLocalBib();
+
+        for (let i = 0; i < refobjs.length; i++) {
+
+            let _ref_str = '';
+            const _doi = this.oba.localbibs.extractDoi(refobjs?.[i]);
+            
+            // search citekey from local bibtex
+            const _entry = await this.oba.localbibs.findByDoi({
+                doi: _doi, 
+                objList: bib_entries
+            });
+            if (_entry) { continue; }
 
             if (_doi) { _ref_str += `${_doi} `; }
             const _year = refobjs[i]['year'] ?? '';

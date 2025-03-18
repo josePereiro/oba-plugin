@@ -1,4 +1,4 @@
-import { Notice, Plugin } from 'obsidian';
+import { Plugin } from 'obsidian';
 import { ToolBox } from './tools';
 import { Commands } from './commands';
 import { Callbacks } from './callbacks';
@@ -7,7 +7,6 @@ import { BackEnds } from './backends';
 import { Git } from './git';
 import { ConfigFile } from './configFile';
 import { TagNotices } from './tag.notices';
-import { SelectorModal } from './modals';
 import { RangeView } from './view';
 import { OpenPdf } from './open.pdf';
 import { LocalBibs } from './localbibs';
