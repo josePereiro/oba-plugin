@@ -12,24 +12,6 @@ export class Dev {
         console.log("Dev:constructor");
 
         this.oba.addCommand({
-            id: 'oba-sel-text',
-            name: 'Dev: test selected text',
-            callback: () => {
-                console.clear();
-
-                const selectedText = this.oba.tools.getSelectedText();
-                this.oba.tools.copyToClipboard(selectedText);
-
-                // const editor = this.oba.app.workspace.activeEditor?.editor;
-                // if (editor) {
-                //     const selectedText = editor.getSelection();
-                //     console.log("selectedText");
-                //     console.log(selectedText);
-                // }
-            }
-        });
-
-        this.oba.addCommand({
             id: 'oba-code-vault',
             name: 'Dev: Open the vault in an IDE, ej: vscode',
             callback: () => {
@@ -62,36 +44,30 @@ export class Dev {
         });
     }
 
-    
     codeVaultCmd() {
         console.log(`codeVaultCmd`);
-        const signalDelay = this.oba.configfile.getConfig("signal.delay", 300);
-        setTimeout(() => { 
             
-            // load config file
-            const code = this.oba.configfile.getConfig("edit.vault.shell.cmd");
-            if (typeof code !== 'string') {
-                console.log(`Unformatted code section: `, code)
-                return
+        // load config file
+        const code = this.oba.configfile.getConfig("edit.vault.shell.cmd");
+        if (typeof code !== 'string') {
+            console.log(`Unformatted code section: `, code)
+            return
+        }
+        
+        //  run code
+        exec(code, (error, stdout, stderr) => {
+            if (error) {
+                console.log(`error: ${error.message}`);
+                return;
             }
-            
-            //  run code
-            exec(code, (error, stdout, stderr) => {
-                if (error) {
-                    console.log(`error: ${error.message}`);
-                    return;
-                }
-                if (stderr) {
-                    console.log(`stderr: ${stderr}`);
-                    return;
-                }
-                console.log(`stdout: ${stdout}`);
-            });					
-            
-        }, signalDelay);
+            if (stderr) {
+                console.log(`stderr: ${stderr}`);
+                return;
+            }
+            console.log(`stdout: ${stdout}`);
+        });					
     }
 
-    // TODO: Move to Dev
     async askLLM(question: string): Promise<string> {
         // const API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1";
         // const API_URL = "https://api-inference.huggingface.co/models/gpt2";
