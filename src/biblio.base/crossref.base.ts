@@ -32,7 +32,7 @@ export class CrossRefBase {
             "published-date": this.extractPublishedDate(cr_data),
             "journaltitle": this.extractJournalTitle(cr_data),
             "url": this.extractURL(cr_data),
-            "abstract": this.extractJournalAbstract(cr_data),
+            "abstract": this.extractAbstract(cr_data),
             "keywords": this.extractKeywords(cr_data),
             "references-count": this.extractReferencesCount(cr_data),
             "references-DOIs": this.extractReferencesDOIs(cr_data),
@@ -41,15 +41,15 @@ export class CrossRefBase {
         return biblio
     }
 
-    // MARK: fetch/load
+    // MARK: get/fetch
     async fetchOnDemandCrossrefData(doi0: string) {
         const doi = this.oba.tools.absDoi(doi0);
-        return this._fetchOnDemandCrossrefData(doi);
+        return await this._fetchOnDemandCrossrefData(doi);
     }
     
     async getCrossrefData(doi0: string) {
         const doi = this.oba.tools.absDoi(doi0);
-        this._fetchOnDemandCrossrefData(doi);
+        await this._fetchOnDemandCrossrefData(doi);
         return this._loadCache(doi);
     }
 
@@ -60,7 +60,7 @@ export class CrossRefBase {
         }
         console.log(`fetching! ${doi}`)
         const cr_data = await this._fetchCrossrefData(doi)
-        if (cr_data) { this._writeCache(doi, cr_data); } 
+        if (cr_data) { await this._writeCache(doi, cr_data); } 
     }
 
     async _fetchCrossrefData(doi: string) {
@@ -94,7 +94,7 @@ export class CrossRefBase {
         return _dir;
     }
 
-    _loadCache(doi: string) {
+    async _loadCache(doi: string) {
         const path = this._getCachePath(doi);
         return this.oba.tools.loadJSON(path);
     }
@@ -131,8 +131,10 @@ export class CrossRefBase {
     }
 
     private extractType(cr_data: any): string | null {
-        try{
-            return cr_data['message']['type']
+        try {
+            const dat0 = cr_data['message']["type"]
+            if (!dat0) { return null; } 
+            return dat0
         } catch (error) { return null; }
     }
 
@@ -234,7 +236,7 @@ export class CrossRefBase {
         } catch (error) { return null; }
     }
 
-    private extractJournalAbstract(cr_data: any): string | null {
+    private extractAbstract(cr_data: any): string | null {
         try {
             const dat0 = cr_data['message']["abstract"]
             if (!dat0) { return null}

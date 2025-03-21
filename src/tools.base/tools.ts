@@ -3,6 +3,7 @@ import { join } from 'path';
 import ObA from './main';
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'fs';
 import * as path from 'path';
+import { readFile, writeFile } from 'fs/promises';
 
 /*
 	Split this some how
@@ -142,7 +143,23 @@ export class ToolBox {
 		this.oba.app.metadataCache.getFirstLinkpathDest(noteName, '')
 	}
 	
-	loadJSON(path: string) {
+	// TODO: dry this
+	async loadJSON(path: string) {
+		try {
+			if (!existsSync(path)) {
+				console.error("File missing", path);
+				return null
+			}
+			const data = await readFile(path, 'utf8')
+			const obj = JSON.parse(data); // try parse
+			return obj
+		} catch (err) {
+			console.error("Error loading", err);
+			return null
+		}
+	}
+
+	loadJSONSync(path: string) {
 		try {
 			if (!existsSync(path)) {
 				console.error("File missing", path);
@@ -157,7 +174,19 @@ export class ToolBox {
 		}
 	}
 
-	writeJSON(path: string, obj) {
+	// TODO: dry this
+	async writeJSON(path: string, obj: any) {
+		try {
+			this.mkdirParent(path);
+			const jsonString = JSON.stringify(obj, null, 2);
+			await writeFile(path, jsonString, 'utf-8');
+			console.log(`JSON written at: ${path}`);
+		} catch (error) {
+			console.error(`Error writing JSON: ${error}`);
+		}
+	}
+
+	writeJSOSync(path: string, obj: any) {
 		try {
 			this.mkdirParent(path);
 			const jsonString = JSON.stringify(obj, null, 2);
@@ -185,21 +214,17 @@ export class ToolBox {
         return filename;
     }
 
-	getMoreRecentlyModified(file1: string, file2: string): string {
+	newestMTime(file1: string, file2: string): string {
 		try {
 			// Get stats for both files
 			const stats1 = statSync(file1);
 			const stats2 = statSync(file2);
 	
 			// Compare modification times
-			if (stats1.mtimeMs > stats2.mtimeMs) {
-				return file1;
-			} else {
-				return file2;
-			}
+			if (stats1.mtimeMs > stats2.mtimeMs) { return file1; }
+			return file2;
 		} catch (error) {
-			console.error('Error comparing file modification times:', error);
-			return '';
+			return '-1';
 		}
 	}
 

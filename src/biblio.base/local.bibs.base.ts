@@ -3,8 +3,8 @@ import ObA from '../main';
 import { parse } from '@retorquere/bibtex-parser';
 import { existsSync, mkdirSync } from 'fs';
 import { readFile } from 'fs/promises';
-import Fuse from 'fuse.js';
 import { join } from 'path';
+import { BiblIOAuthor, BiblIOData, BiblIODate } from './bibl.io.data';
 
 
 /*
@@ -16,14 +16,41 @@ export class LocalBibsBase {
         console.log("LocalBibs:constructor");
     }
 
-    // MARK: parse/load
-    _loadBibCache(filePath: string) {
-        return this.oba.tools.loadJSON(filePath);
-    }
+    // MARK: biblio
+        async getBiblioDB(
+            sourceFiles: string[] = 
+                this.oba.configfile.getConfig("local.bib.files")
+        ) {
+            const biblioDB: BiblIOData[] = [];
+            const lb_dataDB = await this.getLocalBib(sourceFiles)
+            for (const lb_data of lb_dataDB) {
+                const biblio: BiblIOData = {
+                    "doi": this.extractDoi(lb_data),
+                    "citekey": this.extractCiteKey(lb_data),
+                    "type": this.extractType(lb_data),
+                    "title": this.extractTitle(lb_data),
+                    "authors": this.extractAuthors(lb_data),
+                    "created-date": this.extractCreatedDate(lb_data),
+                    "deposited-date": this.extractDepositedDate(lb_data),
+                    "issued-date": this.extractIssuedDate(lb_data),
+                    "published-date": this.extractPublishedDate(lb_data),
+                    "journaltitle": this.extractJournalTitle(lb_data),
+                    "url": this.extractURL(lb_data),
+                    "abstract": this.extractAbstract(lb_data),
+                    "keywords": this.extractKeywords(lb_data),
+                    "references-count": this.extractReferencesCount(lb_data),
+                    "references-DOIs": this.extractReferencesDOIs(lb_data),
+                    "extras": this.extractExtras(lb_data),
+                }
+                biblioDB.push(biblio);
+            }
+            return biblioDB
+        }
 
-    async _parseBibFile(filePath: string) {
+    // MARK: parse/load
+    async _parseBibFile(sourceFile: string) {
         try {
-            const bibContent = await readFile(filePath, 'utf-8');
+            const bibContent = await readFile(sourceFile, 'utf-8');
             const parsedBib = parse(bibContent);
             return parsedBib;
         } catch (error) {
@@ -32,43 +59,167 @@ export class LocalBibsBase {
         }
     }
 
-    async _parseOnDemandLocalBib(file: string) {
-
+    async _parseOnDemandLocalBib(sourceFile: string) {
+        // Check file
+        const cacheFile = this._getCachePath(sourceFile)
+        const newest = this.oba.tools.newestMTime(sourceFile, cacheFile);
+        if (existsSync(cacheFile) && newest == cacheFile) { 
+            console.log(`cached! ${sourceFile}`)
+            return; 
+        }
+        // parse/catch
+        console.log(`parsing! ${sourceFile}`)
+        const lb_data = await this._parseBibFile(sourceFile)
+        if (!lb_data) { return; }
+        return this.oba.tools.writeJSON(cacheFile, lb_data);
     }
 
-    async getLocalBib() {
-        const bibfiles = this.oba.configfile.getConfig("local.bib.files")
+    async parseOnDemandLocalBib(sourceFile: string) {
+        await this._parseOnDemandLocalBib(sourceFile)
+    }
 
-        const rawBib = [];
-        for (const bibfile of bibfiles) {
-            const bibcache = this.getCachePath(bibfile)
-            console.log("bibcache");
-            console.log(bibcache);
-
-            const newest = this.oba.tools.getMoreRecentlyModified(bibfile, bibcache);
-            let bibdb = null;
-            if (newest == '' || newest != bibcache) {
-                // update cache
-                bibdb = await this._parseBibFile(bibfile)
-                console.log("bibdb");
-                console.log(bibdb);
-                // write cache
-                this.oba.tools.writeJSON(bibcache, bibdb);
-            } else {
-                bibdb = this._loadBibCache(bibcache);
-            }
+    async getLocalBib(
+        sourceFiles: string[] = 
+            this.oba.configfile.getConfig("local.bib.files")
+    ) {
+        const lb_merged = [];
+        for (const sourceFile of sourceFiles) {
+            // load
+            await this._parseOnDemandLocalBib(sourceFile);
+            const lb_data = await this._loadBibCache(sourceFile);
             // merge
-            const entries = bibdb?.['entries'];
+            const entries = lb_data?.['entries'];
             if (!entries) { continue; } 
-            for (const elm of entries) {
-                rawBib.push(elm); // Efficient for large arrays
-            }
+            for (const elm of entries) { lb_merged.push(elm); }
         }
-        return rawBib
+        return lb_merged
     }
 
 
     // MARK: extract
+    // All extract methods must return null if failed
+    private extractDoi(lb_data: any): string | null {
+        try {
+            const dat0 = lb_data["fields"]["doi"]
+            if (!dat0) { return null; } 
+            return this.oba.tools.absDoi(dat0);
+        } catch (error) { return null; }
+    }
+
+    private extractCiteKey(lb_data: any): null {
+        try {
+            const dat0 = lb_data["key"]
+            if (!dat0) { return null; } 
+            return dat0
+        } catch (error) { return null; }
+    }
+
+    private extractType(lb_data: any): string | null {
+        try {
+            const dat0 = lb_data["type"]
+            if (!dat0) { return null; } 
+            return dat0
+        } catch (error) { return null; }
+    }
+
+    private extractTitle(lb_data: any): string | null {
+        try{
+            const dat0 = lb_data["fields"]['title']
+            if (!dat0) { return null}
+            return dat0
+        } catch (error) { return null; }
+    }
+
+    private extractAuthors(lb_data: any): BiblIOAuthor[] | null {
+        try{
+            const dat0 = lb_data["fields"]["author"]
+            if (!dat0) { return null; }
+            const authors: BiblIOAuthor[] = [];
+            for (const authori of dat0) {
+                const author: BiblIOAuthor = {
+                    "firstName": authori?.["firstName"] ?? '',
+                    "lastName": authori?.["lastName"] ?? '',
+                    "ORCID": authori?.["ORCID"] ?? null,
+                    "affiliations": [],
+                }
+                authors.push(author);
+            }
+            return authors;
+        } catch (error) { return null; }
+    }
+
+    private extractCreatedDate(lb_data: any): BiblIODate | null {
+        return null
+    }
+
+    private extractDepositedDate(lb_data: any): BiblIODate | null {
+        return null
+    }
+
+    private extractIssuedDate(lb_data: any): BiblIODate | null {
+        return null
+    }
+
+    private extractPublishedDate(lb_data: any): BiblIODate | null {
+        try {
+            const dat0 = lb_data["fields"]["date"]
+            const dat1 = dat0.split("-")
+            console.log(dat1)
+            const date: BiblIODate = {
+                "year": this._number(dat1[0]),
+                "month": this._number(dat1?.[1]),
+                "day": this._number(dat1?.[2]),
+            }
+            return date
+        } catch (error) { 
+            // console.log(error)
+            return null; 
+        }
+    }   
+
+    private extractJournalTitle(lb_data: any): string | null {
+        try {
+            const dat0 = lb_data["fields"]["journaltitle"]
+            if (!dat0) { return null}
+            return dat0
+        } catch (error) { return null; }
+    }
+
+    private extractURL(lb_data: any): string | null {
+        try {
+            const dat0 = lb_data["fields"]["url"]
+            if (!dat0) { return null}
+            return dat0
+        } catch (error) { return null; }
+    }
+
+    private extractAbstract(lb_data: any): string | null {
+        try {
+            const dat0 = lb_data["fields"]["abstract"]
+            if (!dat0) { return null}
+            return dat0
+        } catch (error) { return null; }
+    }
+
+    private extractKeywords(lb_data: any): string[] | null {
+        try {
+            const dat0 = lb_data["fields"]["keywords"]
+            if (!dat0) { return null}
+            return dat0
+        } catch (error) { return null; }
+    }
+
+    private extractReferencesCount(lb_data: any): null {
+        return null
+    }
+
+    private extractReferencesDOIs(lb_data: any): null {
+        return null
+    }
+
+    private extractExtras(lb_data: any): any {
+        return { "localbib": lb_data }
+    }
 
     // MARK: cache
 
@@ -81,7 +232,12 @@ export class LocalBibsBase {
         return _dir;
     }
 
-    getCachePath(sourceFile: string) {
+    _hasCache(sourceFile: string) {
+        const path = this._getCachePath(sourceFile)
+        return existsSync(path)
+    }
+
+    _getCachePath(sourceFile: string) {
         console.log("sourceFile");
         console.log(sourceFile);
         const hash = this.oba.tools.hash64(sourceFile);
@@ -90,6 +246,25 @@ export class LocalBibsBase {
             `${hash}.cache.bib.json`
         )
     }
+
+    async _loadBibCache(sourceFile: string) {
+        const path = this._getCachePath(sourceFile)
+        return await this.oba.tools.loadJSON(path);
+    }
+
+    _writeCache(sourceFile: string, lb_data: any) {
+        const path = this._getCachePath(sourceFile);
+        return this.oba.tools.writeJSON(path, lb_data);
+    }
+
+    // MARK: Utils
+    _number(str0: string) {
+        const str = str0.trim();
+        if (!str) { return null; }
+        return Number(str)
+    }
+
+
 }
 
 
