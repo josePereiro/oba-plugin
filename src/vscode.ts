@@ -10,32 +10,48 @@ export class VSCode {
         console.log("VSCode:constructor")
 
         this.oba.addCommand({
-            id: "vscode-open-at-position",
-            name: "VSCode open at position",
+            id: "vscode-open-workspace",
+            name: "VSCode open workspace",
+            callback: () => {
+                console.clear()
+                this.callVsCode()
+            },
+        });
+
+        this.oba.addCommand({
+            id: "vscode-goto-position",
+            name: "VSCode goto position",
             callback: () => {
                 console.clear()
                 const path = this.oba.tools.getCurrNotePath();
                 const cursor = this.oba.tools.getCursorPosition();
-                this.open(path, cursor.line, cursor.ch)
+                this.goto(path, cursor.line, cursor.ch)
             },
         });
+
     }
 
-
-    open(path: string, line: number, ch: number) {
-        console.log("path: ", path)
+    callVsCode(args = "") {
         const vscode = this.oba.configfile.getConfig("vscode.exec", "code")
-        const command = `${vscode} --goto "${path}":${line+1}:${ch+1}`;
+        const wrokspace = this.oba.configfile.getConfig("vscode.workspace", "")
+        const command = `${vscode} ${wrokspace} ${args}`;
         console.log("command:\n", command);
         exec(command, (error, stdout, stderr) => {
             if (error) {
                 new Notice(`Error: ${error.message}`);
             }
+            if (stdout) {
+                console.log(`Stdout: ${stdout}`);
+            }
             if (stderr) {
                 new Notice(`Stderr: ${stderr}`);
             }
-            new Notice(`Opening file: ${path}`);
+            new Notice(`Executed: ${command}`);
         });
     }
 
+    goto(path: string, line = 0, ch = 0) {
+        console.log("path: ", path)
+        this.callVsCode(`--goto "${path}":${line+1}:${ch+1}`)
+    }
 }

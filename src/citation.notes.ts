@@ -84,70 +84,66 @@ export class CitationNotes {
     // MARK: copy
     async copyDoiReferences(doi: string) {
         
-        const refobjs = await this.oba.crossref.getReferencesData(doi);
-        if (!refobjs) {
-            console.error('crossref data missing')
-            new Notice(`Sorry, references missing.\ndoi: ${doi}`);
-            return;
-        }
+        const ref_strings: string[] = [];
+        const lb_entries = await this.oba.localbibs.getLocalBib();
 
-        const refcites = [];
-        const bib_entries = await this.oba.localbibs.getLocalBib();
+        this.oba.crossref.forEachReferenceData(doi, 
+            async (cr_data, refi) => {
+                const _doi = this.oba.crossref.extractReferenceDoi(cr_data, refi)
+                // TODO/DOING Fix this
+                const cr_data1 = await this.oba.crossref.getCrossrefData(_doi)
 
-        for (let i = 0; i < refobjs.length; i++) {
+                // this.oba.crossref.extractTitle
 
-            let _ref_str = `> [${i + 1}]  `;
-            const _doi = this.oba.crossref.extractDoi(refobjs?.[i]);
-            
-            // search citekey from local bibtex
-            const _entry = await this.oba.localbibs.findByDoi({
-                doi: _doi, 
-                objList: bib_entries
-            });
-            const _citekey = this.oba.localbibs.extractCiteKey(_entry);
-            console.log("_citekey: ", _citekey)
-            if (_citekey) { _ref_str += `[[@${_citekey}]] `; }
+                console.log("_citekey: ", _citekey)
+                const _year = refobjs[i]['year'] ?? '';
+                console.log("_year: ", _year)
+                const _cite = refobjs[i]['unstructured'] ?? '';
+                console.log("_cite: ", _cite)
 
-            if (_doi) { _ref_str += `${_doi} `; }
-            const _year = refobjs[i]['year'] ?? '';
-            if (_year) { _ref_str += `(${_year}) `; }
-            const _cite = refobjs[i]['unstructured'] ?? '';
-            _ref_str += `${_cite} `
-            
-            console.log(_ref_str);
-            refcites.push(_ref_str);
-        }
+                
+                // search citekey from local bibtex
+                const lb_entry = await this.oba.localbibs.findByDoi({
+                    doi: _doi, 
+                    objList: lb_entries
+                });
+                const _citekey = this.oba.localbibs.extractCiteKey(lb_entry);
 
-        const reference_section = refcites.join('\n');
+                
+                let _ref_str = `> [${refi + 1}]  `;
+                if (_citekey) { _ref_str += `[[@${_citekey}]] `; }
+                if (_doi) { _ref_str += `${_doi} `; }
+                if (_year) { _ref_str += `(${_year}) `; }
+                _ref_str += `${_cite} `
+                
+                ref_strings.push(_ref_str);
+            }
+        )
+
+        const reference_section = ref_strings.join('\n');
         this.oba.tools.copyToClipboard(reference_section);
 
         new Notice(`SUCESS!!! Reference copied to clipboard.\ndoi: ${doi}`)
     }
 
     async copyBiblessReferences(doi: string) {
-        const refobjs = await this.oba.crossref.getReferencesData(doi);
-        if (!refobjs) {
-            console.error('crossref data missing')
-            new Notice(`Sorry, references missing.\ndoi: ${doi}`);
-            return;
-        }
 
-        const dois = [];
-        const bib_entries = await this.oba.localbibs.getLocalBib();
+        const dois: string[] = [];
+        const lb_entries = await this.oba.localbibs.getLocalBib();
 
-        for (let i = 0; i < refobjs.length; i++) {
-
-            const _doi = this.oba.crossref.extractDoi(refobjs?.[i]);
-            if (!_doi) { continue; }
-            
-            // search citekey from local bibtex
-            const _entry = await this.oba.localbibs.findByDoi({
-                doi: _doi, 
-                objList: bib_entries
-            });
-            if (_entry) { continue; }
-            dois.push(_doi);
-        }
+        this.oba.crossref.forEachReferenceData(doi, 
+            async (cr_data, refi) => {
+                const _doi = this.oba.crossref.extractReferenceDoi(cr_data, refi)
+                if (!_doi) { return; }
+                // search citekey from local bibtex
+                const lb_entry = await this.oba.localbibs.findByDoi({
+                    doi: _doi, 
+                    objList: lb_entries
+                });
+                if (lb_entry) { return; }
+                dois.push(_doi);
+            }
+        )
 
         const reference_section = dois.join('\n');
         this.oba.tools.copyToClipboard(reference_section);
@@ -163,14 +159,12 @@ export class CitationNotes {
         note: TFile = this.oba.tools.getCurrNote()
     ) {
         this.oba.tools.copyToClipboard("");
-        const doi0 = await this.getBibTexDoi(note);
+        let doi0 = await this.getBibTexDoi(note);
+        doi0 = this.oba.tools.absDoi(doi0);
         console.log('doi0: ', doi0)
         const cr_data = await this.oba.crossref.getCrossrefData(doi0);
         console.log('cr_data: ', cr_data)
         const doi1 = this.oba.crossref.extractReferenceDoi(cr_data, refnum-1)
-        // const doi1 = 
-        //     crossref_refobjs?.[refnum-1]?.['DOI'] ?? 
-        //     crossref_refobjs?.[refnum-1]?.['doi']
         console.log('doi1: ', doi1)
         if (!doi1) {
             new Notice("ERROR: Missing doi")
@@ -181,8 +175,8 @@ export class CitationNotes {
             objList: await this.oba.localbibs.getLocalBib()
         });
         if (!bibtex_data) {
-            new Notice(`ERROR: Bibtex missing, doi ${doi1}`)
-            const doi2 = this.oba.tools.formatDoi(doi1);
+            new Notice(`🚨 ERROR: Missing at Local Bibtex, doi ${doi1}`)
+            const doi2 = this.oba.tools.absDoi(doi1);
             const link = `\\[[${refnum}](${doi2})]]\\`
             this.oba.tools.copyToClipboard(link);
             new Notice(`Link copied in clipboard, link: ${link}`);
@@ -217,6 +211,23 @@ export class CitationNotes {
     async getBibTexDoi(note: TFile = this.oba.tools.getCurrNote()) {
         const entry = await this.getBibTex(note);
         return this.oba.localbibs.extractDoi(entry);
+    }
+
+    /*
+        search in both local and bibtex
+    */ 
+    async search2Title(doi0: string) {
+        const doi = this.oba.tools.absDoi(doi0);
+        // first search at local bibtex
+        const lb_entry = this.oba.localbibs.findByDoi({doi});
+        if (lb_entry) {
+            return this.oba.localbibs.extractTitle(lb_entry)
+        }
+        // fetch using crossref
+        const cr_entry = this.oba.crossref.getCrossrefData(doi)
+        if (cr_entry) {
+            return this.oba.crossref.extractTitle(cr_entry)
+        }
     }
 
 }

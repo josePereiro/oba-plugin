@@ -1,4 +1,3 @@
-// DeepSeek
 import { Notice } from 'obsidian';
 import ObA from './main';
 import { join } from 'path';

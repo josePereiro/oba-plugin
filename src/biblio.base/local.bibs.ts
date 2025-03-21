@@ -1,21 +1,21 @@
 // DeepSeek
-import ObA from './main';
+import ObA from '../main';
 import { parse } from '@retorquere/bibtex-parser';
 import { existsSync, mkdirSync } from 'fs';
 import { readFile } from 'fs/promises';
 import Fuse from 'fuse.js';
 import { join } from 'path';
+import { LocalBibsBase } from './local.bibs.base';
 
 
 /*
-    Manage a .bib database
-    #TODO: rename 
-    #TODO: Add multiple source support
-    #TODO/DONE: Add automatic recache if source is updated
-*/
-export class LocalBibs {
+    Allow using local .bib files as sources of bibliography data. 
+*/ 
+export class LocalBibs extends LocalBibsBase {
 
-    constructor(private oba: ObA) {
+    constructor(oba: ObA) {
+        super(oba);
+        
         console.log("LocalBibs:constructor");
 
         this.oba.addCommand({
@@ -39,16 +39,16 @@ export class LocalBibs {
     // MARK: find
     async findByDoi({
         doi = "",
-        objList = [],
+        objList = athis.getLocalBib(),
     } : {
         doi?: string 
-        objList?: any[]
+        objList?: any[] | Promise<any[]>
     }
     ) {
         return this.oba.tools.findStr({
             str0: doi,
             keys: ["doi", "Doi", "DOI"],
-            objList: objList,
+            objList: await objList,
             getEntry: (entry) => {
                 return entry?.['fields'] 
             },
@@ -128,7 +128,7 @@ export class LocalBibs {
         const doi = this.oba.tools.getFirst(fields, 
             ["doi", "Doi", "DOI"]
         )
-        return this.oba.tools.formatDoi(doi);
+        return this.oba.tools.absDoi(doi);
     }
 
     extractCiteKey(entry: any) {

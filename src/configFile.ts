@@ -31,10 +31,7 @@ export class ConfigFile {
             const lastMtimeMs = this.config?.["Oba.ConfigFile.last.load.mtimeMs"];
             const currMtimeMs = this.obaConfigMtimeMs();
             const doUpdate = lastMtimeMs == null || lastMtimeMs != currMtimeMs
-            if (!doUpdate) {
-                console.log("Config file non modified!");
-                return false
-            }
+            if (!doUpdate) { return false }
 
             // load
             const data = readFileSync(this.configPath, 'utf8')

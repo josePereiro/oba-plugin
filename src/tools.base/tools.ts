@@ -4,6 +4,9 @@ import ObA from './main';
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'fs';
 import * as path from 'path';
 
+/*
+	Split this some how
+*/ 
 export class ToolBox {
     constructor(private oba: ObA) {
 		console.log("ToolBox:constructor")
@@ -18,6 +21,14 @@ export class ToolBox {
 	getCurrNotePath(): string | null  {
 		const path = this.oba.tools.getCurrNote()?.path;
 		if (!path) { return null; }
+		return join(
+			this.getVaultDir(),
+			path
+		)
+	}
+	getCurrNotePathErr(): string  {
+		const path = this.oba.tools.getCurrNote()?.path;
+		if (!path) { throw {msg: "No active file"}; }
 		return join(
 			this.getVaultDir(),
 			path
@@ -211,10 +222,6 @@ export class ToolBox {
         return elm;
     }
 
-	sleep(ms: number) {
-		setTimeout(() => {}, ms); // 1000 milliseconds = 1 second
-	}
-
 	_identity(obj) {
         return obj
     }
@@ -262,7 +269,7 @@ export class ToolBox {
 		return false
 	}
 
-	formatDoi(doi: string): string {
+	absDoi(doi: string): string {
         if (!doi) { return '' }
         if (!doi.startsWith('https://doi.org/')) {
             return 'https://doi.org/' + doi;
@@ -282,6 +289,25 @@ export class ToolBox {
 		}
 	
 		return hash.toString(32).padStart(32, '0'); // Convert to 16-character hex string
+	}
+
+	toCamelCase(sentence: string): string {
+		// Split the sentence into words based on spaces
+		const words = sentence.split(/[\s\-_]/);
+	
+		// Process each word
+		const camelCased = words.map((word, index) => {
+			if (index === 0) {
+				// Keep the first word in lowercase
+				return word.toLowerCase();
+			} else {
+				// Capitalize the first letter of subsequent words and lowercase the rest
+				return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+			}
+		});
+	
+		// Join the words together without spaces
+		return camelCased.join('');
 	}
 
 	randstring(p: string, length: number): string {

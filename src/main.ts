@@ -1,18 +1,20 @@
 import { Plugin } from 'obsidian';
-import { ToolBox } from './tools';
+import { ToolBox } from './tools.base/tools';
 import { Commands } from './commands';
 import { Callbacks } from './callbacks';
-import { CrossRef } from './crossref';
+import { CrossRef } from './biblio.base/crossref';
 import { BackEnds } from './backends';
 import { Git } from './git';
 import { ConfigFile } from './configFile';
 import { TagNotices } from './tag.notices';
 import { RangeView } from './view';
 import { OpenPdf } from './open.pdf';
-import { LocalBibs } from './localbibs';
+import { LocalBibs } from './biblio.base/local.bibs';
 import { Dev } from './dev';
 import { CitationNotes } from './citation.notes';
 import { VSCode } from './vscode';
+import { MarkerPDF } from './marker.pdf';
+import { ObaNotes } from './obanotes';
 
 // NOTES
 
@@ -37,6 +39,8 @@ export default class ObA extends Plugin {
 	localbibs: LocalBibs;
 	vscode: VSCode;
 	citnotes: CitationNotes;
+	markerpdf: MarkerPDF;
+	obanotes: ObaNotes;
 	dev: Dev;
 	
 	// MARK: onload
@@ -58,6 +62,8 @@ export default class ObA extends Plugin {
 		this.localbibs = new LocalBibs(this);
 		this.vscode = new VSCode(this);
 		this.citnotes = new CitationNotes(this);
+		this.markerpdf = new MarkerPDF(this);
+		this.obanotes = new ObaNotes(this);
 		this.dev = new Dev(this);
 		// this.rangeview = new RangeView(this);
 
