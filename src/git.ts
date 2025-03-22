@@ -1,7 +1,7 @@
 // DeepSeek
 import simpleGit, { SimpleGit, StatusResult } from 'simple-git';
 import { Notice } from 'obsidian';
-import ObA from './main';
+import ObA from './main-old';
 
 /*
     Add a few git utilities

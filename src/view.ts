@@ -1,7 +1,7 @@
 // Open file externally
 
 import { MarkdownRenderer, TFile } from 'obsidian';
-import ObA from './main';
+import ObA from './main-old';
 
 interface EmbedParameters {
     "path": string;

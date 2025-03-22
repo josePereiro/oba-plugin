@@ -1,8 +1,8 @@
 import { Notice } from 'obsidian';
-import ObA from '../main';
+import ObA from '../main-old';
 import { join } from 'path';
 import { existsSync, mkdirSync } from 'fs';
-import { BiblIOAuthor, BiblIOData, BiblIODate } from './bibl.io.data';
+import { BiblIOAuthor, BiblIOData, BiblIODate } from './biblio-data';
 
 /*
     Use CrossRef API to download papers metadata
@@ -36,7 +36,8 @@ export class CrossRefBase {
             "keywords": this.extractKeywords(cr_data),
             "references-count": this.extractReferencesCount(cr_data),
             "references-DOIs": this.extractReferencesDOIs(cr_data),
-            "extras": this.extractExtras(cr_data),
+            // "extras": this.extractExtras(cr_data),
+            "extras": {},
         }
         return biblio
     }

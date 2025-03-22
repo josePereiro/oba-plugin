@@ -1,4 +1,4 @@
-import ObA from './main';
+import ObA from './main-old';
 import { existsSync, readFileSync, statSync } from 'fs';
 import { join } from 'path';
 

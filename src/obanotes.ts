@@ -1,5 +1,5 @@
 import { basename } from 'path';
-import ObA from './main';
+import ObA from './main-old';
 
 /*
     Handle the manipulation of note

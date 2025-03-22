@@ -1,5 +1,5 @@
 // DeepSeek
-import ObA from './main';
+import ObA from './main-old';
 
 /*
     Add a few utils for interfacing with Telegram

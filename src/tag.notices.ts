@@ -1,5 +1,5 @@
 import { Notice, TFile } from 'obsidian';
-import ObA from './main';
+import ObA from './main-old';
 
 // TODO: Add checkout current file git cmd
 export class TagNotices {

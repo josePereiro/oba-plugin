@@ -1,6 +1,6 @@
-import ObA from '../main';
+import ObA from '../main-old';
 import { SimilarityModal } from '../modals';
-import { CrossRefBase } from './crossref.base';
+import { CrossRefBase } from './crossref-base';
 
 /*
     This is the CrossRef Service

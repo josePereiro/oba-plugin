@@ -1,10 +1,10 @@
 // DeepSeek
-import ObA from '../main';
+import ObA from '../main-old';
 import { parse } from '@retorquere/bibtex-parser';
 import { existsSync, mkdirSync } from 'fs';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
-import { BiblIOAuthor, BiblIOData, BiblIODate } from './bibl.io.data';
+import { BiblIOAuthor, BiblIOData, BiblIODate } from './biblio-data';
 
 
 /*
@@ -12,40 +12,66 @@ import { BiblIOAuthor, BiblIOData, BiblIODate } from './bibl.io.data';
 */ 
 export class LocalBibsBase {
 
+    // DOING" Cache all in ram too
+    localbibs: BiblIOData[];
+
     constructor(public oba: ObA) {
         console.log("LocalBibs:constructor");
+        this.localbibs = [];
     }
 
     // MARK: biblio
-        async getBiblioDB(
-            sourceFiles: string[] = 
-                this.oba.configfile.getConfig("local.bib.files")
-        ) {
-            const biblioDB: BiblIOData[] = [];
-            const lb_dataDB = await this.getLocalBib(sourceFiles)
-            for (const lb_data of lb_dataDB) {
-                const biblio: BiblIOData = {
-                    "doi": this.extractDoi(lb_data),
-                    "citekey": this.extractCiteKey(lb_data),
-                    "type": this.extractType(lb_data),
-                    "title": this.extractTitle(lb_data),
-                    "authors": this.extractAuthors(lb_data),
-                    "created-date": this.extractCreatedDate(lb_data),
-                    "deposited-date": this.extractDepositedDate(lb_data),
-                    "issued-date": this.extractIssuedDate(lb_data),
-                    "published-date": this.extractPublishedDate(lb_data),
-                    "journaltitle": this.extractJournalTitle(lb_data),
-                    "url": this.extractURL(lb_data),
-                    "abstract": this.extractAbstract(lb_data),
-                    "keywords": this.extractKeywords(lb_data),
-                    "references-count": this.extractReferencesCount(lb_data),
-                    "references-DOIs": this.extractReferencesDOIs(lb_data),
-                    "extras": this.extractExtras(lb_data),
-                }
-                biblioDB.push(biblio);
-            }
-            return biblioDB
+    _makeBiblIO(lb_data: any) {
+        const biblio: BiblIOData = {
+            "doi": this.extractDoi(lb_data),
+            "citekey": this.extractCiteKey(lb_data),
+            "type": this.extractType(lb_data),
+            "title": this.extractTitle(lb_data),
+            "authors": this.extractAuthors(lb_data),
+            "created-date": this.extractCreatedDate(lb_data),
+            "deposited-date": this.extractDepositedDate(lb_data),
+            "issued-date": this.extractIssuedDate(lb_data),
+            "published-date": this.extractPublishedDate(lb_data),
+            "journaltitle": this.extractJournalTitle(lb_data),
+            "url": this.extractURL(lb_data),
+            "abstract": this.extractAbstract(lb_data),
+            "keywords": this.extractKeywords(lb_data),
+            "references-count": this.extractReferencesCount(lb_data),
+            "references-DOIs": this.extractReferencesDOIs(lb_data),
+            // "extras": this.extractExtras(lb_data),
+            "extras": {},
         }
+        return biblio
+    }
+
+    async getBiblioDB(
+        sourceFiles: string[] = 
+            this.oba.configfile.getConfig("local.bib.files")
+    ) {
+        const biblioDB: BiblIOData[] = [];
+        const lb_dataDB = await this.getLocalBib(sourceFiles)
+        for (const lb_data of lb_dataDB) {
+            const biblio: BiblIOData = this._makeBiblIO(lb_data)
+            biblioDB.push(biblio);
+        }
+        return biblioDB
+    }
+
+    // Search doi
+    async getBiblio(doi0: string, 
+        sourceFiles: string[] = 
+            this.oba.configfile.getConfig("local.bib.files")
+    ) {
+        const lb_dataDB = await this.getLocalBib(sourceFiles)
+        for (const lb_data of lb_dataDB) {
+            const doi1 = lb_data?.["fields"]?.["doi"]
+            if (!doi1) { continue; }
+            if (!this.oba.tools.hasSuffix(doi0, doi1)) { continue; }
+            const biblio: BiblIOData = this._makeBiblIO(lb_data)
+            return biblio
+        }
+        return null
+    }
 
     // MARK: parse/load
     async _parseBibFile(sourceFile: string) {
@@ -106,7 +132,7 @@ export class LocalBibsBase {
         } catch (error) { return null; }
     }
 
-    private extractCiteKey(lb_data: any): null {
+    private extractCiteKey(lb_data: any): string | null {
         try {
             const dat0 = lb_data["key"]
             if (!dat0) { return null; } 
@@ -164,7 +190,6 @@ export class LocalBibsBase {
         try {
             const dat0 = lb_data["fields"]["date"]
             const dat1 = dat0.split("-")
-            console.log(dat1)
             const date: BiblIODate = {
                 "year": this._number(dat1[0]),
                 "month": this._number(dat1?.[1]),
@@ -238,8 +263,6 @@ export class LocalBibsBase {
     }
 
     _getCachePath(sourceFile: string) {
-        console.log("sourceFile");
-        console.log(sourceFile);
         const hash = this.oba.tools.hash64(sourceFile);
         return join(
             this.getBibTexDir(),

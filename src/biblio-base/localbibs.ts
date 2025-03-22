@@ -1,11 +1,11 @@
 // DeepSeek
-import ObA from '../main';
+import ObA from '../main-old';
 import { parse } from '@retorquere/bibtex-parser';
 import { existsSync, mkdirSync } from 'fs';
 import { readFile } from 'fs/promises';
 import Fuse from 'fuse.js';
 import { join } from 'path';
-import { LocalBibsBase } from './local.bibs.base';
+import { LocalBibsBase } from './localbibs-base';
 
 
 /*

@@ -1,5 +1,5 @@
 import { join } from 'path';
-import ObA from './main';
+import ObA from './main-old';
 import { Notice } from 'obsidian';
 import { existsSync, mkdirSync } from 'fs';
 

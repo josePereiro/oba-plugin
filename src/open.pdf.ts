@@ -1,5 +1,5 @@
 import { Notice } from 'obsidian';
-import ObA from './main';
+import ObA from './main-old';
 import { join } from 'path';
 import { exec } from 'child_process';
 import { platform } from "os";
