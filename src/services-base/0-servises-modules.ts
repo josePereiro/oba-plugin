@@ -17,12 +17,12 @@ import * as markerpdf from "./marker.pdf"
 export { markerpdf }
 import * as mdjson from "./md.json"
 export { mdjson }
-// import * as obanotes from "./obanotes"
-// export { obanotes }
+import * as obanotes from "./obanotes"
+export { obanotes }
 import * as pdfrepo from "./pdf.repo"
 export { pdfrepo }
-// import * as tagnotices from "./tag.notices"
-// export { tagnotices }
+import * as tagnotices from "./tag.notices"
+export { tagnotices }
 // import * as telegram from "./telegram"
 // export { telegram }
 // import * as view from "./view"
