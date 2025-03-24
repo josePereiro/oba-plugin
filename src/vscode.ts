@@ -1,13 +1,13 @@
 import { Notice } from 'obsidian';
-import ObA from './main-old';
 import { exec } from 'child_process';
+import * as configfile from './oba-base/configfile'
 
 /*
     Handle integration wit vscode
 */ 
 export class VSCode {
     constructor(private oba: ObA) {
-        console.log("VSCode:constructor")
+        console.log("VSCode:onload")
 
         this.oba.addCommand({
             id: "vscode-open-workspace",
@@ -32,8 +32,8 @@ export class VSCode {
     }
 
     callVsCode(args = "") {
-        const vscode = this.oba.configfile.getConfig("vscode.exec", "code")
-        const wrokspace = this.oba.configfile.getConfig("vscode.workspace", "")
+        const vscode = configfile.getConfig("vscode.exec", "code")
+        const wrokspace = configfile.getConfig("vscode.workspace", "")
         const command = `${vscode} ${wrokspace} ${args}`;
         console.log("command:\n", command);
         exec(command, (error, stdout, stderr) => {

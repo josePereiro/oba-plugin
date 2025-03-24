@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync } from "fs";
+import { existsSync, mkdirSync, statSync } from "fs";
 import * as path from "path";
 
 export function mkdirParent(filePath: string): void {

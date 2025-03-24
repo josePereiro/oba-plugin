@@ -1,8 +1,11 @@
 // TODO/DOING: mobe servises to modules
 
 import { Plugin } from 'obsidian';
-import * as globals from './0-base/globals';
-import * as tools from './tools-base/0-tools';
+import * as globals from './oba-base/globals';
+import * as tools from './tools-base/0-tools-base';
+import { dev } from './services/0-servises';
+import { biblio } from './biblio-base/0-biblio-base';
+import { configfile } from './oba-base/0-oba-base';
 
 // NOTES
 
@@ -23,17 +26,10 @@ export default class ObAPlugin extends Plugin {
 		globals.setOba(this);
 
 		// init servises
-
-		// commands
-		this.addCommand({
-            id: 'obaplugin-dev',
-            name: 'ObAPlugin dev',
-            callback: async () => {
-                console.clear();
-                const obadir = tools.getCurrNotePathErr();
-				console.log(obadir);
-            }
-        });
+		configfile.onload()
+		dev.onload()
+		tools.onload()
+		biblio.onload()
 	}
 
 	onunload() {

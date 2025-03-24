@@ -1,9 +1,9 @@
 import { Notice } from 'obsidian';
-import ObA from './main-old';
 import { join } from 'path';
 import { exec } from 'child_process';
 import { platform } from "os";
 import { existsSync } from 'fs';
+import * as configfile from './oba-base/configfile'
 
 /*
     Given a path, open a pdf related with the note
@@ -11,7 +11,7 @@ import { existsSync } from 'fs';
 export class OpenPdf {
 
     constructor(private oba: ObA) {
-        console.log("OpenPdf:constructor");
+        console.log("OpenPdf:onload");
         
         this.oba.addCommand({
             id: "open-pdf-from-note",
@@ -37,7 +37,7 @@ export class OpenPdf {
         noteName = noteName.replace("@", "");
         noteName = noteName.replace(".md", "");
         const pdfFileName = `${noteName}.pdf`;
-        const pdfsDir = this.oba.configfile.getConfig("local.pdfs.dir")
+        const pdfsDir = configfile.getConfig("local.pdfs.dir")
         const pdfFilePath = join(
             pdfsDir, pdfFileName
         );

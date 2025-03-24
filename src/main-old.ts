@@ -3,7 +3,7 @@
 // TODO/DOING: mobe servises to modules
 
 import { Plugin } from 'obsidian';
-import { ToolBox } from './tools-base/0-tools';
+import { ToolBox } from './tools-base/0-tools-base';
 import { Commands } from './commands';
 import { Callbacks } from './callbacks';
 import { CrossRef } from './biblio-base/crossref';
@@ -14,13 +14,13 @@ import { TagNotices } from './tag.notices';
 import { RangeView } from './view';
 import { OpenPdf } from './open.pdf';
 import { LocalBibs } from './biblio-base/localbibs';
-import { Dev } from './dev';
+import { Dev } from './services/dev';
 import { CitationNotes } from './citation.notes';
 import { VSCode } from './vscode';
 import { MarkerPDF } from './marker.pdf';
 import { ObaNotes } from './obanotes';
-import { BiblIO } from './biblio-base/0-biblio';
-import { setOba } from './0-base/globals';
+import { BiblIO } from './biblio-base/0-biblio-base';
+import { setOba } from './oba-base/globals';
 
 // NOTES
 

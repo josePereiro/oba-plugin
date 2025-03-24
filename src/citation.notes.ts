@@ -1,5 +1,4 @@
 import { Notice, TFile } from 'obsidian';
-import ObA from './main-old';
 
 /*
     Handle citation notes.
@@ -14,7 +13,7 @@ export class CitationNotes {
 
     // MARK: constructor
     constructor(private oba: ObA) {
-        console.log("CitationNotes:constructor");
+        console.log("CitationNotes:onload");
         
         // this.oba.addCommand({
         //     id: "CitationNotes-dev",

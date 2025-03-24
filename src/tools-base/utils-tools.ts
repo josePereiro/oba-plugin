@@ -17,20 +17,6 @@ export function uriToFilename(url: string): string {
     return filename;
 }
 
-export function newestMTime(file1: string, file2: string): string {
-    try {
-        // Get stats for both files
-        const stats1 = statSync(file1);
-        const stats2 = statSync(file2);
-
-        // Compare modification times
-        if (stats1.mtimeMs > stats2.mtimeMs) { return file1; }
-        return file2;
-    } catch (error) {
-        return '-1';
-    }
-}
-
 export function fixPoint(str0: string, fun) {
     let str1;
     while (true){
@@ -41,7 +27,7 @@ export function fixPoint(str0: string, fun) {
     return str0
 }
 
-export function getFirst(obj0, keys: string[]) {
+export function getFirst(obj0: any, keys: string[]) {
     let elm = null;
     for (const key of keys) {
         if (elm) { return elm; }
@@ -50,7 +36,7 @@ export function getFirst(obj0, keys: string[]) {
     return elm;
 }
 
-export function _identity(obj) { return obj }
+export function _identity(obj: any) { return obj }
 
 export function findStr(
     {   
@@ -104,7 +90,7 @@ export function absDoi(doi: string): string {
     return doi
 }
 
-export function hash64(input: string): string {
+export function hash64(input: string, base = 16): string {
     let hash = 0n; // Use BigInt for 64-bit precision
 
     for (let i = 0; i < input.length; i++) {
@@ -113,7 +99,11 @@ export function hash64(input: string): string {
         hash &= 0xFFFFFFFFFFFFFFFFn; // Ensure it stays 64-bit
     }
 
-    return hash.toString(32).padStart(32, '0'); // Convert to 16-character hex string
+    // pad = precision * log_{base} {2}
+    // log_{base} {2} = 1 / log_{2} {base}
+    let pad = 64 / Math.log2(base)
+    pad = Math.ceil(pad)
+    return hash.toString(base).padStart(pad, '0');
 }
 
 export function toCamelCase(sentence: string): string {

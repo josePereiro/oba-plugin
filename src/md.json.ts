@@ -1,5 +1,3 @@
-import ObA from './main-old';
-
 /*
     Allow parsing markdown sections as key/value 
     - Parse scope
@@ -8,7 +6,7 @@ import ObA from './main-old';
 export class MdJSON {
 
     constructor(private oba: ObA) {
-        console.log("MdJSON:constructor");
+        console.log("MdJSON:onload");
     }
     
     // MARK: parseKVOnelines

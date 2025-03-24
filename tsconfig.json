@@ -31,5 +31,5 @@
   "include": [
     "**/*.ts",
     "types/**/*"
-, "src/test.js"  ]
+, "src/test.js", "src/biblio-base/localbibs-base.old"  ]
 }

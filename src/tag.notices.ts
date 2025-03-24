@@ -1,11 +1,11 @@
 import { Notice, TFile } from 'obsidian';
-import ObA from './main-old';
+import * as configfile from './oba-base/configfile'
 
 // TODO: Add checkout current file git cmd
 export class TagNotices {
 
     constructor(private oba: ObA) {
-        console.log("TagNotices:constructor");
+        console.log("TagNotices:onload");
 
          'changed'
         this.oba.registerEvent(
@@ -26,7 +26,7 @@ export class TagNotices {
     }
 
     tagNoticesConfig() {
-        return this.oba.configfile.getConfig("tag.notices", null)
+        return configfile.getConfig("tag.notices", null)
     }
 
     execNotices(file: TFile, event0: string) {

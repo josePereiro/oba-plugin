@@ -1,5 +1,4 @@
 import { Notice } from 'obsidian';
-import ObA from './main-old';
 
 /*
     TODO: Add priority
@@ -9,7 +8,7 @@ export class Callbacks {
     lastCalled: string;
 
     constructor(private oba: ObA) {
-        console.log("Callbacks:constructor");
+        console.log("Callbacks:onload");
         this.registry = {};
         this.lastCalled = ''
 

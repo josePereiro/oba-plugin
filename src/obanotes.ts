@@ -1,5 +1,4 @@
 import { basename } from 'path';
-import ObA from './main-old';
 
 /*
     Handle the manipulation of note
@@ -10,7 +9,7 @@ import ObA from './main-old';
 export class ObaNotes {
 
     constructor(private oba: ObA) {
-        console.log("ObaNotes:constructor");
+        console.log("ObaNotes:onload");
 
         this.oba.addCommand({
             id: "obanotes-subnote-link",

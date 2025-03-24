@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync } from "fs";
 import { EditorPosition, FileSystemAdapter, MarkdownView, Notice, TFile } from "obsidian";
 import { join } from "path";
-import { OBA } from "src/0-base/globals";
+import { OBA } from "src/oba-base/globals";
 
 export function getCurrNote(): TFile | null  {
     return OBA.app.workspace.getActiveFile();
@@ -29,15 +29,6 @@ export function getVaultDir(): string {
         throw new Error('Cannot determine base path.');
     }
     return path;
-}
-
-export function getObaDir(): string {
-    const vault = getVaultDir();
-    const obaDir = join(vault, ".Oba");
-    if (!existsSync(obaDir)) {
-        mkdirSync(obaDir, { recursive: true });
-    }
-    return obaDir;
 }
 
 export function getSelectedText() : string {

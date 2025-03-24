@@ -1,7 +1,6 @@
-// DeepSeek
 import simpleGit, { SimpleGit, StatusResult } from 'simple-git';
+import * as configfile from './oba-base/configfile'
 import { Notice } from 'obsidian';
-import ObA from './main-old';
 
 /*
     Add a few git utilities
@@ -14,7 +13,7 @@ export class Git {
     private git: SimpleGit;
 
     constructor(private oba: ObA) {
-        console.log("Git:constructor");
+        console.log("Git:onload");
         this.git = simpleGit(this.oba.tools.getVaultDir());
     } 
 
@@ -39,7 +38,7 @@ export class Git {
 
     async commitToBranch(): Promise<void> {
         try {
-            const targetBranch = this.oba.configfile.getConfig("git.commit.branch.target")
+            const targetBranch = configfile.getConfig("git.commit.branch.target")
             if (!targetBranch) {
                 new Notice(`Target brach not setup. See Oba.json "git.commit.branch.target"`)
                 return;

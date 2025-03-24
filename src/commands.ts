@@ -1,5 +1,3 @@
-import ObA from './main-old';
-
 /*
     General purpose commands.
     - The commands use callbacks so other servises can use them as entry point
@@ -9,7 +7,7 @@ export class Commands {
     ncommands = 10;
     
     constructor(private oba: ObA) {
-        console.log("Commands:constructor");
+        console.log("Commands:onload");
 
         for (const i of this.getCommandRange()) {
             this.oba.addCommand({

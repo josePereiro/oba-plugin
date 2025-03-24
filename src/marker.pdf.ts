@@ -1,7 +1,7 @@
 import { existsSync } from 'fs';
-import ObA from './main-old';
 import { basename, join } from 'path';
 import { Notice } from 'obsidian';
+import * as configfile from './oba-base/configfile'
 
 /*
     Integration with marker pdf.
@@ -10,7 +10,7 @@ import { Notice } from 'obsidian';
 export class MarkerPDF {
 
     constructor(private oba: ObA) {
-        console.log("MarkerPDF:constructor");
+        console.log("MarkerPDF:onload");
 
         this.oba.addCommand({
             id: "markerpdf-open-note-md",
@@ -43,7 +43,7 @@ export class MarkerPDF {
     }
 
     getMarkerDir() {
-        const path = this.oba.configfile.getConfig("markerpdf.dir")
+        const path = configfile.getConfig("markerpdf.dir")
         if (existsSync(path)) { return path; }
         const errorMsg = `"markerpdf.dir" config not found!!!`
         new Notice(`ERROR: ${errorMsg}`);

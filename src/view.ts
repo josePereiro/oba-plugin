@@ -1,7 +1,6 @@
 // Open file externally
 
 import { MarkdownRenderer, TFile } from 'obsidian';
-import ObA from './main-old';
 
 interface EmbedParameters {
     "path": string;
@@ -16,7 +15,7 @@ export class RangeView {
     embedTag: 'embed-lines'
 
     constructor(private oba: ObA) {
-            console.log("RangeView:constructor");
+            console.log("RangeView:onload");
             this.oba.registerMarkdownPostProcessor(this.embedProcessor.bind(this));
     }
 

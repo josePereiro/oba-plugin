@@ -1,5 +1,4 @@
-// DeepSeek
-import ObA from './main-old';
+import * as configfile from './oba-base/configfile'
 
 /*
     Add a few utils for interfacing with Telegram
@@ -7,7 +6,7 @@ import ObA from './main-old';
 export class Telegram {
 
     constructor(private oba: ObA) {
-        console.log("Telegram:constructor");
+        console.log("Telegram:onload");
     }
 }
 
@@ -29,8 +28,8 @@ export class Telegram {
 
 // 		// Lettura delle credenziali dal file .env
 
-// 		const apiId = this.oba.configfile.getConfig("telegram.api.id", null); //process.env.API_ID;
-// 		const apiHash = this.oba.configfile.getConfig("telegram.api.hash", null); // process.env.API_HASH;
+// 		const apiId = configfile.getConfig("telegram.api.id", null); //process.env.API_ID;
+// 		const apiHash = configfile.getConfig("telegram.api.hash", null); // process.env.API_HASH;
 
 // 		if (!apiId || !apiHash) {
 // 			console.error("API_ID o API_HASH non sono stati trovati nel file .env.");

@@ -1,7 +1,7 @@
 import { FuzzySuggestModal, Notice } from "obsidian";
-import { App, Modal, Setting } from "obsidian";
+import { Modal, Setting } from "obsidian";
 import * as levenshtein from "fast-levenshtein";
-import ObA from "./main-old";
+import ObAPlugin from "./main";
 
 
 /*
@@ -11,7 +11,7 @@ export class SelectorModal extends FuzzySuggestModal<string> {
   items: string[] = [];
 
   // Explicit constructor
-  constructor(private oba: ObA, items: string[]) {
+  constructor(private oba: ObAPlugin, items: string[]) {
     super(oba.app);
     this.items = items; // Initialize the items array
   }
@@ -40,7 +40,7 @@ export class SimilarityModal extends Modal {
     private selectedOption: string | null = null;
     private onSubmit: (selectedOption: string) => void;
 
-    constructor(private oba: ObA, 
+    constructor(private oba: ObAPlugin, 
       options: string[],
       onSubmit: (selectedOption: string) => void
     ) {

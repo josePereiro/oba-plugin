@@ -1,5 +1,4 @@
 import { join } from 'path';
-import ObA from './main-old';
 import { Notice } from 'obsidian';
 import { existsSync, mkdirSync } from 'fs';
 
@@ -24,7 +23,7 @@ export class BackEnds {
 	extras: { [key: string]: any };
 
     constructor(private oba: ObA) {
-		console.log("BackEnds:constructor");
+		console.log("BackEnds:onload");
 		this.extras = {}
     }
 
