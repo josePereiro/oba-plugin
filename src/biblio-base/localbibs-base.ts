@@ -12,10 +12,15 @@ import { OBA } from 'src/oba-base/globals';
 */ 
 
 // DOING/ Cache all in ram too
-let MERGED_BIBLIO: BiblIOData[] = [];
+let MERGED_BIBLIO: BiblIOData[];
 
 export function onload() {
+    
     console.log("LocalBibsBase:onload");
+
+    MERGED_BIBLIO = [];
+    DOI_IDX_MAP = {};
+    CITEKEY_IDX_MAP = {};
 }
 
 // MARK: biblio
@@ -364,7 +369,7 @@ async function _findMergedBiblIO(
     return null;
 }
 
-let DOI_IDX_MAP: { [key: string]: number } = {};
+let DOI_IDX_MAP: { [key: string]: number };
 export async function findByDoi(
     doi0: string
 ) {
@@ -378,7 +383,7 @@ export async function findByDoi(
     )
 }
 
-let CITEKEY_IDX_MAP: { [key: string]: number } = {};
+let CITEKEY_IDX_MAP: { [key: string]: number };
 export async function findByCiteKey(
     citekey0: string
 ) {

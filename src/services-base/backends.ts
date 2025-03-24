@@ -1,6 +1,10 @@
 import { join } from 'path';
 import { Notice } from 'obsidian';
 import { existsSync, mkdirSync } from 'fs';
+import { tools } from 'src/tools-base/0-tools-modules';
+import { filesys } from 'src/oba-base/0-oba-modules';
+import { callbacks } from './0-servises-modules';
+import { OBA } from 'src/oba-base/globals';
 
 /*
 	Deal with signals to backends.
@@ -18,80 +22,87 @@ import { existsSync, mkdirSync } from 'fs';
 			- parsing
 			- editing notes
 */
-export class BackEnds {
-	// For others to store extra data to send to backends
-	extras: { [key: string]: any };
 
-    constructor(private oba: ObA) {
-		console.log("BackEnds:onload");
-		this.extras = {}
-    }
+// For others to store extra data to send to backends
+export let BACKENDS_EXTRAS: { [key: string]: any };
 
-	getBackEndsDir(): string {
-        const obaDir = this.oba.tools.getObaDir();
-        const _dir = join(obaDir, "backends");
-        if (!existsSync(_dir)) {
-            mkdirSync(_dir, { recursive: true });
-        }
-        return _dir;
-    }
+export function onload() {
+	console.log("BackEnds:onload");
+	BACKENDS_EXTRAS = {}
 
-	/*
-		Will contain just the dummy-hash
-	*/
-	getHashSignalPath(): string {
-		return join(
-			this.getBackEndsDir(), 
-			"hash-signal.json"
-		)
-	}
-
-	/*
-		Will contain all signal data
-	*/
-	getStateSignalPath(): string {
-		return join(
-            this.getBackEndsDir(),
-            "state-signal.json"
-        )
-	}
-
-	// MARK: signalBackend
-	/*
-		Call this to signal backends
-	*/ 
-	signalBackend(extras = this.extras) {
-		console.log("signalBackend");
-
-		const rlen = 15;
-		const hash = this.oba.tools.randstring('O.', rlen)
-		
-		const notepath = this.oba.tools.getCurrNotePath();
-		const selectionText = this.oba.tools.getSelectedText();
-		const selectionRange = this.oba.tools.getSelectionRange();
-		const cursorPos = this.oba.tools.getCursorPosition();
-		const callbackLast = this.oba.callbacks.lastCalled;
-
-		const hashsignal = { 
-			"signal.hash": hash
+	OBA.addCommand({
+		id: 'oba-git-signal-backends',
+		name: 'BackEnds signal backends',
+		callback: async () => {
+			signalBackend();
 		}
-		const statesignal = { 
-			"signal.hash": hash, 
-			"active.note.path": notepath, 
-			"selection.text": selectionText,
-			"selection.range": selectionRange,
-			"cursor.pos": cursorPos,
-			"callbacks.last": callbackLast,
-			"backends.extras": extras,
-		}
+	});
+}
 
-		// Order is important
-		// backends must be listening 
-		this.oba.tools.writeJSON(this.getStateSignalPath(), statesignal)
-		this.oba.tools.writeJSON(this.getHashSignalPath(), hashsignal)
-		console.log("hashsignal:\n", hashsignal)
-		console.log("statesignal:\n", statesignal)
-
-		new Notice("Oba: backend signaled");
+export function getBackEndsDir(): string {
+	const obaDir = filesys.getObaDir();
+	const _dir = join(obaDir, "backends");
+	if (!existsSync(_dir)) {
+		mkdirSync(_dir, { recursive: true });
 	}
+	return _dir;
+}
+
+/*
+	Will contain just the dummy-hash
+*/
+export function getHashSignalPath(): string {
+	return join(
+		getBackEndsDir(), 
+		"hash-signal.json"
+	)
+}
+
+/*
+	Will contain all signal data
+*/
+export function getStateSignalPath(): string {
+	return join(
+		getBackEndsDir(),
+		"state-signal.json"
+	)
+}
+
+// MARK: signalBackend
+/*
+	Call this to signal backends
+*/ 
+export async function signalBackend(extras = BACKENDS_EXTRAS) {
+	console.log("signalBackend");
+
+	const rlen = 15;
+	const hash = tools.randstring('O.', rlen)
+	
+	const notepath = tools.getCurrNotePath();
+	const selectionText = tools.getSelectedText();
+	const selectionRange = tools.getSelectionRange();
+	const cursorPos = tools.getCursorPosition();
+	const callbackLast = callbacks.LAST_CALLBACK;
+
+	const hashsignal = { 
+		"signal.hash": hash
+	}
+	const statesignal = { 
+		"signal.hash": hash, 
+		"active.note.path": notepath, 
+		"selection.text": selectionText,
+		"selection.range": selectionRange,
+		"cursor.pos": cursorPos,
+		"callbacks.last": callbackLast,
+		"backends.extras": extras,
+	}
+
+	// Order is important
+	// backends must be listening 
+	await tools.writeJSON(getStateSignalPath(), statesignal)
+	await tools.writeJSON(getHashSignalPath(), hashsignal)
+	console.log("hashsignal:\n", hashsignal)
+	console.log("statesignal:\n", statesignal)
+
+	new Notice("Oba: backend signaled");
 }

@@ -1,6 +1,7 @@
 import { OBA } from 'src/oba-base/globals';
 import * as tools from '../tools-base/0-tools-modules';
-import { getBiblIO, getCrossrefData } from './crossref-base';
+import { getBiblIO } from './crossref-base';
+import * as crossrefbase from './crossref-base'
 export * from './crossref-base';
 
 /*
@@ -10,6 +11,9 @@ export * from './crossref-base';
 
 // // MARK: onload
 export function onload() {
+    
+    // base
+    crossrefbase.onload()
     
     console.log("CrossRef:onload");
 

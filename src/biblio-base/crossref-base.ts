@@ -12,6 +12,12 @@ import { filesys } from "src/oba-base/0-oba-modules";
 import { join } from "path";
 import { existsSync, mkdirSync } from "fs";
 
+
+
+export function onload() {
+    console.log("CrossRefBase:onload");
+}
+
 // MARK: biblio
 export async function getBiblIO(doi0: string) {
     const doi = tools.absDoi(doi0);

@@ -1,60 +1,60 @@
 import { Notice } from 'obsidian';
+import { backends, commands, git } from './0-servises-modules';
 
 /*
     TODO: Add priority
 */ 
-export class Callbacks {
-    registry: { [key: string]: (() => void)[] };
-    lastCalled: string;
+export let CALLBACKS_REGISTRY: { [key: string]: (() => void)[] };
+export let LAST_CALLBACK: string;
 
-    constructor(private oba: ObA) {
-        console.log("Callbacks:onload");
-        this.registry = {};
-        this.lastCalled = ''
+export function onload() {
+    console.log("Callbacks:onload");
 
-        // TODO: make an interface with config file
-        // - Inspire in vscode.snnipets  
-        //  - "callback.oba-signal" : ["signalBackendCmd", "gitCommitCmd"]
-		//      - You can just use bracket notation
-        const callid = this.oba.commands.getCommandCallbackId(1);
-        this.registerCallback(callid, 
-			() => this.oba.backends.signalBackend(),
-			() => this.oba.git.gitCommitCmd()
-		)
-        console.log("registry:\n", this.registry)
+    CALLBACKS_REGISTRY = {};
+    LAST_CALLBACK = ''
 
-    }
-
-    registerCallback(key: string, ...fns: (() => void)[]): void {
-        const calls = this.getCallbacks(key, true);
-        fns.forEach((fn, _index) => {
-            calls.push(fn); // Add the function to the array
-        });
-    }
-
-    runCallbacks(key: string): void {
-        this.lastCalled = key;
-        console.clear();
-        console.log(`runCallbacks:${key}`);
-        const calls = this.getCallbacks(key, true);
-        console.log(calls)
-        for (const call of calls) {
-            try {
-                call(); // Execute each function
-            } catch (err) {
-                new Notice(`Failed callback "${key}" run: ${err.message}`);
-                console.error(err);
-            }
-        }
-    }
-
-    getCallbacks(key: string, mk = false): (() => void)[] {
-        if (!mk) { return this.registry?.[key] }
-        const calls = this.registry?.[key] ?? [] as (() => void)[];
-        this.registry[key] = calls;
-        return calls;
-    }
-
+    // TODO: make an interface with config file
+    // - Inspire in vscode.snnipets  
+    //  - "callback.oba-signal" : ["signalBackendCmd", "gitCommitCmd"]
+    //      - You can just use bracket notation
+    const callid = commands.getCommandCallbackId(1);
+    this.registerCallback(callid, 
+        () => backends.signalBackend(),
+        () => git.gitCommitCmd()
+    )
+    console.log("registry:\n", CALLBACKS_REGISTRY)
 
 }
+
+export function registerCallback(key: string, ...fns: (() => void)[]): void {
+    const calls = getCallbacks(key, true);
+    fns.forEach((fn, _index) => {
+        calls.push(fn); // Add the function to the array
+    });
+}
+
+export function runCallbacks(key: string): void {
+    LAST_CALLBACK = key;
+    console.clear();
+    console.log(`runCallbacks:${key}`);
+    const calls = getCallbacks(key, true);
+    console.log(calls)
+    for (const call of calls) {
+        try {
+            call(); // Execute each function
+        } catch (err) {
+            new Notice(`Failed callback "${key}" run: ${err.message}`);
+            console.error(err);
+        }
+    }
+}
+
+export function getCallbacks(key: string, mk = false): (() => void)[] {
+    if (!mk) { return CALLBACKS_REGISTRY?.[key] }
+    const calls = CALLBACKS_REGISTRY?.[key] ?? [] as (() => void)[];
+    CALLBACKS_REGISTRY[key] = calls;
+    return calls;
+}
+
+
 

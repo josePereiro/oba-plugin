@@ -1,56 +1,59 @@
+import { OBA } from "src/oba-base/globals";
+import { callbacks } from "./0-servises-modules";
+import { configfile } from "src/oba-base/0-oba-modules";
+
 /*
     General purpose commands.
     - The commands use callbacks so other servises can use them as entry point
     - Also it is useful for bundling commands 
 */
-export class Commands {
-    ncommands = 10;
+let NCOMMANDS: number;
     
-    constructor(private oba: ObA) {
-        console.log("Commands:onload");
+export function onload() {
+    console.log("Commands:onload");
 
-        for (const i of this.getCommandRange()) {
-            this.oba.addCommand({
-                id: this.getCommandId(i),
-                name: this.getCommandName(i),
-                callback: () => {
-                    // console.clear();
-                    const callid = this.getCommandCallbackId(i);
-                    this.oba.callbacks.runCallbacks(callid);
-                }
-            });
-        }
+    NCOMMANDS = configfile.getConfig("commands.defaults.num", 5)
+
+    for (const i of getCommandRange()) {
+        OBA.addCommand({
+            id: getCommandId(i),
+            name: getCommandName(i),
+            callback: () => {
+                // console.clear();
+                const callid = getCommandCallbackId(i);
+                callbacks.runCallbacks(callid);
+            }
+        });
     }
+}
 
-    getCommandRange() {
-        return Array.from({ length: this.ncommands }, (_, i) => i + 1);
+export function getCommandRange() {
+    return Array.from({ length: NCOMMANDS }, (_, i) => i + 1);
+}
+
+export function getCommandId(i: number) { return `oba-command-${i}` }
+export function getCommandIds(): string[] {
+    const result: string[] = [];
+    for (const i of getCommandRange()) {
+        result.push(getCommandId(i));
     }
+    return result;
+}
 
-    getCommandId(i: number) { return `oba-command-${i}` }
-    getCommandIds(): string[] {
-        const result: string[] = [];
-        for (const i of this.getCommandRange()) {
-            result.push(this.getCommandId(i));
-        }
-        return result;
+export function getCommandName(i: number) { return `General Command ${i}` }
+export function getCommandNames(): string[] {
+    const result: string[] = [];
+    for (const i of getCommandRange()) {
+        result.push(getCommandName(i));
     }
+    return result;
+}
 
-    getCommandName(i: number) { return `General Command ${i}` }
-    getCommandNames(): string[] {
-        const result: string[] = [];
-        for (const i of this.getCommandRange()) {
-            result.push(this.getCommandName(i));
-        }
-        return result;
+export function getCommandCallbackId(i: number) { return `callback.command.${i}` }
+export function getCommandCallbackIds(): string[] {
+    const result: string[] = [];
+    for (const i of getCommandRange()) {
+        result.push(getCommandCallbackId(i));
     }
-
-    getCommandCallbackId(i: number) { return `callback.command.${i}` }
-    getCommandCallbackIds(): string[] {
-        const result: string[] = [];
-        for (const i of this.getCommandRange()) {
-            result.push(this.getCommandCallbackId(i));
-        }
-        return result;
-    }
-
+    return result;
 }

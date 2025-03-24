@@ -1,6 +1,7 @@
 import { clearJSONCache, clearRAMCache, getBiblIO, getMergedBiblIO} from './localbibs-base';
 import { OBA } from 'src/oba-base/globals';
 import { tools } from 'src/tools-base/0-tools-modules';
+import * as localbibsbase from './localbibs-base';
 export * from "./localbibs-base"
 
 
@@ -9,6 +10,9 @@ export * from "./localbibs-base"
 */ 
 export function onload() {
         
+    // base 
+    localbibsbase.onload();
+
     console.log("LocalBibs:onload");
 
     OBA.addCommand({
