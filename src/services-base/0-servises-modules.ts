@@ -13,8 +13,8 @@ export { git }
 // export { linecmds }
 // import * as llm from "./llm"
 // export { llm }
-// import * as markerpdf from "./marker.pdf"
-// export { markerpdf }
+import * as markerpdf from "./marker.pdf"
+export { markerpdf }
 // import * as mdjson from "./md.json"
 // export { mdjson }
 // import * as obanotes from "./obanotes"
