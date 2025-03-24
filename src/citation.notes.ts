@@ -91,7 +91,7 @@ export class CitationNotes {
     async copyDoiReferences(doi0: string) {
 
         // get biblio data
-        const biblIO_0 = await this.oba.crossref.getBiblio(doi0);
+        const biblIO_0 = await this.oba.crossref.getBiblIO(doi0);
         const cr_refDOIs = biblIO_0["references-DOIs"];
         if (!cr_refDOIs) { return; }
 
@@ -131,7 +131,7 @@ export class CitationNotes {
 
         // get biblio data
         const lb_biblIOs = await this.oba.localbibs.getBiblioDB();
-        const cr_biblIO = await this.oba.crossref.getBiblio(doi);
+        const cr_biblIO = await this.oba.crossref.getBiblIO(doi);
         const cr_refDOIs = cr_biblIO["references-DOIs"];
         if (!cr_refDOIs) { return; }
 

@@ -10,20 +10,34 @@ export * from "./biblio-data"
 */
 
 export function onload() {
+    // modules onload
     crossref.onload()
     localbibs.onload()
 
+    // MARK: commands
     OBA.addCommand({
-            id: 'oba-biblio-dev',
-            name: 'BiblIO dev',
-            callback: async () => {
-                console.clear();
-                const sel = tools.getSelectedText();
-                console.log("sel: ", sel);
-                const data = await consensusBiblIO(sel);
-                console.log("data: ", data);
-            }
-        });
+        id: 'oba-biblio-get-consensus-biblio',
+        name: 'BiblIO get consensus biblIO',
+        callback: async () => {
+            console.clear();
+            const sel = tools.getSelectedText();
+            console.log("sel: ", sel);
+            const data = await consensusBiblIO(sel);
+            console.log("data: ", data);
+        }
+    });
+
+    OBA.addCommand({
+        id: 'oba-biblio-dev',
+        name: 'BiblIO dev',
+        callback: async () => {
+            console.clear();
+            const sel = tools.getSelectedText();
+            console.log("sel: ", sel);
+            const data = await consensusBiblIO(sel);
+            console.log("data: ", data);
+        }
+    });
 }
 
 // MARK: consensus
@@ -31,57 +45,34 @@ export function onload() {
     merge biblIOs from several sources
 */ 
 export async function consensusBiblIO(doi: string) {
-    const rc_biblIO = await crossref.getBiblio(doi);
-    const lb_biblIO = await localbibs.getBiblio(doi);
+    const rc_biblIO = await crossref.getBiblIO(doi);
+    const lb_biblIO = await localbibs.getBiblIO(doi);
+    
     const biblio: BiblIOData = {
-        "doi": lb_biblIO?.["doi"] ?? rc_biblIO?.["doi"],
-        "citekey": lb_biblIO?.["citekey"] ?? rc_biblIO?.["citekey"],
-        "type": lb_biblIO?.["type"] ?? rc_biblIO?.["type"],
-        "title": lb_biblIO?.["title"] ?? rc_biblIO?.["title"],
-        "authors": lb_biblIO?.["authors"] ?? rc_biblIO?.["authors"],
-        "created-date": rc_biblIO?.["created-date"] ?? rc_biblIO?.["created-date"],
-        "deposited-date": rc_biblIO?.["deposited-date"] ?? rc_biblIO?.["deposited-date"],
-        "published-date": rc_biblIO?.["published-date"] ?? rc_biblIO?.["published-date"],
-        "issued-date": rc_biblIO?.["issued-date"] ?? rc_biblIO?.["issued-date"],
-        "journaltitle": lb_biblIO?.["journaltitle"] ?? rc_biblIO?.["journaltitle"],
-        "url": lb_biblIO?.["url"] ?? rc_biblIO?.["url"],
-        "abstract": lb_biblIO?.["abstract"] ?? rc_biblIO?.["abstract"],
-        "keywords": lb_biblIO?.["keywords"] ?? rc_biblIO?.["keywords"],
-        "references-count": rc_biblIO?.["references-count"] ?? lb_biblIO?.["references-count"],
-        "references-DOIs": rc_biblIO?.["references-DOIs"] ?? lb_biblIO?.["references-DOIs"],
+        "doi":                  _getFirst("doi", lb_biblIO, rc_biblIO),
+        "citekey":              _getFirst("citekey", lb_biblIO, rc_biblIO),
+        "type":                 _getFirst("type", lb_biblIO, rc_biblIO),
+        "title":                _getFirst("title", lb_biblIO, rc_biblIO),
+        "authors":              _getFirst("authors", lb_biblIO, rc_biblIO),
+        "created-date":         _getFirst("created-date", rc_biblIO, lb_biblIO),
+        "deposited-date":       _getFirst("deposited-date", rc_biblIO, lb_biblIO),
+        "published-date":       _getFirst("published-date", rc_biblIO, lb_biblIO),
+        "issued-date":          _getFirst("issued-date", rc_biblIO, lb_biblIO),
+        "journaltitle":         _getFirst("journaltitle", lb_biblIO, rc_biblIO),
+        "url":                  _getFirst("url", lb_biblIO, rc_biblIO),
+        "abstract":             _getFirst("abstract", lb_biblIO, rc_biblIO),
+        "keywords":             _getFirst("keywords", lb_biblIO, rc_biblIO),
+        "references-count":     _getFirst("references-count", rc_biblIO, lb_biblIO),
+        "references-DOIs":      _getFirst("references-DOIs", rc_biblIO, lb_biblIO),
         "extras": {},
     }
     return biblio;
 }
 
-
-// MARK: utils
-export function findByDoi(
-    doi0: string,
-    objList: BiblIOData[] | null,
-): BiblIOData | null {
-    return tools.findStr({
-        str0: doi0,
-        key: "doi",
-        objList: objList,
-        getEntry: (entry) => { return entry },
-        foundFun: (_doi0: string, _doi1: string) => {
-            return tools.hasSuffix(_doi0, _doi1);
-        }
-    })
-}
-
-export function findByCiteKey(
-    ckey0: string,
-    objList: BiblIOData[] | null,
-) {
-    return tools.findStr({
-        str0: ckey0,
-        key: "citekey",
-        objList: objList,
-        getEntry: (entry) => { return entry },
-        foundFun: (_ckey0: string, _ckey1: string) => {
-            return tools.hasSuffix(_ckey0, _ckey1);
-        }
-    })
+function _getFirst(key: string, ...objects: any[]) {
+    for (const obj of objects) {
+        const val = obj?.[key];
+        if (val) { return val; }
+    }
+    return null
 }

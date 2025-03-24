@@ -268,6 +268,12 @@ function extractIssuedDate(lb_data: any): BiblIODate | null {
 }
 
 function extractPublishedDate(lb_data: any): BiblIODate | null {
+    
+    function _number(str: any) {
+        if (!str) { return null }
+        return parseInt(str)
+    }
+
     try {
         const dat0 = lb_data["fields"]["date"]
         const dat1 = dat0.split("-")

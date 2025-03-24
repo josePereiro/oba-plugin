@@ -13,7 +13,7 @@ import { join } from "path";
 import { existsSync, mkdirSync } from "fs";
 
 // MARK: biblio
-export async function getBiblio(doi0: string) {
+export async function getBiblIO(doi0: string) {
     const doi = tools.absDoi(doi0);
     const cr_data = await getCrossrefData(doi)
     return _makeBiblIO(cr_data)
