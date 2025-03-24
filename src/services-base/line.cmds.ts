@@ -12,3 +12,5 @@ DESIGN
 - The command will be a command at the end of the line.
 - The command can have args
 */
+
+export let _dummy = 1

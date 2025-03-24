@@ -1,5 +1,5 @@
 import { OBA } from 'src/oba-base/globals';
-import * as tools from '../tools-base/0-tools-base';
+import * as tools from '../tools-base/0-tools-modules';
 import { getBiblIO, getCrossrefData } from './crossref-base';
 export * from './crossref-base';
 

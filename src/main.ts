@@ -1,11 +1,11 @@
 // TODO/DOING: mobe servises to modules
 
 import { Plugin } from 'obsidian';
-import * as globals from './oba-base/globals';
-import * as tools from './tools-base/0-tools-base';
-import { dev } from './services/0-servises';
-import { biblio } from './biblio-base/0-biblio-base';
-import { configfile } from './oba-base/0-oba-base';
+import { globals } from './oba-base/0-oba-modules';
+import { tools } from './tools-base/0-tools-modules';
+import { dev, vscode } from './services-base/0-servises-modules';
+import { biblio } from './biblio-base/0-biblio-modules';
+import { configfile } from './oba-base/0-oba-modules';
 
 // NOTES
 
@@ -25,11 +25,12 @@ export default class ObAPlugin extends Plugin {
 		// Set globals
 		globals.setOba(this);
 
-		// init servises
+		// init modules
 		configfile.onload()
 		dev.onload()
 		tools.onload()
 		biblio.onload()
+		vscode.onload()
 	}
 
 	onunload() {

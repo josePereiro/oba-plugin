@@ -2,7 +2,7 @@
     A set of tools to query if some events have happend
 */
 import { existsSync, statSync } from "fs";
-import { state } from "src/oba-base/0-oba-base";
+import { state } from "src/oba-base/0-oba-modules";
 
 /*
     compare mtimeMs with a cached one

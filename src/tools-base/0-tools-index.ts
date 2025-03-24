@@ -7,3 +7,4 @@ export * from "./obsidian-tools";
 export * from "./system-tools";
 export * from "./utils-tools";
 export * from "./tools-main";
+export * from "./modals-tools";

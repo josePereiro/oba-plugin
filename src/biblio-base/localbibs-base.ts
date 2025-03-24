@@ -1,20 +1,14 @@
-import * as tools from '../tools-base/0-tools-base';
+import * as tools from '../tools-base/0-tools-modules';
 import { parse } from '@retorquere/bibtex-parser';
 import { existsSync, mkdirSync } from 'fs';
 import { readFile, rm } from 'fs/promises';
 import { join } from 'path';
 import { BiblIOAuthor, BiblIOData, BiblIODate } from './biblio-data';
-import { configfile, filesys } from 'src/oba-base/0-oba-base';
+import { configfile, filesys } from 'src/oba-base/0-oba-modules';
 import { OBA } from 'src/oba-base/globals';
 
 /*
     Allow using local .bib files as sources of bibliography data. 
-    // TODO/ keep a loaded ram copy (MERGED_BIBLIO)
-    // TODO/ clean conceptually.
-    //  - keep json only for backends
-    //  - Plugin should use RAM/Parsed pair
-    //  - Use the same engine for updating stuff
-    //  - Maybe cach whole biblIODB, not source file caches. 
 */ 
 
 // DOING/ Cache all in ram too

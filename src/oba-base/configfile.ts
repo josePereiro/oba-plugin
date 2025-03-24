@@ -1,6 +1,6 @@
 import { existsSync, statSync } from 'fs';
 import { join } from 'path';
-import * as tools from '../tools-base/0-tools-base';
+import * as tools from '../tools-base/0-tools-modules';
 import { OBA } from './globals';
 
 /*

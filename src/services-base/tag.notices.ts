@@ -1,5 +1,5 @@
 import { Notice, TFile } from 'obsidian';
-import * as configfile from './oba-base/configfile'
+import * as configfile from '../oba-base/configfile'
 
 // TODO: Add checkout current file git cmd
 export class TagNotices {

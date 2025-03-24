@@ -3,7 +3,7 @@ import { join } from 'path';
 import { exec } from 'child_process';
 import { platform } from "os";
 import { existsSync } from 'fs';
-import * as configfile from './oba-base/configfile'
+import * as configfile from '../oba-base/configfile'
 
 /*
     Given a path, open a pdf related with the note

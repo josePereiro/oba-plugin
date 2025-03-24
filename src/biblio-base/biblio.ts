@@ -1,7 +1,7 @@
 import { OBA } from "src/oba-base/globals";
-import { crossref, localbibs } from "./0-biblio-base";
-import { BiblIOData } from "./biblio-data";
-import { tools } from "src/tools-base/0-tools-base";
+import { crossref, localbibs } from "./0-biblio-modules";
+import { BiblIOData, BiblIOIder } from "./biblio-data";
+import { tools } from "src/tools-base/0-tools-modules";
 
 export * from "./biblio-data"
 
@@ -22,7 +22,7 @@ export function onload() {
             console.clear();
             const sel = tools.getSelectedText();
             console.log("sel: ", sel);
-            const data = await consensusBiblIO(sel);
+            const data = await consensusBiblIO({"query": sel});
             console.log("data: ", data);
         }
     });
@@ -34,7 +34,7 @@ export function onload() {
             console.clear();
             const sel = tools.getSelectedText();
             console.log("sel: ", sel);
-            const data = await consensusBiblIO(sel);
+            const data = await consensusReferences({"query": sel});
             console.log("data: ", data);
         }
     });
@@ -44,9 +44,25 @@ export function onload() {
 /*
     merge biblIOs from several sources
 */ 
-export async function consensusBiblIO(doi: string) {
-    const rc_biblIO = await crossref.getBiblIO(doi);
-    const lb_biblIO = await localbibs.getBiblIO(doi);
+export async function consensusBiblIO(id: BiblIOIder) {
+
+    // handle id
+    const valid = await resolveDoi(id);
+    if (!valid) { return null } 
+    
+    // get data
+    const doi0 = id["doi"]
+    console.log("doi0: ", doi0)
+    const rc_biblIO = await crossref.getBiblIO(doi0);
+    const lb_biblIO = await localbibs.getBiblIO(doi0);
+
+    function _getFirst(key: string, ...objects: any[]) {
+        for (const obj of objects) {
+            const val = obj?.[key];
+            if (val) { return val; }
+        }
+        return null
+    }    
     
     const biblio: BiblIOData = {
         "doi":                  _getFirst("doi", lb_biblIO, rc_biblIO),
@@ -69,10 +85,54 @@ export async function consensusBiblIO(doi: string) {
     return biblio;
 }
 
-function _getFirst(key: string, ...objects: any[]) {
-    for (const obj of objects) {
-        const val = obj?.[key];
-        if (val) { return val; }
+export async function consensusReferences(id: BiblIOIder) {
+
+    // handle id
+    const valid = await resolveDoi(id);
+    if (!valid) { return null } 
+
+    const biblIO0 = await consensusBiblIO(id)
+    if (!biblIO0) { return null }
+    const dois = biblIO0["references-DOIs"]
+    if (!dois) { return null }
+
+    const refs: (BiblIOData | null)[] = []
+    for (const doi1 of dois) {
+        if (doi1) {
+            const biblIO1 = await consensusBiblIO({"doi": doi1})
+            refs.push(biblIO1)
+        } else {
+            refs.push(null)
+        }
     }
-    return null
+    return refs
+}
+
+
+// MARK: utils
+async function resolveDoi(id: BiblIOIder) {
+    if (id?.["doi"]) { return true; } 
+    if (id?.["citekey"]) {
+        const lb_biblIO = await localbibs.findByCiteKey(id["citekey"])
+        id["doi"] = lb_biblIO?.["doi"]
+        return true; 
+    } 
+    if (id?.["query"]) {
+        // local search first
+        let lb_biblIO;
+        lb_biblIO = await localbibs.findByCiteKey(id["query"])
+        if (lb_biblIO) {
+            id["doi"] = lb_biblIO?.["doi"]
+            return true; 
+        }
+        lb_biblIO = await localbibs.findByDoi(id["query"])
+        if (lb_biblIO) {
+            id["doi"] = lb_biblIO?.["doi"]
+            return true; 
+        }
+        // default to doi
+        id["doi"] = id["query"]
+        return true; 
+    }
+    return false; 
 }

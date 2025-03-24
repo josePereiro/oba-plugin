@@ -1,6 +1,6 @@
 import { clearJSONCache, clearRAMCache, getBiblIO, getMergedBiblIO} from './localbibs-base';
 import { OBA } from 'src/oba-base/globals';
-import { tools } from 'src/tools-base/0-tools-base';
+import { tools } from 'src/tools-base/0-tools-modules';
 export * from "./localbibs-base"
 
 

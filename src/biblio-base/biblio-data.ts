@@ -7,6 +7,12 @@
 */ 
 
 // MARK: interfaces
+export interface BiblIOIder {
+    "doi"?: string, 
+    "citekey"?: string,
+    "query"?: string // to trigger seach ider
+}
+
 export interface BiblIOAuthor {
     "firstName": string,
     "lastName": string,
@@ -86,3 +92,4 @@ export function getReferencesDOIs(biblio: BiblIOData) {
 export function getExtras(biblio: BiblIOData) {
     return biblio["extras"]
 }
+

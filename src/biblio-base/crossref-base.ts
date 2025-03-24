@@ -5,10 +5,10 @@
     // Include the interface to Biblio.
 */
 
-import { tools } from "src/tools-base/0-tools-base";
+import { tools } from "src/tools-base/0-tools-modules";
 import { BiblIOAuthor, BiblIOData, BiblIODate } from "./biblio-data";
 import { Notice } from "obsidian";
-import { filesys } from "src/oba-base/0-oba-base";
+import { filesys } from "src/oba-base/0-oba-modules";
 import { join } from "path";
 import { existsSync, mkdirSync } from "fs";
 

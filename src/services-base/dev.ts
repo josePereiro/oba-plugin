@@ -1,8 +1,8 @@
 import { Notice } from 'obsidian';
-import { SimilarityModal } from '../modals';
-import { configfile } from 'src/oba-base/0-oba-base';
+import { SimilarityModal } from '../tools-base/modals-tools';
+import { configfile } from 'src/oba-base/0-oba-modules';
 import { OBA } from 'src/oba-base/globals';
-import { tools } from 'src/tools-base/0-tools-base';
+import { tools } from 'src/tools-base/0-tools-modules';
 
 /*
     A playground for new features
