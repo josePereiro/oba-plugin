@@ -3,9 +3,10 @@
 import { Plugin } from 'obsidian';
 import { globals } from './oba-base/0-oba-modules';
 import { tools } from './tools-base/0-tools-modules';
-import { dev, vscode } from './services-base/0-servises-modules';
+import { dev, git, vscode } from './services-base/0-servises-modules';
 import { biblio } from './biblio-base/0-biblio-modules';
 import { configfile } from './oba-base/0-oba-modules';
+import { OBA } from './oba-base/globals';
 
 // NOTES
 
@@ -24,6 +25,7 @@ export default class ObAPlugin extends Plugin {
 
 		// Set globals
 		globals.setOba(this);
+		console.log(OBA)
 
 		// init modules
 		configfile.onload()
@@ -31,6 +33,7 @@ export default class ObAPlugin extends Plugin {
 		tools.onload()
 		biblio.onload()
 		vscode.onload()
+		git.onload()
 	}
 
 	onunload() {

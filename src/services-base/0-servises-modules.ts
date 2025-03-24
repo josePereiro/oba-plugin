@@ -7,8 +7,8 @@
 // export { commands }
 import * as dev from "./dev"
 export { dev }
-// import * as git from "./git"
-// export { git }
+import * as git from "./git"
+export { git }
 // import * as linecmds from "./line.cmds"
 // export { linecmds }
 // import * as llm from "./llm"

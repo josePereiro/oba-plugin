@@ -1,4 +1,3 @@
-import { existsSync, mkdirSync } from "fs";
 import { EditorPosition, FileSystemAdapter, MarkdownView, Notice, TFile } from "obsidian";
 import { join } from "path";
 import { OBA } from "src/oba-base/globals";

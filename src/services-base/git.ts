@@ -1,6 +1,8 @@
 import simpleGit, { SimpleGit, StatusResult } from 'simple-git';
-import * as configfile from './oba-base/configfile'
 import { Notice } from 'obsidian';
+import { tools } from 'src/tools-base/0-tools-modules';
+import { configfile } from 'src/oba-base/0-oba-modules';
+import { OBA } from 'src/oba-base/globals';
 
 /*
     Add a few git utilities
@@ -9,92 +11,99 @@ import { Notice } from 'obsidian';
         - This can be use for making a read only lock
         - If edition is detected, the note is restore to its last git version.
 */
-export class Git {
-    private git: SimpleGit;
+let GIT: SimpleGit;
 
-    constructor(private oba: ObA) {
-        console.log("Git:onload");
-        this.git = simpleGit(this.oba.tools.getVaultDir());
-    } 
+export function onload() {
+    console.log("Git:onload");
 
-    async isGitRepo(): Promise<boolean> {
-        try {
-            await this.git.status();
-            return true;
-        } catch (err) {
-            return false;
+    GIT = simpleGit(tools.getVaultDir());
+
+    OBA.addCommand({
+        id: 'oba-git-commit-default-branch',
+        name: 'Git commit default branch',
+        callback: async () => {
+            await commitToBranch();
         }
+    });
+} 
+
+export async function isGitRepo(): Promise<boolean> {
+    try {
+        await GIT.status();
+        return true;
+    } catch (err) {
+        return false;
     }
+}
 
-    async gitCommitCmd() {
-        const isRepo = await this.isGitRepo();
-        if (!isRepo) {
-            new Notice('This vault is not a Git repository.');
-            return;
-        }
-
-        await this.commitToBranch();
-    }
-
-    async commitToBranch(): Promise<void> {
-        try {
-            const targetBranch = configfile.getConfig("git.commit.branch.target")
-            if (!targetBranch) {
-                new Notice(`Target brach not setup. See Oba.json "git.commit.branch.target"`)
-                return;
-            }
-
-            const message = this.buildCmtMsg();
-            
-            const currBranch = await this.getCurrentBranch()
-            if (currBranch != targetBranch) {
-                new Notice(`Target brach != current brach. target: ${targetBranch}, current: ${currBranch}`);
-                return;
-            }
-
-            const isdirty = await this.isRepoDirty()
-            console.log(`this.isRepoDirty() = ${isdirty}`)
-            if (isdirty) {
-                await this.git.add('.');
-                await this.git.commit(message);
-                console.log(`Committed changes to branch: ${currBranch}`);
-            } else {
-                console.log("Repo is clean")
-            }
-        } catch (err) {
-            new Notice(`Failed to commit changes: ${err.message}`);
-            console.error(err);
-        }
+export async function gitCommitCmd() {
+    const isRepo = await isGitRepo();
+    if (!isRepo) {
+        new Notice('This vault is not a Git repository.');
         return;
     }
 
-    buildCmtMsg() {
-        const currentDate = new Date();
-        const year = currentDate.getFullYear();
-        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
-        const day = String(currentDate.getDate()).padStart(2, '0');
-        return `Oba Up ${year}-${month}-${day}`;
-    }
+    await commitToBranch();
+}
 
-    // Get the current active branch
-    async getCurrentBranch(): Promise<string | null> {
-        try {
-            const branchSummary = await this.git.branch();
-            return branchSummary.current; // Returns the name of the current branch
-        } catch (err) {
-            new Notice(`Failed to get current branch: ${err.message}`);
-            console.error(err);
-            return null;
+export async function commitToBranch(): Promise<void> {
+    try {
+        const targetBranch = configfile.getConfig("git.commit.branch.target")
+        if (!targetBranch) {
+            new Notice(`Target brach not setup. See Oba.json "git.commit.branch.target"`)
+            return;
         }
-    }
 
-    async isRepoDirty(): Promise<boolean> {
-        try {
-          const status: StatusResult = await this.git.status();
-          return !status.isClean(); // Returns `true` if the repo is dirty
-        } catch (err) {
-          console.error('Error checking repository status:', err);
-          throw err;
+        const message = buildCmtMsg();
+        
+        const currBranch = await getCurrentBranch()
+        if (currBranch != targetBranch) {
+            new Notice(`Target brach != current brach. target: ${targetBranch}, current: ${currBranch}`);
+            return;
         }
+
+        const isdirty = await isRepoDirty()
+        console.log(`isRepoDirty() = ${isdirty}`)
+        if (isdirty) {
+            await GIT.add('.');
+            await GIT.commit(message);
+            console.log(`Committed changes to branch: ${currBranch}`);
+        } else {
+            console.log("Repo is clean")
+        }
+    } catch (err) {
+        new Notice(`Failed to commit changes: ${err.message}`);
+        console.error(err);
+    }
+    return;
+}
+
+export function buildCmtMsg() {
+    const currentDate = new Date();
+    const year = currentDate.getFullYear();
+    const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+    const day = String(currentDate.getDate()).padStart(2, '0');
+    return `Oba Up ${year}-${month}-${day}`;
+}
+
+// Get the current active branch
+export async function getCurrentBranch(): Promise<string | null> {
+    try {
+        const branchSummary = await GIT.branch();
+        return branchSummary.current; // Returns the name of the current branch
+    } catch (err) {
+        new Notice(`Failed to get current branch: ${err.message}`);
+        console.error(err);
+        return null;
+    }
+}
+
+export async function isRepoDirty(): Promise<boolean> {
+    try {
+        const status: StatusResult = await GIT.status();
+        return !status.isClean(); // Returns `true` if the repo is dirty
+    } catch (err) {
+        console.error('Error checking repository status:', err);
+        throw err;
     }
 }
