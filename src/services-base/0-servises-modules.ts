@@ -19,8 +19,8 @@ export { git }
 // export { mdjson }
 // import * as obanotes from "./obanotes"
 // export { obanotes }
-// import * as openpdf from "./open.pdf"
-// export { openpdf }
+import * as pdfrepo from "./pdf.repo"
+export { pdfrepo }
 // import * as tagnotices from "./tag.notices"
 // export { tagnotices }
 // import * as telegram from "./telegram"
