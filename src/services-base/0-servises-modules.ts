@@ -15,8 +15,8 @@ export { git }
 // export { llm }
 import * as markerpdf from "./marker.pdf"
 export { markerpdf }
-// import * as mdjson from "./md.json"
-// export { mdjson }
+import * as mdjson from "./md.json"
+export { mdjson }
 // import * as obanotes from "./obanotes"
 // export { obanotes }
 import * as pdfrepo from "./pdf.repo"
