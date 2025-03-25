@@ -3,7 +3,7 @@
     - for instance 
         - #!mdate -> modification date of the note
 */
-import { existsSync, Stats, statSync } from "fs";
+import { existsSync, statSync } from "fs";
 import { OBA } from "src/oba-base/globals";
 import { tools } from "src/tools-base/0-tools-modules";
 import { DateTime } from 'luxon';
