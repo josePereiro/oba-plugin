@@ -1,13 +1,11 @@
 import { statSync } from "fs";
+import { tools } from "./0-tools-modules";
 
 export function uriToFilename(url: string): string {
-    // Replace invalid characters with underscores
-    let filename = url
-        .replace(/[/\\:*?"<>|#]/g, '_')   // Replace invalid characters
-        .replace(/https?:\/\//, '')       // Remove 'http://' or 'https://'
-        .replace(/\./g, '_')              // Replace dots with underscores
-        .replace(/\s+/g, '_');            // Replace spaces with underscores
-
+    // 
+    let filename = tools.fixPoint(url, (texti) => {
+        return texti.trim().replace(/[^0-9a-zA-Z]/g, '_')
+    })
     // Trim the filename to a reasonable length (e.g., 255 characters)
     const maxLength = 255;
     if (filename.length > maxLength) {

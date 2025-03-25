@@ -2,11 +2,11 @@ import { OBA } from "src/oba-base/globals";
 import { crossref, localbibs } from "./0-biblio-modules";
 import { BiblIOData, BiblIOIder } from "./biblio-data";
 import { tools } from "src/tools-base/0-tools-modules";
-
 export * from "./biblio-data"
 
 /*
     Integrated tools to work with bibliography data
+    // TODO/TAI create local/online search interface
 */
 
 export function onload() {
@@ -55,35 +55,28 @@ export async function consensusBiblIO(id: BiblIOIder) {
     console.log("doi0: ", doi0)
     const rc_biblIO = await crossref.getBiblIO(doi0);
     const lb_biblIO = await localbibs.getBiblIO(doi0);
-
-    function _getFirst(key: string, ...objects: any[]) {
-        for (const obj of objects) {
-            const val = obj?.[key];
-            if (val) { return val; }
-        }
-        return null
-    }    
     
     const biblio: BiblIOData = {
-        "doi":                  _getFirst("doi", lb_biblIO, rc_biblIO),
-        "citekey":              _getFirst("citekey", lb_biblIO, rc_biblIO),
-        "type":                 _getFirst("type", lb_biblIO, rc_biblIO),
-        "title":                _getFirst("title", lb_biblIO, rc_biblIO),
-        "authors":              _getFirst("authors", lb_biblIO, rc_biblIO),
-        "created-date":         _getFirst("created-date", rc_biblIO, lb_biblIO),
-        "deposited-date":       _getFirst("deposited-date", rc_biblIO, lb_biblIO),
-        "published-date":       _getFirst("published-date", rc_biblIO, lb_biblIO),
-        "issued-date":          _getFirst("issued-date", rc_biblIO, lb_biblIO),
-        "journaltitle":         _getFirst("journaltitle", lb_biblIO, rc_biblIO),
-        "url":                  _getFirst("url", lb_biblIO, rc_biblIO),
-        "abstract":             _getFirst("abstract", lb_biblIO, rc_biblIO),
-        "keywords":             _getFirst("keywords", lb_biblIO, rc_biblIO),
-        "references-count":     _getFirst("references-count", rc_biblIO, lb_biblIO),
-        "references-DOIs":      _getFirst("references-DOIs", rc_biblIO, lb_biblIO),
+        "doi":                  _extractFirst("doi", lb_biblIO, rc_biblIO),
+        "citekey":              _extractFirst("citekey", lb_biblIO, rc_biblIO),
+        "type":                 _extractFirst("type", lb_biblIO, rc_biblIO),
+        "title":                _extractAsPlainText("title", lb_biblIO, rc_biblIO),
+        "authors":              _extractFirst("authors", lb_biblIO, rc_biblIO),
+        "created-date":         _extractFirst("created-date", rc_biblIO, lb_biblIO),
+        "deposited-date":       _extractFirst("deposited-date", rc_biblIO, lb_biblIO),
+        "published-date":       _extractFirst("published-date", rc_biblIO, lb_biblIO),
+        "issued-date":          _extractFirst("issued-date", rc_biblIO, lb_biblIO),
+        "journaltitle":         _extractFirst("journaltitle", lb_biblIO, rc_biblIO),
+        "url":                  _extractFirst("url", lb_biblIO, rc_biblIO),
+        "abstract":             _extractAsPlainText("abstract", lb_biblIO, rc_biblIO),
+        "keywords":             _extractFirst("keywords", lb_biblIO, rc_biblIO),
+        "references-count":     _extractFirst("references-count", rc_biblIO, lb_biblIO),
+        "references-DOIs":      _extractFirst("references-DOIs", rc_biblIO, lb_biblIO),
         "extras": {},
     }
     return biblio;
 }
+
 
 export async function consensusReferences(id: BiblIOIder) {
 
@@ -108,8 +101,32 @@ export async function consensusReferences(id: BiblIOIder) {
     return refs
 }
 
+// MARK: extract
+function _formatToSimpleLine(text: string | null) {
+    if (!text) { return text; }
+    return tools.fixPoint(text, (texti: string) => {
+        return texti.trim().
+            replace(/<[^>]*?>/, "").
+            replace(/\n/, "").
+            replace(/\s\s/, "")
+    })
+}
 
-// MARK: utils
+function _extractFirst(key: string, ...objects: any[]) {
+    for (const obj of objects) {
+        const val = obj?.[key];
+        if (val) { return val; }
+    }
+    return null
+}    
+
+function _extractAsPlainText(...objects: any[]) {
+    const title = _extractFirst("title", ...objects)
+    return _formatToSimpleLine(title)
+}
+
+
+// MARK: ider
 async function resolveDoi(id: BiblIOIder) {
     if (id?.["doi"]) { return true; } 
     if (id?.["citekey"]) {

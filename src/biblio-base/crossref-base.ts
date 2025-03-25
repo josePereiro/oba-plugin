@@ -76,13 +76,11 @@ export async function _fetchCrossrefData(doi: string) {
         const url = `https://api.crossref.org/works/${doi}`;
         const response = await fetch(url);
         await sleep(101); // avoid abuse
-        console.log('_fetchCrossrefData.response ', response)
         if (!response['ok']) {
             new Notice(`Server error, check selected doi.\ndoi: ${doi}`);
             return null
         }
         const cr_data = await response.json();
-        console.log('_fetchCrossrefData.cr_data ', cr_data)
         return cr_data
     } catch (error) {
         console.error('Error fetching DOI reference:', error);
@@ -117,9 +115,11 @@ function _hasCache(doi: string) {
 }
 
 export function _getCachePath(doi: string): string {
+    doi = tools.absDoi(doi)
+    const hash = tools.hash64(doi);
     return join(
         getCrossrefDir(),
-        tools.uriToFilename(doi)
+        `${hash}.cache.json`
     )
 }
 

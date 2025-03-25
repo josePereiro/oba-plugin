@@ -1,17 +1,20 @@
 import { Notice } from 'obsidian';
 import { backends, commands, git } from './0-servises-modules';
+import { tools } from 'src/tools-base/0-tools-modules';
 
 /*
     TODO: Add priority
 */ 
 export let CALLBACKS_REGISTRY: { [key: string]: (() => void)[] };
 export let LAST_CALLBACK: string;
+export let CALLBACK_ARGS: any[];
 
 export function onload() {
     console.log("Callbacks:onload");
 
     CALLBACKS_REGISTRY = {};
     LAST_CALLBACK = ''
+    CALLBACK_ARGS = []
 
     // TODO: make an interface with config file
     // - Inspire in vscode.snnipets  
@@ -22,6 +25,19 @@ export function onload() {
         () => backends.signalBackend(),
         () => git.gitCommitCmd()
     )
+
+    this.registerCallback(
+        "callbacks.obauri.action", async () => {
+            console.clear()
+            const params = getCallbackArgs()?.[0]
+            if (!params) { return; }
+            console.log("obauri.params:\n", params?.[0])
+            await tools.openNoteAtLine(params?.["_file"], params?.["_line"])
+        }
+    )
+    
+
+
     console.log("registry:\n", CALLBACKS_REGISTRY)
 
 }
@@ -33,8 +49,13 @@ export function registerCallback(key: string, ...fns: (() => void)[]): void {
     });
 }
 
-export function runCallbacks(key: string): void {
+export function getCallbackArgs() {
+    return CALLBACK_ARGS
+}
+
+export function runCallbacks(key: string, ...args: any[]): void {
     LAST_CALLBACK = key;
+    CALLBACK_ARGS = args;
     console.clear();
     console.log(`runCallbacks:${key}`);
     const calls = getCallbacks(key, true);
@@ -47,6 +68,8 @@ export function runCallbacks(key: string): void {
             console.error(err);
         }
     }
+    // reset
+    CALLBACK_ARGS = null
 }
 
 export function getCallbacks(key: string, mk = false): (() => void)[] {

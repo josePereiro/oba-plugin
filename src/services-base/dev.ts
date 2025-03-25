@@ -1,4 +1,4 @@
-import { Notice } from 'obsidian';
+import { MarkdownView, Notice } from 'obsidian';
 import { SimilarityModal } from '../tools-base/modals-tools';
 import { configfile } from 'src/oba-base/0-oba-modules';
 import { OBA } from 'src/oba-base/globals';
@@ -8,9 +8,15 @@ import { tools } from 'src/tools-base/0-tools-modules';
     A playground for new features
 */
 
+// TODO/TAI/ See you can comunicate across plugins
+// - At some point you can split functionalities 
+// const plugin = app.plugins.getPlugin('super-uri') as SuperUriPlugin;
+
 export function onload() {
     console.log("Dev:onload");
 
+    _URLHandler_onload();
+    
     OBA.addCommand({
         id: 'oba-dev-cmd',
         name: 'Dev cmd',
@@ -44,6 +50,47 @@ export function onload() {
         }
     });
 }
+
+function _URLHandler_onload() {
+
+    const ACTION_NAME = 'open-with-line';
+    // const ACTION_NAME = 'open';
+
+    function getEditor() {
+        const leaf = OBA.app.workspace.getActiveViewOfType(MarkdownView);
+        if (leaf instanceof MarkdownView && leaf.getMode() === 'source') {
+            return leaf.editor;
+        }
+        return null;
+    }
+
+    OBA.registerObsidianProtocolHandler(ACTION_NAME, async (params) => {
+        console.clear()
+        console.log("registerObsidianProtocolHandler:\n", params)
+        // if (params.action !== ACTION_NAME) return;
+        
+        // if (!params.file) {
+        //     console.log('No path specified for open-with-line');
+        //     return;
+        // }
+
+        // try {
+        //     await OBA.app.workspace.openLinkText('', params.file);
+        //     const editor = this.getEditor();
+            
+        //     if (params.line && editor) {
+        //         editor.setCursor({
+        //             line: parseInt(params.line),
+        //             ch: 0
+        //         });
+        //         editor.focus();
+        //     }
+        // } catch (error) {
+        //     console.error('Error in open-with-line handler:', error);
+        // }
+    });
+}
+
 
 async function askLLM(question: string): Promise<string> {
     // const API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1";

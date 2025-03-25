@@ -3,10 +3,11 @@
 import { Plugin } from 'obsidian';
 import { globals } from './oba-base/0-oba-modules';
 import { tools } from './tools-base/0-tools-modules';
-import { backends, callbacks, commands, dev, git, markerpdf, mdjson, obanotes, pdfrepo, tagnotices, vscode } from './services-base/0-servises-modules';
+import { backends, callbacks, commands, dev, git, markerpdf, mdjson, obanotes, obauri, pdfrepo, tagnotices, vscode } from './services-base/0-servises-modules';
 import { biblio } from './biblio-base/0-biblio-modules';
 import { configfile } from './oba-base/0-oba-modules';
 import { OBA } from './oba-base/globals';
+import { citnotes } from './citnotes-base/0-citnotes-modules';
 
 // NOTES
 
@@ -42,6 +43,8 @@ export default class ObAPlugin extends Plugin {
 		mdjson.onload()
 		obanotes.onload()
 		tagnotices.onload()
+		citnotes.onload()
+		obauri.onload()
 	}
 
 	onunload() {

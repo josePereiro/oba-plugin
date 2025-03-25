@@ -19,6 +19,8 @@ import * as mdjson from "./md.json"
 export { mdjson }
 import * as obanotes from "./obanotes"
 export { obanotes }
+import * as obauri from "./obauri"
+export { obauri }
 import * as pdfrepo from "./pdf.repo"
 export { pdfrepo }
 import * as tagnotices from "./tag.notices"

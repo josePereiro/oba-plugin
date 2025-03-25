@@ -87,3 +87,39 @@ export function hasTag(file: TFile, tag0: string) {
 export function getNotePath(noteName: string) {
     OBA.app.metadataCache.getFirstLinkpathDest(noteName, '')
 }
+
+
+export async function openNoteAtLine(
+    filePath: string,
+    lineNumber: number
+): Promise<void> {
+    // Get the file from the vault
+    const file = OBA.app.vault.getAbstractFileByPath(filePath);
+    
+    if (!(file instanceof TFile)) {
+        console.error(`File not found: ${filePath}`);
+        return;
+    }
+
+    // Open the file in a new leaf or reuse existing one
+    const leaf = OBA.app.workspace.getLeaf(false);
+    await leaf.openFile(file);
+    
+    // Wait for the editor to be ready
+    const view = leaf.view;
+    if (view?.getViewType() === 'markdown') {
+        // Get the editor instance
+        // @ts-ignore - accessing private API
+        const editor = view.editor;
+        
+        if (editor) {
+            // Scroll to the line (convert to 0-based index)
+            const lineIndex = Math.max(0, lineNumber - 1);
+            editor.setCursor({ line: lineIndex, ch: 0 });
+            editor.scrollIntoView({
+                from: { line: lineIndex, ch: 0 },
+                to: { line: lineIndex, ch: 0 }
+            }, true);
+        }
+    }
+}
