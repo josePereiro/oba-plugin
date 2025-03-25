@@ -1,3 +1,4 @@
+import { TFile } from 'obsidian';
 import { basename } from 'path';
 import { OBA } from 'src/oba-base/globals';
 import { tools } from 'src/tools-base/0-tools-modules';
@@ -34,4 +35,8 @@ export function subNoteLinkFromSelection() {
     })
     name1 = tools.toCamelCase(name1)
     return `[[sub - ${name1} - ${name0}|${sel}]]`
+}
+
+export function readLines(note: TFile) {
+    
 }

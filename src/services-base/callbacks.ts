@@ -32,6 +32,7 @@ export function onload() {
             const params = getCallbackArgs()?.[0]
             if (!params) { return; }
             console.log("obauri.params:\n", params?.[0])
+            // open "obsidian://oba-uri?vault=MetXVault&_file=2_notes%2F%40edwardsEscherichiaColiMG16552000.md&_line=13"
             await tools.openNoteAtLine(params?.["_file"], params?.["_line"])
         }
     )

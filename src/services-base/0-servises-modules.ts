@@ -13,16 +13,18 @@ export { git }
 // export { linecmds }
 // import * as llm from "./llm"
 // export { llm }
-import * as markerpdf from "./marker.pdf"
+import * as markerpdf from "./markerpdf"
 export { markerpdf }
-import * as mdjson from "./md.json"
+import * as mdjson from "./mdjson"
 export { mdjson }
 import * as obanotes from "./obanotes"
 export { obanotes }
 import * as obauri from "./obauri"
 export { obauri }
-import * as pdfrepo from "./pdf.repo"
+import * as pdfrepo from "./pdfrepo"
 export { pdfrepo }
+import * as replacer from "./replacer"
+export { replacer }
 import * as tagnotices from "./tag.notices"
 export { tagnotices }
 // import * as telegram from "./telegram"

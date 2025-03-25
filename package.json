@@ -13,6 +13,7 @@
 	"license": "MIT",
 	"devDependencies": {
 		"@types/fast-levenshtein": "^0.0.4",
+		"@types/luxon": "^3.4.2",
 		"@types/node": "^16.18.126",
 		"@typescript-eslint/eslint-plugin": "^5.62.0",
 		"@typescript-eslint/parser": "^5.62.0",
@@ -27,6 +28,7 @@
 		"@retorquere/bibtex-parser": "^9.0.17",
 		"fast-levenshtein": "^3.0.0",
 		"fuse.js": "^7.1.0",
+		"luxon": "^3.5.0",
 		"mtproto-storage-fs": "^0.3.1",
 		"simple-git": "^3.27.0",
 		"telegram": "^2.26.22",
