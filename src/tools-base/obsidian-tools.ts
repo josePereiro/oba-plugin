@@ -1,68 +1,85 @@
 import { EditorPosition, FileSystemAdapter, MarkdownView, Notice, TFile } from "obsidian";
 import { join } from "path";
 import { OBA } from "src/oba-base/globals";
+import { isAbsolute } from "path";
+import { tools } from "./0-tools-modules";
 
 export function getCurrNote(): TFile | null  {
     return OBA.app.workspace.getActiveFile();
 }
-export function getCurrNotePath(): string | null  {
-    const path = getCurrNote()?.path;
-    if (!path) { return null; }
-    return join(
-        getVaultDir(),
-        path
-    )
-}
-export function getCurrNotePathErr(): string  {
-    const path = getCurrNote()?.path;
-    if (!path) { throw {msg: "No active file"}; }
-    return join( getVaultDir(), path )
+export function getCurrNotePath({err = false} = {}): string | null  {
+    const fun = () => {
+        const note = getCurrNote();
+        return resolveNoteAbsPath(note)
+    }
+    return tools.errVersion({err, fun, msg: "No active file"})
 }
 
-export function getVaultDir(): string {
-    let path;
+export function getVaultDir({err = false} = {}): string {
     // base path
-    if (OBA.app.vault.adapter instanceof FileSystemAdapter) {
-        path = OBA.app.vault.adapter.getBasePath();
-    } else {
-        throw new Error('Cannot determine base path.');
+    const fun = () => {
+        if (OBA.app.vault.adapter instanceof FileSystemAdapter) {
+            return OBA.app.vault.adapter.getBasePath();
+        } else { return null; }
     }
-    return path;
+    return tools.errVersion({err, fun, 
+        msg: 'Cannot determine base path.'
+    })
 }
 
-export function getSelectedText() : string {
-    const editor = OBA.app.workspace.activeEditor?.editor;
-    if (!editor) { return '' }
-    const selectedText = editor.getSelection();
-    console.log("selectedText:\n ", selectedText);
-    return selectedText ? selectedText : ''
-}
-
-export function getSelectionRange(): { start: number, end: number } {
-    const editor = OBA.app.workspace.activeEditor?.editor;
-    if (!editor) { return {start: -1, end: -1} }
-    const selection = editor.getSelection();
-    if (!selection) { return {start: -1, end: -1} }
-    const start = editor.posToOffset(editor.getCursor('from'));
-    const end = editor.posToOffset(editor.getCursor('to'));
-    return { start, end };
-}
-
-export function getCursorPosition(): { line: number, ch: number } {
-    const editor = OBA.app.workspace.activeEditor?.editor;
-    if (!editor) { return {line: -1, ch: -1} }
-    // Get the cursor's position in { line, ch } format
-    return editor.getCursor();
-}
-
-export function insertAtCursor(txt: string) {
-    const view = OBA.app.workspace.getActiveViewOfType(MarkdownView);
-    if (!view) {
-        new Notice("No note opened.");
-        return;
+export function getSelectedText({err = false} = {}) : string | null{
+    const fun = () => {
+        const editor = OBA.app.workspace.activeEditor?.editor;
+        if (!editor) { return null }
+        const selectedText = editor.getSelection();
+        console.log("selectedText:\n ", selectedText);
+        return selectedText ? selectedText : null
     }
-    const cursor: EditorPosition = view.editor.getCursor()
-    view.editor.replaceRange(txt, cursor);
+    return tools.errVersion({err, fun, 
+        msg: 'No text selected.'
+    })
+}
+
+export function getSelectionRange({err = false} = {}): { start: number, end: number } | null{
+    const fun = () => {
+        const editor = OBA.app.workspace.activeEditor?.editor;
+        if (!editor) { return null }
+        const selection = editor.getSelection();
+        if (!selection) { return null }
+        const start = editor.posToOffset(editor.getCursor('from'));
+        const end = editor.posToOffset(editor.getCursor('to'));
+        return { start, end };
+    }
+    return tools.errVersion({err, fun, 
+        msg: 'No text selected.'
+    })
+}
+
+export function getCursorPosition({err = false} = {}): { line: number, ch: number } | null {
+    const fun = () => {
+        const editor = OBA.app.workspace.activeEditor?.editor;
+        if (!editor) { return null }
+        return editor.getCursor();
+    }
+    return tools.errVersion({err, fun, 
+        msg: 'No active file.'
+    })
+}
+
+export function insertAtCursor(txt: string, {err = true} = {}): number {
+    const fun = () => {
+        const view = OBA.app.workspace.getActiveViewOfType(MarkdownView);
+        if (!view) {
+            new Notice('No active file.');
+            return 0;
+        }
+        const cursor: EditorPosition = view.editor.getCursor()
+        view.editor.replaceRange(txt, cursor);
+        return 1;
+    }
+    return tools.errVersion({err, fun, 
+        msg: 'No active file.'
+    })
 }
 
 export function getTagsForFile(file: TFile): string[] | null {
@@ -80,14 +97,13 @@ export function getTags(file: TFile) {
 
 export function hasTag(file: TFile, tag0: string) {
     const tags = getTags(file);
-    // console.log("tags: ", metadata?.tags)
     return tags?.some((tag: { tag: string; }) => tag.tag === tag0);
 }
 
-export function getNotePath(noteName: string) {
-    OBA.app.metadataCache.getFirstLinkpathDest(noteName, '')
+export function linkToNotePath(noteName: string) {
+    const path = OBA.app.metadataCache.getFirstLinkpathDest(noteName, '')
+    return resolveNoteAbsPath(path);
 }
-
 
 export async function openNoteAtLine(
     filePath: string,
@@ -122,4 +138,26 @@ export async function openNoteAtLine(
             }, true);
         }
     }
+}
+
+export function absPath(path: string, {err = false} = {}): string | null {
+    if (isAbsolute(path)) { return path; } 
+    return join(getVaultDir({err}), path);
+}
+
+export function resolveNoteAbsPath(
+        note: string | TFile | null, 
+        {err = false} = {}
+    ): string | null {
+    const fun = () => {
+        if (!note) { return null; }
+        if (typeof note === 'string') {
+            return absPath(note)
+        } else {
+            absPath(note.path)
+        }
+    }
+    return tools.errVersion({err, fun,
+        msg: 'Null note.'
+    })
 }

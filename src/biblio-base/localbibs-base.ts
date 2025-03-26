@@ -167,12 +167,7 @@ async function _validateRAMCache(
 
 // MARK: json cache
 export function getBibTexDir(): string {
-    const obaDir = filesys.getObaDir();
-    const _dir = join(obaDir, "localbibs");
-    if (!existsSync(_dir)) {
-        mkdirSync(_dir, { recursive: true });
-    }
-    return _dir;
+    return filesys.getObaDir("localbibs")
 }
 
 function _validateJSONCache(cacheFile: string, sourceFile: string) {

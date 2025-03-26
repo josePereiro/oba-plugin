@@ -72,31 +72,28 @@ export async function _fetchOnDemandCrossrefData(doi: string) {
 
 export async function _fetchCrossrefData(doi: string) {
     try {
-        new Notice('Sending request');
+        // new Notice('Sending request');
         const url = `https://api.crossref.org/works/${doi}`;
         const response = await fetch(url);
         await sleep(101); // avoid abuse
         if (!response['ok']) {
-            new Notice(`Server error, check selected doi.\ndoi: ${doi}`);
+            // TODO: create a error handling interface
+            console.error(`Server error, check selected doi.\ndoi: ${doi}`);
+            // new Notice(`Server error, check selected doi.\ndoi: ${doi}`);
             return null
         }
         const cr_data = await response.json();
         return cr_data
     } catch (error) {
         console.error('Error fetching DOI reference:', error);
-        new Notice(`Server error, check selected doi. ${doi}`);
+        // new Notice(`Server error, check selected doi. ${doi}`);
         return null
     }
 }
 
 // MARK: cache
 export function getCrossrefDir(): string {
-    const obaDir = filesys.getObaDir();
-    const _dir = join(obaDir, "crossref");
-    if (!existsSync(_dir)) {
-        mkdirSync(_dir, { recursive: true });
-    }
-    return _dir;
+    return filesys.getObaDir("crossref")
 }
 
 async function _loadCache(doi: string) {

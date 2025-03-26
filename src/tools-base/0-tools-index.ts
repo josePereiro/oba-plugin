@@ -1,4 +1,5 @@
 // Index
+export * from "./err-handling";
 export * from "./event-tools";
 export * from "./files-tools";
 export * from "./json-tools";

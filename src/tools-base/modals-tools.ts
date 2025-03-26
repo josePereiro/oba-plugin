@@ -1,13 +1,14 @@
-import { FuzzySuggestModal, Notice } from "obsidian";
+import { App, FuzzySuggestModal, Notice } from "obsidian";
 import { Modal, Setting } from "obsidian";
 import * as levenshtein from "fast-levenshtein";
 import ObAPlugin from "../main";
+import { OBA } from "src/oba-base/globals";
 
 
 /*
   A few modals utils
 */
-export class SelectorModal extends FuzzySuggestModal<string> {
+export class SelectorModalV1 extends FuzzySuggestModal<string> {
   items: string[] = [];
 
   // Explicit constructor
@@ -111,4 +112,43 @@ export class SimilarityModal extends Modal {
             this.onSubmit(this.selectedOption);
         }
     }
+}
+
+
+// 
+export class SelectorModalV2 extends FuzzySuggestModal<string> {
+  private items: string[];
+  private title: string;
+  private callback: (idx: number) => void;
+
+  constructor(
+        items: string[], 
+        title = "Select an item", 
+        callback: (idx: number) => void = () => {}
+      ) {
+      super(OBA.app);
+      this.items = items;
+      this.title = title;
+      this.callback = callback;
+  }
+
+  onOpen(): void {
+      const { contentEl } = this;
+      contentEl.createEl("h2", { text: this.title }); 
+      super.onOpen();
+  }
+
+  getItems(): string[] {
+      return this.items;
+  }
+
+  getItemText(item: string): string {
+      return item;
+  }
+
+  async onChooseItem(item: string, evt: MouseEvent | KeyboardEvent) {
+      const selectedIndex = this.items.indexOf(item);
+      await this.callback(selectedIndex);
+  }
+
 }

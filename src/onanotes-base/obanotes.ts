@@ -26,7 +26,7 @@ export function onload() {
 }
 
 export function subNoteLinkFromSelection() {
-    const path = tools.getCurrNotePathErr()
+    const path = tools.getCurrNotePath({err: true})
     const name0 = basename(path).
         replace(/.md$/, '')
     const sel = tools.getSelectedText().trim();
