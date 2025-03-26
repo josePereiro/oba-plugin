@@ -81,8 +81,7 @@ export async function consensusBiblIO(id: BiblIOIder) {
 export async function consensusReferences(id: BiblIOIder) {
 
     // handle id
-    const valid = await resolveBiblIOIder(id);
-    if (!valid) { return null } 
+    await resolveBiblIOIder(id);
 
     const biblIO0 = await consensusBiblIO(id)
     if (!biblIO0) { return null }
@@ -165,4 +164,5 @@ export async function resolveBiblIOIderDOI(id: BiblIOIder) {
 // TODO/ make it resolve more than doi
 export async function resolveBiblIOIder(id: BiblIOIder) {
     await resolveBiblIOIderDOI(id)
+    return id
 }

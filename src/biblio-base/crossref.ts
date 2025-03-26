@@ -2,6 +2,8 @@ import { OBA } from 'src/oba-base/globals';
 import * as tools from '../tools-base/0-tools-modules';
 import { getBiblIO } from './crossref-base';
 import * as crossrefbase from './crossref-base'
+import { resolve } from 'node:path';
+import { biblio } from './0-biblio-modules';
 export * from './crossref-base';
 
 /*
@@ -45,7 +47,9 @@ export function onload() {
             console.clear();
             const sel = tools.getSelectedText();
             console.log("sel: ", sel);
-            const biblIO = await getBiblIO({query: sel});
+            const ider = await biblio.resolveBiblIOIder({query: sel});
+            console.log("ider: ", ider);
+            const biblIO = await getBiblIO(ider);
             console.log("biblIO: ", biblIO);
         }
     });
@@ -57,7 +61,9 @@ export function onload() {
             console.clear();
             const sel = tools.getSelectedText();
             console.log("sel: ", sel);
-            const biblIO = await getBiblIO({query: sel});
+            const ider = await biblio.resolveBiblIOIder({query: sel});
+            console.log("ider: ", ider);
+            const biblIO = await getBiblIO(ider);
             console.log("biblIO: ", biblIO);
         }
     });

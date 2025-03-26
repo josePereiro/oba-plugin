@@ -2,6 +2,7 @@ import { clearJSONCache, clearRAMCache, getBiblIO, getMergedBiblIO} from './loca
 import { OBA } from 'src/oba-base/globals';
 import { tools } from 'src/tools-base/0-tools-modules';
 import * as localbibsbase from './localbibs-base';
+import { biblio } from './0-biblio-modules';
 export * from "./localbibs-base"
 
 
@@ -61,7 +62,9 @@ export function onload() {
             console.clear();
             const sel = tools.getSelectedText();
             console.log("sel: ", sel);
-            const biblIO = await getBiblIO({query: sel});
+            const ider = await biblio.resolveBiblIOIder({query: sel});
+            console.log("ider: ", ider);
+            const biblIO = await getBiblIO(ider);
             console.log("biblIO")
             console.log(biblIO)
         }

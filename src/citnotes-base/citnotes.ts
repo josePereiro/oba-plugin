@@ -3,9 +3,11 @@ import { biblio, crossref, localbibs } from 'src/biblio-base/0-biblio-modules';
 import { BiblIOData, BiblIOIder } from 'src/biblio-base/biblio-data';
 import { OBA } from 'src/oba-base/globals';
 import { tools } from 'src/tools-base/0-tools-modules';
-import { consensusReferences, resolveBiblIOIder } from 'src/biblio-base/biblio';
-import { obanotes } from 'src/onanotes-base/0-obanotes-modules';
+import { consensusReferences } from 'src/biblio-base/biblio';
 import { basename } from 'node:path';
+import { generateConfigRefResolverMap, getCitNoteRefResolverMap, newRefResolverMap } from './citnotes-base';
+import { obanotes } from 'src/onanotes-base/0-obanotes-modules';
+export * from './citnotes-base'
 
 /*
     Handle citation notes.
@@ -36,6 +38,7 @@ export function onload() {
         callback: async () => {
             console.clear();
             const note0 = tools.getCurrNote();
+            console.log("note0: ", note0);
             const biblIOs = await consensusReferences({"citnote": note0});
             if (!biblIOs) {
                 new Notice(`No references found. note0: ${note0}`);
@@ -86,12 +89,12 @@ export function onload() {
     });
 
     OBA.addCommand({
-        id: 'oba-citnotes-generate-num-biblIOIder-map',
-        name: 'CitNotes generate num-biblIOIder-map',
+        id: 'oba-citnotes-generate-references-resolver-map',
+        name: 'CitNotes generate references resolver map',
         callback: async () => {
             console.clear();
             const citnote = tools.getCurrNote()
-            await generateRefBiblIOIderMap(citnote)
+            await generateConfigRefResolverMap(citnote)
         }
     });
 
@@ -131,7 +134,27 @@ export function onload() {
 
 }
 
-// DOING: reimplement all this using BiblIO
+// TODO/
+// - Use RefResolverMap fro all Reference related methods
+// - Use regex in the RefResolverMap keys
+// - First resolve Iders and them retrive biblIOs
+// - Add a general biblIO search interface
+//  - Change BiblIOIder to BiblIOQuery
+//      - or just use a incomplete BiblIOData object
+
+// "citnotes.references.resolver-map"
+export async function generateConfigRefResolverMap(note: TFile) {
+    const config = await obanotes.getObaNoteConfigJSON(note) || {}
+    const lock = config?.["citnotes.references.resolver-map.lock"]
+    if (lock) { 
+        new Notice("🚨 ERROR: Map is locked!!")
+        return; 
+    }
+    const map = newRefResolverMap(note)
+    config["citnotes.references.resolver-map.lock"] = true
+    config["citnotes.references.resolver-map"] = map
+    await obanotes.writeObaNoteConfig(note, config)
+}
 
 // MARK: copy
 export async function copyDoiReferences(id0: BiblIOIder) {
@@ -195,13 +218,15 @@ async function copyNonLocalReferences(id0: BiblIOIder) {
     new Notice(`SUCESS!!! DOIs copied to clipboard`)
 }
 
+
+
 export async function copyReferenceLink(
     note: TFile, refnums: number[]
 ) {
 
     // get biblio data
-    const refBiblIOIderMap = await getCitNoteRefBiblIOIderMap(note)
-    console.log("refBiblIOIderMap: ", refBiblIOIderMap)
+    const refResolverMap = await getCitNoteRefResolverMap(note)
+    console.log("refResolverMap: ", refResolverMap)
     const biblIO_0 = await biblio.consensusBiblIO({"citnote": note});
     const refDOIs = biblIO_0["references-DOIs"];
     if (!refDOIs) { return; }
@@ -210,8 +235,8 @@ export async function copyReferenceLink(
     for (const refnum of refnums) {
         // resolve refDOI
         let refIder: BiblIOIder = null
-        // -- look at refBiblIOIderMap
-        refIder = refBiblIOIderMap?.[refnum];
+        // -- look at refResolverMap
+        refIder = refResolverMap?.[refnum];
         // -- look at references-DOIs
         if (!refIder) {
             refIder = {"doi": refDOIs?.[refnum - 1]}
@@ -312,33 +337,3 @@ function getCitationStringToSearch(biblIOs: BiblIOData[]) {
     });
 }
 
-/*
-    # RefBiblIOIderMap
-    - To be use as a custom setting for reference resolution
-    - It is intended to be eddited manually in the json file
-*/ 
-// "citnotes.references.refstr-biblIOIder-map"
-export async function generateRefBiblIOIderMap(note: TFile) {
-    const biblIO = await getNoteBiblIO(note)
-    const config = await obanotes.getObaNoteConfigJSON(note) || {}
-    const lock = config?.["citnotes.references.refstr-biblIOIder-map.lock"]
-    if (lock) { 
-        new Notice("🚨 ERROR: Map is locked!!")
-        return; 
-    }
-    const map = config["citnotes.references.refstr-biblIOIder-map"] || {}
-    const refDOIs = biblIO["references-DOIs"]
-    if (!refDOIs) { return; }
-    for (let i = 0; i < refDOIs.length; i++) {
-        map[i + 1] = { "doi": refDOIs[i] }
-    }
-    config["citnotes.references.refstr-biblIOIder-map.lock"] = true
-    config["citnotes.references.refstr-biblIOIder-map"] = map
-    await obanotes.writeObaNoteConfig(note, config)
-}
-
-
-// "citnotes.references.refstr-biblIOIder-map"
-export function getCitNoteRefBiblIOIderMap(note: TFile) {
-    return obanotes.getObaNoteConfig(note, "citnotes.references.refstr-biblIOIder-map")
-}
