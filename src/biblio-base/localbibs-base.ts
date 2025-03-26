@@ -3,7 +3,7 @@ import { parse } from '@retorquere/bibtex-parser';
 import { existsSync, mkdirSync } from 'fs';
 import { readFile, rm } from 'fs/promises';
 import { join } from 'path';
-import { BiblIOAuthor, BiblIOData, BiblIODate } from './biblio-data';
+import { BiblIOAuthor, BiblIOData, BiblIODate, BiblIOIder } from './biblio-data';
 import { configfile, filesys } from 'src/oba-base/0-oba-modules';
 import { OBA } from 'src/oba-base/globals';
 
@@ -24,8 +24,14 @@ export function onload() {
 }
 
 // MARK: biblio
-export async function getBiblIO(doi: string) {
-    return await findByDoi(doi)
+export async function getBiblIO(ider: BiblIOIder) {
+    if (ider["doi"]) {
+        return await findByDoi(ider["doi"])
+    } else if (ider["citekey"]) {
+        return await findByCiteKey(ider["citekey"])
+    } else {
+        return null
+    }
 }
 
 

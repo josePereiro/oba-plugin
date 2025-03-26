@@ -2,6 +2,7 @@ import { OBA } from "src/oba-base/globals";
 import { crossref, localbibs } from "./0-biblio-modules";
 import { BiblIOData, BiblIOIder } from "./biblio-data";
 import { tools } from "src/tools-base/0-tools-modules";
+import { citnotes } from "src/citnotes-base/0-citnotes-modules";
 export * from "./biblio-data"
 
 /*
@@ -47,14 +48,13 @@ export function onload() {
 export async function consensusBiblIO(id: BiblIOIder) {
 
     // handle id
-    const valid = await resolveDoi(id);
-    if (!valid) { return null } 
+    await resolveBiblIOIder(id);
     
     // get data
     const doi0 = id["doi"]
     console.log("doi0: ", doi0)
-    const rc_biblIO = await crossref.getBiblIO(doi0);
-    const lb_biblIO = await localbibs.getBiblIO(doi0);
+    const rc_biblIO = await crossref.getBiblIO(id);
+    const lb_biblIO = await localbibs.getBiblIO(id);
     
     const biblio: BiblIOData = {
         "doi":                  _extractFirst("doi", lb_biblIO, rc_biblIO),
@@ -81,7 +81,7 @@ export async function consensusBiblIO(id: BiblIOIder) {
 export async function consensusReferences(id: BiblIOIder) {
 
     // handle id
-    const valid = await resolveDoi(id);
+    const valid = await resolveBiblIOIder(id);
     if (!valid) { return null } 
 
     const biblIO0 = await consensusBiblIO(id)
@@ -127,13 +127,21 @@ function _extractAsPlainText(...objects: any[]) {
 
 
 // MARK: ider
-async function resolveDoi(id: BiblIOIder) {
+export async function resolveBiblIOIderDOI(id: BiblIOIder) {
     if (id?.["doi"]) { return true; } 
     if (id?.["citekey"]) {
         const lb_biblIO = await localbibs.findByCiteKey(id["citekey"])
         id["doi"] = lb_biblIO?.["doi"]
         return true; 
     } 
+    if (id?.["citnote"]) {
+        const note = id["citnote"]
+        const citekey = await citnotes.parseCitNoteCiteKey(note)
+        if (citekey) {
+            id["citekey"] = citekey 
+            return await resolveBiblIOIder(id); 
+        }
+    }
     if (id?.["query"]) {
         // local search first
         let lb_biblIO;
@@ -152,4 +160,9 @@ async function resolveDoi(id: BiblIOIder) {
         return true; 
     }
     return false; 
+}
+
+// TODO/ make it resolve more than doi
+export async function resolveBiblIOIder(id: BiblIOIder) {
+    await resolveBiblIOIderDOI(id)
 }

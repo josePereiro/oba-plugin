@@ -4,13 +4,28 @@
     That is, any comunication of bibliography data accross services must be 
     using this interface...
     Any special object must be internal and not used outside a particular service...
-*/ 
+*/
+import { TFile } from "obsidian"
+
+ 
 
 // MARK: interfaces
+export interface RefBiblIOIderMap {
+    [key: string]: BiblIOIder
+}
+
+
+/*
+    A bundle of unique BiblIO fields
+    TODO/
+    - Maybe turn it into BiblIOQuery
+        - An object to settup a biblio searching engine
+*/ 
 export interface BiblIOIder {
     "doi"?: string, 
     "citekey"?: string,
-    "query"?: string // to trigger seach ider
+    "citnote"?: TFile | string | null,
+    "query"?: string, // to trigger search
 }
 
 export interface BiblIOAuthor {

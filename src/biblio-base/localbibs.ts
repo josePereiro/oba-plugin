@@ -61,7 +61,7 @@ export function onload() {
             console.clear();
             const sel = tools.getSelectedText();
             console.log("sel: ", sel);
-            const biblIO = await getBiblIO(sel);
+            const biblIO = await getBiblIO({query: sel});
             console.log("biblIO")
             console.log(biblIO)
         }

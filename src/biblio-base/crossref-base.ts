@@ -6,7 +6,7 @@
 */
 
 import { tools } from "src/tools-base/0-tools-modules";
-import { BiblIOAuthor, BiblIOData, BiblIODate } from "./biblio-data";
+import { BiblIOAuthor, BiblIOData, BiblIODate, BiblIOIder } from "./biblio-data";
 import { Notice } from "obsidian";
 import { filesys } from "src/oba-base/0-oba-modules";
 import { join } from "path";
@@ -19,10 +19,13 @@ export function onload() {
 }
 
 // MARK: biblio
-export async function getBiblIO(doi0: string) {
-    const doi = tools.absDoi(doi0);
-    const cr_data = await getCrossrefData(doi)
-    return _makeBiblIO(cr_data)
+export async function getBiblIO(ider: BiblIOIder) {
+    if (ider["doi"]) {
+        const cr_data = await getCrossrefData(ider["doi"])
+        return _makeBiblIO(cr_data)
+    } else {
+        return null
+    }
 }
 
 function _makeBiblIO(cr_data: any) {

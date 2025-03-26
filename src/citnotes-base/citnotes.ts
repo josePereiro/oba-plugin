@@ -3,7 +3,9 @@ import { biblio, crossref, localbibs } from 'src/biblio-base/0-biblio-modules';
 import { BiblIOData, BiblIOIder } from 'src/biblio-base/biblio-data';
 import { OBA } from 'src/oba-base/globals';
 import { tools } from 'src/tools-base/0-tools-modules';
-import { consensusReferences } from 'src/biblio-base/biblio';
+import { consensusReferences, resolveBiblIOIder } from 'src/biblio-base/biblio';
+import { obanotes } from 'src/onanotes-base/0-obanotes-modules';
+import { basename } from 'node:path';
 
 /*
     Handle citation notes.
@@ -33,25 +35,25 @@ export function onload() {
         name: "CitNotes copy reference link from list",
         callback: async () => {
             console.clear();
-            const citekey0 = getCitNoteCiteKey();
-            const biblIOs = await consensusReferences({citekey: citekey0});
+            const note0 = tools.getCurrNote();
+            const biblIOs = await consensusReferences({"citnote": note0});
             if (!biblIOs) {
-                new Notice(`No references found. citekey: ${citekey0}`);
+                new Notice(`No references found. note0: ${note0}`);
                 return;
             }
             const references = getCitationStringToSearch(biblIOs);
             if (!references || references.length === 0) {
-                new Notice(`No references found. citekey: ${citekey0}`);
+                new Notice(`No references found. citekey: ${note0}`);
                 return;
             }
             const modal = new tools.SelectorModalV2(
                 references, 
                 "Select reference to copy link",
-                async (sel: number) => {
-                    if (sel == -1) { return; }
+                async (refnum: number) => {
+                    if (refnum == -1) { return; }
                     console.clear();
-                    console.log("sel: ", sel);
-                    await copyReferenceLink({citekey: citekey0}, [sel+1]);
+                    console.log("refnum: ", refnum+1);
+                    await copyReferenceLink(note0, [refnum+1]);
                 }
             );
             modal.open()
@@ -78,8 +80,18 @@ export function onload() {
         name: 'CitNotes copy references of current note',
         callback: async () => {
             console.clear();
-            const citekey = getCitNoteCiteKey()
-            await this.copyDoiReferences({citekey});
+            const citnote = tools.getCurrNote()
+            await this.copyDoiReferences({citnote});
+        }
+    });
+
+    OBA.addCommand({
+        id: 'oba-citnotes-generate-num-biblIOIder-map',
+        name: 'CitNotes generate num-biblIOIder-map',
+        callback: async () => {
+            console.clear();
+            const citnote = tools.getCurrNote()
+            await generateRefBiblIOIderMap(citnote)
         }
     });
 
@@ -88,7 +100,8 @@ export function onload() {
         name: 'CitNotes copy non-local references of current note',
         callback: async () => {
             console.clear();
-            const citekey = getCitNoteCiteKey()
+            const note = tools.getCurrNote()
+            const citekey = parseCitNoteCiteKey(note, {err: true})
             await copyNonLocalReferences({citekey});
         }
     });
@@ -102,8 +115,8 @@ export function onload() {
                 // replace(/\D+/g, "")
             const str = tools.getSelectedText()
             const refnums = extractRefNums(str);
-            const citekey = getCitNoteCiteKey()
-            await copyReferenceLink({citekey}, refnums)
+            const note = tools.getCurrNote()
+            await copyReferenceLink(note, refnums)
         }
     });
 
@@ -183,34 +196,50 @@ async function copyNonLocalReferences(id0: BiblIOIder) {
 }
 
 export async function copyReferenceLink(
-    id0: BiblIOIder, refnums: number[]
+    note: TFile, refnums: number[]
 ) {
 
     // get biblio data
-    const biblIO_0 = await biblio.consensusBiblIO(id0);
+    const refBiblIOIderMap = await getCitNoteRefBiblIOIderMap(note)
+    console.log("refBiblIOIderMap: ", refBiblIOIderMap)
+    const biblIO_0 = await biblio.consensusBiblIO({"citnote": note});
     const refDOIs = biblIO_0["references-DOIs"];
     if (!refDOIs) { return; }
     const links: string[] = []
 
     for (const refnum of refnums) {
-        const refDOI = refDOIs?.[refnum - 1]
+        // resolve refDOI
+        let refIder: BiblIOIder = null
+        // -- look at refBiblIOIderMap
+        refIder = refBiblIOIderMap?.[refnum];
+        // -- look at references-DOIs
+        if (!refIder) {
+            refIder = {"doi": refDOIs?.[refnum - 1]}
+        }
+        console.log("refIder: ", refIder)
+
+        // create link
         let link = '';
         while (1) {
-            if (!refDOI) { 
+            if (!refIder) { 
                 link = `${refnum}`
                 break;
             }
-            const biblIO_1 = await biblio.consensusBiblIO({doi: refDOI});
+            const biblIO_1 = await biblio.consensusBiblIO(refIder);
+            console.log("biblIO_1: ", biblIO_1)
             if (!biblIO_1) { 
-                link = `[${refnum}](${refDOI})`
+                link = `[${refnum}]`
                 break;
             }
             const refCitekey = biblIO_1?.["citekey"]
+            const refDOI = biblIO_1?.["doi"]
             if (refCitekey) {
                 link = `[[@${refCitekey}|${refnum}]]`
-            } else {
+            } else if (refDOI) {
                 // new Notice(`🚨 ERROR: Missing citekey, doi ${refDOI}`)
                 link = `[${refnum}](${refDOI})`
+            } else {
+                link = `[${refnum}]`
             }
             break;
         }
@@ -226,17 +255,24 @@ export async function copyReferenceLink(
 // // MARK: extract
 // // TODO/TAI: do not rely on the note name
 // // - Maybe add a citekey field on the yalm section of the note
-export function getCitNoteCiteKey(note: TFile = tools.getCurrNote()) {
-    return note?.basename?.
-        replace(/\.md$/, '')?.
-        replace(/^@/, '')
+export function parseCitNoteCiteKey(note: any, {err = false} = {}) {
+    const fun = () => {
+        const path = tools.resolveNoteAbsPath(note);
+        if (!path) { return null; }
+        return basename(path).
+            replace(/\.md$/, '')?.
+            replace(/^@/, '')
+    }
+    return tools.errVersion({err, fun,
+        msg: 'Error parsing citekey'
+    })
 }
 
 // MARK: get
 export async function getNoteBiblIO(
     note: TFile = tools.getCurrNote()
 ) {
-    const citekey = this.getCitNoteCiteKey(note);
+    const citekey = parseCitNoteCiteKey(note);
     return await biblio.consensusBiblIO({citekey})
 }
 
@@ -274,4 +310,35 @@ function getCitationStringToSearch(biblIOs: BiblIOData[]) {
         const year = biblIO?.["published-date"]?.["year"] || "Unknown Year";
         return `${authorsStr} (${year}). "${title}" ${citekey}`;
     });
+}
+
+/*
+    # RefBiblIOIderMap
+    - To be use as a custom setting for reference resolution
+    - It is intended to be eddited manually in the json file
+*/ 
+// "citnotes.references.refstr-biblIOIder-map"
+export async function generateRefBiblIOIderMap(note: TFile) {
+    const biblIO = await getNoteBiblIO(note)
+    const config = await obanotes.getObaNoteConfigJSON(note) || {}
+    const lock = config?.["citnotes.references.refstr-biblIOIder-map.lock"]
+    if (lock) { 
+        new Notice("🚨 ERROR: Map is locked!!")
+        return; 
+    }
+    const map = config["citnotes.references.refstr-biblIOIder-map"] || {}
+    const refDOIs = biblIO["references-DOIs"]
+    if (!refDOIs) { return; }
+    for (let i = 0; i < refDOIs.length; i++) {
+        map[i + 1] = { "doi": refDOIs[i] }
+    }
+    config["citnotes.references.refstr-biblIOIder-map.lock"] = true
+    config["citnotes.references.refstr-biblIOIder-map"] = map
+    await obanotes.writeObaNoteConfig(note, config)
+}
+
+
+// "citnotes.references.refstr-biblIOIder-map"
+export function getCitNoteRefBiblIOIderMap(note: TFile) {
+    return obanotes.getObaNoteConfig(note, "citnotes.references.refstr-biblIOIder-map")
 }

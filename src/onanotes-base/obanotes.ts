@@ -3,6 +3,9 @@ import { basename } from 'path';
 import { OBA } from 'src/oba-base/globals';
 import { tools } from 'src/tools-base/0-tools-modules';
 import { obanotes } from './0-obanotes-modules';
+import { vscode } from 'src/services-base/0-servises-modules';
+import { getNoteConfigPath, getObaNoteConfigJSON, getSetObaNoteConfig } from './noteconfig';
+import { genObaNoteId } from './obanotes-base';
 
 // index
 export * from './obanotes-base'
@@ -43,6 +46,39 @@ export function onload() {
             console.clear()
             const link = subNoteLinkFromSelection()
             await tools.copyToClipboard(link)
+        },
+    });
+
+    OBA.addCommand({
+        id: "oba-obanotes-open-note-config-json",
+        name: "ObaNotes open note config json",
+        callback: async () => {
+            console.clear()
+            const note = tools.getCurrNote({err: true})
+            const path = await getNoteConfigPath(note)
+            vscode.goto(path)
+        },
+    });
+
+    OBA.addCommand({
+        id: "oba-obanotes-log-note-config",
+        name: "ObaNotes log note config",
+        callback: async () => {
+            console.clear()
+            const note = tools.getCurrNote({err: true})
+            const config = await getObaNoteConfigJSON(note)
+            console.log("config: ", config)
+        },
+    });
+
+    OBA.addCommand({
+        id: "oba-obanotes-dev",
+        name: "ObaNotes dev",
+        callback: async () => {
+            console.clear()
+            const note = tools.getCurrNote({err: true})
+            const config = await getSetObaNoteConfig(note, "oba.test", genObaNoteId())
+            console.log("config: ", config)
         },
     });
     
