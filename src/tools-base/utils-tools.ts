@@ -123,7 +123,7 @@ export function toCamelCase(sentence: string): string {
     return camelCased.join('');
 }
 
-export function randstring(p: string, length: number): string {
+export function randstring(p = '', length = 8): string {
 
     console.log("length ", length)
     const CHARACTERS  = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';

@@ -4,8 +4,11 @@ import { OBA } from "src/oba-base/globals";
 import { isAbsolute } from "path";
 import { tools } from "./0-tools-modules";
 
-export function getCurrNote(): TFile | null  {
-    return OBA.app.workspace.getActiveFile();
+export function getCurrNote({err = false} = {}): TFile | null  {
+    const fun = () => {
+        return OBA.app.workspace.getActiveFile();
+    }
+    return tools.errVersion({err, fun, msg: "No active file"})
 }
 export function getCurrNotePath({err = false} = {}): string | null  {
     const fun = () => {
@@ -154,10 +157,32 @@ export function resolveNoteAbsPath(
         if (typeof note === 'string') {
             return absPath(note)
         } else {
-            absPath(note.path)
+            return absPath(note.path)
         }
     }
     return tools.errVersion({err, fun,
         msg: 'Null note.'
     })
+}
+
+// MARK: yaml section
+export async function modifyNoteYamlHeader(
+    note: TFile, mod0: (frontmatter: any) => void
+): Promise<any> {
+    let ret = null;
+    const mod1 = (frontmatter: any) => {
+        ret = frontmatter
+        mod0(frontmatter)
+    }
+    await OBA.app.fileManager.processFrontMatter(note, mod1);
+    return ret;
+}
+
+export function getNoteYamlHeader(note: TFile): any | null {
+    // Get the active file's frontmatter
+    if (!note) { return null }
+    const fileCache = OBA.app.metadataCache.getFileCache(note);
+    const frontmatter = fileCache?.frontmatter;
+    if (!frontmatter) { return null }
+    return frontmatter
 }
