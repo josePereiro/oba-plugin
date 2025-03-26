@@ -5,7 +5,7 @@ import { platform } from "os";
 import { existsSync } from 'fs';
 import { OBA } from 'src/oba-base/globals';
 import { tools } from 'src/tools-base/0-tools-modules';
-import { configfile } from 'src/oba-base/0-oba-modules';
+import { obaconfig } from 'src/oba-base/0-oba-modules';
 
 /*
     Given a path, open a pdf related with the note
@@ -35,7 +35,7 @@ export function openPdfFromNote() {
     noteName = noteName.replace("@", "");
     noteName = noteName.replace(".md", "");
     const pdfFileName = `${noteName}.pdf`;
-    const pdfsDir = configfile.getConfig("local.pdfs.dir")
+    const pdfsDir = obaconfig.getConfig("local.pdfs.dir")
     const pdfFilePath = join(
         pdfsDir, pdfFileName
     );

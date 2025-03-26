@@ -89,13 +89,9 @@ export function subNoteLinkFromSelection() {
     const name0 = basename(path).
         replace(/.md$/, '')
     const sel = tools.getSelectedText().trim();
-    let name1 = tools.fixPoint(sel, (stri) => {
+    let name1 = tools.fixPoint(sel, (stri: string) => {
         return stri.trim().replace(/[^a-zA-Z0-9\s\-_]/g, '')
     })
     name1 = tools.toCamelCase(name1)
     return `[[sub - ${name1} - ${name0}|${sel}]]`
-}
-
-export function readLines(note: TFile) {
-    
 }

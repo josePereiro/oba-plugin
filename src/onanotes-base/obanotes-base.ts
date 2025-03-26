@@ -1,12 +1,12 @@
 import { v4 as uuidv4 } from 'uuid';
-import { configfile, filesys } from "src/oba-base/0-oba-modules";
+import { obaconfig, filesys } from "src/oba-base/0-oba-modules";
 import { tools } from "src/tools-base/0-tools-modules";
 import { basename } from 'path';
 import { OBA } from 'src/oba-base/globals';
 
 // MARK: FileSys
 export function getObaNotesDir(): string {
-    const path = configfile.getConfig("obanotes.configs.folder", null)
+    const path = obaconfig.getConfig("obanotes.configs.folder", null)
     if (path) { return tools.absPath(path); }
     return filesys.getObaDir("obanotes")
 }
@@ -37,7 +37,7 @@ export async function ensureObaNoteID(note: any, {err = true} = {}) {
 
 // "obanotes.include.folders": ["2_notes"],
 export function getObaNotes() {
-    const folders: string[] = configfile.getConfig("obanotes.include.folders", [''])
+    const folders: string[] = obaconfig.getConfig("obanotes.include.folders", [''])
     const notes = OBA.app.vault.getMarkdownFiles()
     return notes.filter((note) => {
         return folders.some(folder => note.path.includes(folder))

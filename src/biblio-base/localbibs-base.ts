@@ -4,7 +4,7 @@ import { existsSync, mkdirSync } from 'fs';
 import { readFile, rm } from 'fs/promises';
 import { join } from 'path';
 import { BiblIOAuthor, BiblIOData, BiblIODate, BiblIOIder } from './biblio-data';
-import { configfile, filesys } from 'src/oba-base/0-oba-modules';
+import { obaconfig, filesys } from 'src/oba-base/0-oba-modules';
 import { OBA } from 'src/oba-base/globals';
 
 /*
@@ -67,7 +67,7 @@ function _makeBiblIO(lb_data: any) {
 // MARK: merged
 export async function getMergedBiblIO(
     sourceFiles: string[] = 
-            configfile.getConfig("local.bib.files")
+            obaconfig.getConfig("local.bib.files")
 ): Promise<BiblIOData[]> {
     // Check for updates
     const valid = await _validateRAMCache(sourceFiles, 'getMergedBiblIO')
@@ -86,7 +86,7 @@ export async function getMergedBiblIO(
 
 async function _buildMergedBiblIO(
         sourceFiles: string[] = 
-            configfile.getConfig("local.bib.files")
+            obaconfig.getConfig("local.bib.files")
     ) {
     const mergedBiblIO: BiblIOData[] = [];
     for (const sourceFile of sourceFiles) {
@@ -156,7 +156,7 @@ export function clearRAMCache() {
 }
 
 async function _validateRAMCache(
-    sourceFiles: string[] = configfile.getConfig("local.bib.files"),
+    sourceFiles: string[] = obaconfig.getConfig("local.bib.files"),
     eventid = "validateRAMCache"
 ) {
     // Check spurce modifications

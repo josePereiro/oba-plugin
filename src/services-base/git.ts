@@ -1,7 +1,7 @@
 import simpleGit, { SimpleGit, StatusResult } from 'simple-git';
 import { Notice } from 'obsidian';
 import { tools } from 'src/tools-base/0-tools-modules';
-import { configfile } from 'src/oba-base/0-oba-modules';
+import { obaconfig } from 'src/oba-base/0-oba-modules';
 import { OBA } from 'src/oba-base/globals';
 
 /*
@@ -48,7 +48,7 @@ export async function gitCommitCmd() {
 
 export async function commitToBranch(): Promise<void> {
     try {
-        const targetBranch = configfile.getConfig("git.commit.branch.target")
+        const targetBranch = obaconfig.getConfig("git.commit.branch.target")
         if (!targetBranch) {
             new Notice(`Target brach not setup. See Oba.json "git.commit.branch.target"`)
             return;

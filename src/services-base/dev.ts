@@ -1,6 +1,6 @@
 import { MarkdownView, Notice } from 'obsidian';
 import { SimilarityModal } from '../tools-base/modals-tools';
-import { configfile } from 'src/oba-base/0-oba-modules';
+import { obaconfig } from 'src/oba-base/0-oba-modules';
 import { OBA } from 'src/oba-base/globals';
 import { tools } from 'src/tools-base/0-tools-modules';
 
@@ -99,7 +99,7 @@ async function askLLM(question: string): Promise<string> {
     const API_URL = "https://api-inference.huggingface.co/models/";
     
     // const API_TOKEN = "YOUR_HUGGINGFACE_API_KEY"; // Sostituiscilo con la tua chiave API gratuita
-    const API_TOKEN = configfile.getConfig("huggingface.access.token", null)
+    const API_TOKEN = obaconfig.getConfig("huggingface.access.token", null)
     if (!API_TOKEN) {
         new Notice("'huggingface.access.token' missing")
         return;

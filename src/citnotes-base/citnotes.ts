@@ -5,7 +5,7 @@ import { OBA } from 'src/oba-base/globals';
 import { tools } from 'src/tools-base/0-tools-modules';
 import { consensusReferences } from 'src/biblio-base/biblio';
 import { basename } from 'node:path';
-import { generateConfigRefResolverMap, getCitNoteRefResolverMap, newRefResolverMap } from './citnotes-base';
+import { consensusCitNoteRefResolverMap, newRefResolverMap } from './citnotes-base';
 import { obanotes } from 'src/onanotes-base/0-obanotes-modules';
 export * from './citnotes-base'
 
@@ -135,7 +135,7 @@ export function onload() {
 }
 
 // TODO/
-// - Use RefResolverMap fro all Reference related methods
+// - Use RefResolverMap for all Reference related methods
 // - Use regex in the RefResolverMap keys
 // - First resolve Iders and them retrive biblIOs
 // - Add a general biblIO search interface
@@ -225,7 +225,7 @@ export async function copyReferenceLink(
 ) {
 
     // get biblio data
-    const refResolverMap = await getCitNoteRefResolverMap(note)
+    const refResolverMap = await consensusCitNoteRefResolverMap(note)
     console.log("refResolverMap: ", refResolverMap)
     const biblIO_0 = await biblio.consensusBiblIO({"citnote": note});
     const refDOIs = biblIO_0["references-DOIs"];
@@ -277,30 +277,6 @@ export async function copyReferenceLink(
     new Notice(`Link copied in clipboard, link: ${tocopy}`);
 }
 
-// // MARK: extract
-// // TODO/TAI: do not rely on the note name
-// // - Maybe add a citekey field on the yalm section of the note
-export function parseCitNoteCiteKey(note: any, {err = false} = {}) {
-    const fun = () => {
-        const path = tools.resolveNoteAbsPath(note);
-        if (!path) { return null; }
-        return basename(path).
-            replace(/\.md$/, '')?.
-            replace(/^@/, '')
-    }
-    return tools.errVersion({err, fun,
-        msg: 'Error parsing citekey'
-    })
-}
-
-// MARK: get
-export async function getNoteBiblIO(
-    note: TFile = tools.getCurrNote()
-) {
-    const citekey = parseCitNoteCiteKey(note);
-    return await biblio.consensusBiblIO({citekey})
-}
-
 // MARK: download all
 export async function downloadAllLocalReferences() {
     const biblIODB = await localbibs.getMergedBiblIO();
@@ -313,6 +289,8 @@ export async function downloadAllLocalReferences() {
         i++;
     }
 }
+
+// MARK: utils
 function extractRefNums(str: string): number[] {
     // Extract all numeric sequences from the input string
     const matches = str.match(/\d+/g);
@@ -321,7 +299,6 @@ function extractRefNums(str: string): number[] {
     return matches.map(num => parseInt(num, 10));
 }
 
-// MARK: utils
 function getCitationStringToSearch(biblIOs: BiblIOData[]) {
     const MAX_AUTHORS = 5;
     return biblIOs.map(biblIO => {

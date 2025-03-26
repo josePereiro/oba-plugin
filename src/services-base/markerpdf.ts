@@ -4,7 +4,7 @@ import { Notice } from 'obsidian';
 import { OBA } from 'src/oba-base/globals';
 import { tools } from 'src/tools-base/0-tools-modules';
 import { vscode } from './0-servises-modules';
-import { configfile } from 'src/oba-base/0-oba-modules';
+import { obaconfig } from 'src/oba-base/0-oba-modules';
 
 /*
     Integration with marker pdf.
@@ -45,7 +45,7 @@ export function openNoteMD() {
 }
 
 export function getMarkerDir() {
-    const path = configfile.getConfig("markerpdf.dir")
+    const path = obaconfig.getConfig("markerpdf.dir")
     if (existsSync(path)) { return path; }
     const errorMsg = `"markerpdf.dir" config not found!!!`
     new Notice(`ERROR: ${errorMsg}`);

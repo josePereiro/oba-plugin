@@ -11,14 +11,14 @@ import { vscode } from 'src/services-base/0-servises-modules';
 export let CONFIG: { [key: string]: any } = {};
 
 export function onload() {
-    console.log("ConfigFile:onload");
+    console.log("obaconfig:onload");
     
     // first load
     loadConfig()
 
     OBA.addCommand({
-        id: 'oba-configfile-open-confic-file',
-        name: 'ConfigFile open Oba.json',
+        id: 'oba-obaconfig-open-confic-file',
+        name: 'obaconfig open Oba.json',
         callback: async () => {
             vscode.goto(getObaConfigPath())
         }

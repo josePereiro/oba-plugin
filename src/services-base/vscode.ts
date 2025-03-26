@@ -1,7 +1,7 @@
 import { Notice } from 'obsidian';
 import { exec } from 'child_process';
 import { OBA } from 'src/oba-base/globals';
-import { configfile } from '../oba-base/0-oba-modules'
+import { obaconfig } from '../oba-base/0-oba-modules'
 import { tools } from 'src/tools-base/0-tools-modules';
 
 /*
@@ -33,8 +33,8 @@ export function onload() {
 }
 
 export function call(args = "") {
-    const vscode = configfile.getConfig("vscode.exec", "code")
-    const wrokspace = configfile.getConfig("vscode.workspace", "")
+    const vscode = obaconfig.getConfig("vscode.exec", "code")
+    const wrokspace = obaconfig.getConfig("vscode.workspace", "")
     const command = `${vscode} ${wrokspace} ${args}`;
     console.log("command:\n", command);
     exec(command, (error, stdout, stderr) => {

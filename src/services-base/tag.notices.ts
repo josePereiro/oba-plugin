@@ -1,5 +1,5 @@
 import { Notice, TFile } from 'obsidian';
-import * as configfile from '../oba-base/configfile'
+import * as obaconfig from '../oba-base/obaconfig'
 import { tools } from 'src/tools-base/0-tools-modules';
 import { OBA } from 'src/oba-base/globals';
 
@@ -26,7 +26,7 @@ export function onload() {
 }
 
 export function tagNoticesConfig() {
-    return configfile.getConfig("tag.notices", null)
+    return obaconfig.getConfig("tag.notices", null)
 }
 
 /*

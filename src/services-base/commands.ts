@@ -1,6 +1,6 @@
 import { OBA } from "src/oba-base/globals";
 import { callbacks } from "./0-servises-modules";
-import { configfile } from "src/oba-base/0-oba-modules";
+import { obaconfig } from "src/oba-base/0-oba-modules";
 
 /*
     General purpose commands.
@@ -12,7 +12,7 @@ let NCOMMANDS: number;
 export function onload() {
     console.log("Commands:onload");
 
-    NCOMMANDS = configfile.getConfig("commands.defaults.num", 5)
+    NCOMMANDS = obaconfig.getConfig("commands.defaults.num", 5)
 
     for (const i of getCommandRange()) {
         OBA.addCommand({

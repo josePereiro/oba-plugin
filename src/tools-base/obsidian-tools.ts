@@ -167,7 +167,8 @@ export function resolveNoteAbsPath(
 
 // MARK: yaml section
 export async function modifyNoteYamlHeader(
-    note: TFile, mod0: (frontmatter: any) => void
+    note: TFile, 
+    mod0: (frontmatter: any) => void
 ): Promise<any> {
     let ret = null;
     const mod1 = (frontmatter: any) => {
@@ -185,4 +186,19 @@ export function getNoteYamlHeader(note: TFile): any | null {
     const frontmatter = fileCache?.frontmatter;
     if (!frontmatter) { return null }
     return frontmatter
+}
+
+export function getNoteYamlHeaderVal(
+    note: TFile, 
+    key: string, 
+    dflt: any = null,
+    {err = false} = {}
+): any | null {
+    const fun = () => {
+        const yaml = getNoteYamlHeader(note);
+        return yaml?.[key] || dflt
+    }
+    return tools.errVersion({err, fun,
+        msg: 'No frontmatter.'
+    })
 }
