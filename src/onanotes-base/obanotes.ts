@@ -3,6 +3,10 @@ import { basename } from 'path';
 import { OBA } from 'src/oba-base/globals';
 import { tools } from 'src/tools-base/0-tools-modules';
 
+// index
+export * from './obanotes-base'
+export * from './noteconfig'
+
 /*
     Handle the manipulation of note
     - for instance:

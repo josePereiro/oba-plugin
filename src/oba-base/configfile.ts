@@ -1,25 +1,26 @@
-import { existsSync, statSync } from 'fs';
+import { statSync } from 'fs';
 import { join } from 'path';
 import * as tools from '../tools-base/0-tools-modules';
 import { OBA } from './globals';
+import { vscode } from 'src/services-base/0-servises-modules';
 
 /*
     Handle Oba confg file
 */
 
-    
 export let CONFIG: { [key: string]: any } = {};
 
 export function onload() {
     console.log("ConfigFile:onload");
+    
     // first load
     loadConfig()
 
     OBA.addCommand({
-        id: 'oba-configfile-dev',
-        name: 'ConfigFile dev',
+        id: 'oba-configfile-open-confic-file',
+        name: 'ConfigFile open Oba.json',
         callback: async () => {
-            loadConfig();
+            vscode.goto(getObaConfigPath())
         }
     });
 }
