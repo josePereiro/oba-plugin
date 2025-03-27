@@ -136,7 +136,7 @@ async function parseOnDemandLocalBib(
     const lb_data = await _parseBibFile(sourceFile)
     if (!lb_data) { return; }
     // Write cache
-    await tools.writeJSON(cacheFile, lb_data);
+    await tools.writeJsonFileAsync(cacheFile, lb_data);
     return "parsed";
 }
 
@@ -145,7 +145,7 @@ export async function getLocalBib(
         cacheFile: string = _getJSONCachePath(sourceFile)
     ) {
     await parseOnDemandLocalBib(sourceFile, cacheFile)
-    return await tools.loadJSON(cacheFile);
+    return await tools.loadJsonFileAsync(cacheFile);
 }
 
 // MARK: ram cache

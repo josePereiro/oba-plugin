@@ -1,4 +1,21 @@
 /*
+TODO:
+- Create a general get/set/getset/write/load interface for handling JSON files
+    - Similar to blobio
+    - Potential name: jsonio
+- Propagate the RefResolverMap interface to biblIO to handle references
+    - An array is not sufficiently flexible
+- Resolve the CitNotes citekey problem
+    - Getting the citekey from the name is not ideal
+        - Maybe use the YAML section
+        - Maybe use the note configuration
+    - This could help define what constitutes a CitNote
+- Consider the problem of empty or invalid BiblIOData
+- Work on installation tools
+- Work on (git) synchronization tools
+*/
+
+/*
 # DESIGN v1
 - TODO/ Add replacer (line by line)
 - TODO/ Study Obsidian API documentation 

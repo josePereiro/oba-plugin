@@ -32,6 +32,8 @@ export async function getCitNoteBiblIO(
     note: TFile = tools.getCurrNote()
 ) {
     const citekey = parseCitNoteCiteKey(note);
+    // TODO: this biblio object has not a 
+    // resolved refs field
     return await biblio.consensusBiblIO({citekey})
 }
 
@@ -39,19 +41,20 @@ export async function getCitNoteReferenceBiblIOs(
     note: TFile = tools.getCurrNote()
 ) {
     const iders = await consensusCitNoteRefResolverMap(note)
-    const biblIOs: BiblIOData[] = []
+    type T = BiblIOData | null;
+    const biblIOs: T[] = []
     // Iterate through all reference numbers from 1 to the total number of keys in the iders object.
     // If a reference number is missing in the iders object, throw an error indicating the missing reference.
     // For each valid reference number found in iders, resolve the corresponding biblIO and add it to the biblIOs array.
     const n = Object.keys(iders).length
     for (let i = 1; i <= n; i++) {
-        if (!(i in iders)) {
-            const msg = `Reference number ${i} not found in resolver map. Fix it!!`;
+        if (i in iders) {
+            const biblIO = await biblio.consensusBiblIO(iders[i])
+        } else {
+            const msg = `Reference number ${i} not found in resolver map`;
+            biblIOs.push(null);
             new Notice(msg);
-            throw new Error(msg);
         }
-        const biblIO = await biblio.consensusBiblIO(iders[i])
-        biblIOs.push(biblIO);
     }
     return biblIOs
 }

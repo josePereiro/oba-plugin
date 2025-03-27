@@ -125,7 +125,6 @@ export function toCamelCase(sentence: string): string {
 
 export function randstring(p = '', length = 8): string {
 
-    console.log("length ", length)
     const CHARACTERS  = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
     if (length < 1) { length = 1; }

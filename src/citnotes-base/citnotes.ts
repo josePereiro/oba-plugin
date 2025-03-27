@@ -5,7 +5,7 @@ import { OBA } from 'src/oba-base/globals';
 import { tools } from 'src/tools-base/0-tools-modules';
 import { consensusReferences } from 'src/biblio-base/biblio';
 import { basename } from 'node:path';
-import { consensusCitNoteRefResolverMap, newRefResolverMap } from './citnotes-base';
+import { consensusCitNoteRefResolverMap, getCitNoteReferenceBiblIOs, newRefResolverMap } from './citnotes-base';
 import { obanotes } from 'src/onanotes-base/0-obanotes-modules';
 export * from './citnotes-base'
 
@@ -225,8 +225,9 @@ export async function copyReferenceLink(
 ) {
 
     // get biblio data
-    const refResolverMap = await consensusCitNoteRefResolverMap(note)
-    console.log("refResolverMap: ", refResolverMap)
+    const biblIOs = await getCitNoteReferenceBiblIOs(note)
+    console.log("biblIOs: ", biblIOs)
+    return;
     const biblIO_0 = await biblio.consensusBiblIO({"citnote": note});
     const refDOIs = biblIO_0["references-DOIs"];
     if (!refDOIs) { return; }

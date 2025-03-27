@@ -101,12 +101,12 @@ export function getCrossrefDir(): string {
 
 async function _loadCache(doi: string) {
     const path = _getCachePath(doi);
-    return tools.loadJSON(path);
+    return await tools.loadJsonFileAsync(path);
 }
 
 function _writeCache(doi: string, cr_data: any) {
     const path = _getCachePath(doi);
-    return tools.writeJSON(path, cr_data);
+    return tools.writeJsonFileSync(path, cr_data);
 }
 
 function _hasCache(doi: string) {

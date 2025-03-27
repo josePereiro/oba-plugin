@@ -6,8 +6,8 @@ import { tools } from './tools-base/0-tools-modules';
 import { backends, callbacks, commands, dev, git, markerpdf, mdjson, obanotes, obauri, pdfrepo, replacer, tagnotices, vscode } from './services-base/0-servises-modules';
 import { biblio } from './biblio-base/0-biblio-modules';
 import { obaconfig } from './oba-base/0-oba-modules';
-import { OBA } from './oba-base/globals';
 import { citnotes } from './citnotes-base/0-citnotes-modules';
+import { tests } from './tests-base/0-tests-modules';
 
 // NOTES
 
@@ -26,7 +26,6 @@ export default class ObAPlugin extends Plugin {
 
 		// Set globals
 		globals.setOba(this);
-		console.log(OBA)
 
 		// init modules
 		callbacks.onload()
@@ -46,6 +45,8 @@ export default class ObAPlugin extends Plugin {
 		citnotes.onload()
 		obauri.onload()
 		replacer.onload()
+		tests.onload()
+	
 	}
 
 	onunload() {

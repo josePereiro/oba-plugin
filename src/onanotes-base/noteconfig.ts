@@ -12,12 +12,12 @@ export async function getNoteConfigPath(note: any) {
 
 export async function getObaNoteConfigJSON(note: any) {
     const configpath = await getNoteConfigPath(note)
-    return tools.loadJSONSync(configpath)
+    return tools.loadJsonFileSync(configpath)
 }
 
 export async function writeObaNoteConfig(note: any, config: any) {
     const configpath = await getNoteConfigPath(note)
-    return tools.writeJSOSync(configpath, config)
+    return await tools.writeJsonFileAsync(configpath, config)
 }
 
 // read a key in the config file

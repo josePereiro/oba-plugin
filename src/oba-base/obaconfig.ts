@@ -34,7 +34,7 @@ export function loadConfig() : boolean {
         if (ev["file.intact"]) { return false }
 
         // load
-        const json = tools.loadJSONSync(configPath)
+        const json = tools.loadJsonFileSync(configPath)
         if (!json) { return false; }
         CONFIG = json; // update
         console.log("config loaded!");

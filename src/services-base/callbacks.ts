@@ -36,8 +36,6 @@ export function onload() {
             await tools.openNoteAtLine(params?.["_file"], params?.["_line"])
         }
     )
-    
-
 
     console.log("registry:\n", CALLBACKS_REGISTRY)
 

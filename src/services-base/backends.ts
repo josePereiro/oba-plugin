@@ -99,8 +99,8 @@ export async function signalBackend(extras = BACKENDS_EXTRAS) {
 
 	// Order is important
 	// backends must be listening 
-	await tools.writeJSON(getStateSignalPath(), statesignal)
-	await tools.writeJSON(getHashSignalPath(), hashsignal)
+	await tools.writeJsonFileAsync(getStateSignalPath(), statesignal)
+	await tools.writeJsonFileAsync(getHashSignalPath(), hashsignal)
 	console.log("hashsignal:\n", hashsignal)
 	console.log("statesignal:\n", statesignal)
 
