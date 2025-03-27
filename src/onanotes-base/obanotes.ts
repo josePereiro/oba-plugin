@@ -77,7 +77,8 @@ export function onload() {
         callback: async () => {
             console.clear()
             const note = tools.getCurrNote({err: true})
-            const config = await getSetObaNoteConfig(note, "oba.test", genObaNoteId())
+            // const config = await getSetObaNoteConfig(note, "oba.test", genObaNoteId())
+            const config = await getObaNoteConfigJSON(note)
             console.log("config: ", config)
         },
     });

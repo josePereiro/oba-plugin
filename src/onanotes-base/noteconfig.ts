@@ -1,6 +1,9 @@
-import { tools } from "src/tools-base/0-tools-modules";
+import { JsonIO } from "src/tools-base/0-tools-modules";
 import { ensureObaNoteID, getObaNotesDir } from "./obanotes-base";
 import { join } from "path";
+import { existsSync } from "fs";
+import { TFile } from "obsidian";
+
 
 // MARK: note config
 export async function getNoteConfigPath(note: any) {
@@ -9,55 +12,36 @@ export async function getNoteConfigPath(note: any) {
     return join(dir, `${uuid}.config.json`)
 }
 
+export async function getObaNoteConfigJsonIO(note: TFile) {
+    const io = new JsonIO()
+    const configpath = await getNoteConfigPath(note)
+    io.file(configpath)
+    if (existsSync(configpath)) { io.load() }
+    return io
+}
 
 export async function getObaNoteConfigJSON(note: any) {
-    const configpath = await getNoteConfigPath(note)
-    return tools.loadJsonFileSync(configpath)
+    const io = await getObaNoteConfigJsonIO(note)
+    return io.retDepot()
 }
 
 export async function writeObaNoteConfig(note: any, config: any) {
-    const configpath = await getNoteConfigPath(note)
-    return await tools.writeJsonFileAsync(configpath, config)
+    const io = await getObaNoteConfigJsonIO(note)
+    return io.write()
 }
 
 // read a key in the config file
 export async function getObaNoteConfig(note: any, key: string, dflt: any = null) {
-    try {
-        const config = await getObaNoteConfigJSON(note)
-        if (!(key in config)) { 
-            console.warn(`Unknown key, key: `, key)
-            return dflt
-        } else {
-            return config[key]
-        }
-    } catch (err) {
-        console.warn("Error getting config", err);
-        return dflt
-    }
+    const io = await getObaNoteConfigJsonIO(note)
+    return io.getd(key, dflt).retVal()
 }
 
 export async function setObaNoteConfig(note: any, key: string, val: any) {
-    const config = await getObaNoteConfigJSON(note) || {}
-    config[key] = val
-    await writeObaNoteConfig(note, config)
+    const io = await getObaNoteConfigJsonIO(note)
+    return io.set(key, val)
 }
 
-export async function getSetObaNoteConfig(note: any, key: string, dflt: any = null) {
-    let config: { [key: string]: any } = {};
-    try {
-        config = await getObaNoteConfigJSON(note) || config
-        if (!(key in config)) { 
-            console.warn(`Unknown key, key: `, key)
-            config[key] = dflt
-            await writeObaNoteConfig(note, config)
-            return dflt
-        } else {
-            return config[key]
-        }
-    } catch (err) {
-        console.warn("Error getting config", err);
-        config[key] = dflt
-        await writeObaNoteConfig(note, config)
-        return dflt
-    }
+export async function getSetObaNoteConfig(note: any, key: string, val: any = null) {
+    const io = await getObaNoteConfigJsonIO(note)
+    return io.getset(key, val).retVal()
 }

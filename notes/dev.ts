@@ -1,8 +1,9 @@
 /*
 TODO:
-- Create a general get/set/getset/write/load interface for handling JSON files
+-DONE/ Create a general get/set/getset/write/load interface for handling JSON files
     - Similar to blobio
     - Potential name: jsonio
+- Migrate config procesing to jsonio
 - Propagate the RefResolverMap interface to biblIO to handle references
     - An array is not sufficiently flexible
 - Resolve the CitNotes citekey problem
