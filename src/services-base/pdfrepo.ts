@@ -35,7 +35,7 @@ export function openPdfFromNote() {
     noteName = noteName.replace("@", "");
     noteName = noteName.replace(".md", "");
     const pdfFileName = `${noteName}.pdf`;
-    const pdfsDir = obaconfig.getConfig("local.pdfs.dir")
+    const pdfsDir = obaconfig.getObaConfig("local.pdfs.dir")
     const pdfFilePath = join(
         pdfsDir, pdfFileName
     );

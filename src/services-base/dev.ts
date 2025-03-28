@@ -99,7 +99,7 @@ async function askLLM(question: string): Promise<string> {
     const API_URL = "https://api-inference.huggingface.co/models/";
     
     // const API_TOKEN = "YOUR_HUGGINGFACE_API_KEY"; // Sostituiscilo con la tua chiave API gratuita
-    const API_TOKEN = obaconfig.getConfig("huggingface.access.token", null)
+    const API_TOKEN = obaconfig.getObaConfig("huggingface.access.token", null)
     if (!API_TOKEN) {
         new Notice("'huggingface.access.token' missing")
         return;

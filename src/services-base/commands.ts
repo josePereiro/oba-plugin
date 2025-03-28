@@ -12,7 +12,7 @@ let NCOMMANDS: number;
 export function onload() {
     console.log("Commands:onload");
 
-    NCOMMANDS = obaconfig.getConfig("commands.defaults.num", 5)
+    NCOMMANDS = obaconfig.getObaConfig("commands.defaults.num", 5)
 
     for (const i of getCommandRange()) {
         OBA.addCommand({

@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from "fs";
-import { errVersion, ErrVersionCallerOptions, mkdirParent } from "./0-tools-modules";
+import { errVersion, ErrVersionCallerOptions, mkdirParent, tools } from "./0-tools-modules";
 import { readFile, writeFile } from "fs/promises";
-import _ from 'lodash';
+import * as _ from 'lodash';
 
 // MARK: JsonIO
 // // TOOD: implement jsonio as a class
@@ -40,7 +40,15 @@ export class JsonIO {
     }
 
     public load() {
-        this.state["depot"] = loadJsonFileSync(this.state["file"]);
+        const depot = loadJsonFileSync(this.state["file"], {strict: true});
+        this.state["depot"] = depot
+        return this
+    }
+
+    public loadd(dflt: any = {}) {
+        const depot = loadJsonFileSync(this.state["file"], {strict: false})
+        console.log(depot)
+        this.state["depot"] = depot || dflt
         return this
     }
 
@@ -164,59 +172,53 @@ export class JsonIO {
 
 }
 
-
 // load
 function __generalLoadJson(
     path: string, 
     loadfun: any, 
-    err: ErrVersionCallerOptions = {}
+    errops: ErrVersionCallerOptions = {}
 ) {
-    return errVersion({...err, 
-        fun: () => {
-            if (!existsSync(path)) {
-                console.error("File missing", path);
-                return null
-            }
-            const ret = loadfun();
-            if (ret instanceof Promise) {
-                return ret.then((ret1) => {
-                    console.log(`JSON loaded from: ${path}`);
-                    return ret1;
-                  })
-            } else {
-                console.log(`JSON loaded from: ${path}`);
-                return ret;
-            }
+    const fun = () => {
+        if (!existsSync(path)) {
+            console.error("File missing", path);
+            return null
         }
-    })
+        const ret = loadfun();
+        if (ret instanceof Promise) {
+            return ret.then((ret1) => {
+                console.log(`JSON loaded from: ${path}`);
+                return ret1;
+                })
+        } else {
+            console.log(`JSON loaded from: ${path}`);
+            return ret;
+        }
+    }
+    return tools.errVersion(fun, errops)
 }
 
 export function loadJsonFileSync(
     path: string, 
-    err: ErrVersionCallerOptions = {}
+    errops: ErrVersionCallerOptions = {}
 ) {
-    return __generalLoadJson(path, 
-        () => { 
-            const data = readFileSync(path, 'utf8') 
-            const obj = JSON.parse(data); // try parse
-            return obj
-        }, 
-        err
-    )
+    const fun = () => { 
+        const data = readFileSync(path, 'utf8') 
+        const obj = JSON.parse(data); // try parse
+        return obj
+    }
+    return __generalLoadJson(path, fun, errops)
 }
 
 export async function loadJsonFileAsync(
     path: string, 
-    err: ErrVersionCallerOptions = {}
+    errops: ErrVersionCallerOptions = {}
 ) {
-    return await __generalLoadJson(path, 
-        async () => { 
-            const data = await readFile(path, 'utf8') 
-            const obj = JSON.parse(data); // try parse
-            return obj
-        }, 
-        err
-    )
+    const fun = async () => { 
+        const data = await readFile(path, 'utf8') 
+        const obj = JSON.parse(data); // try parse
+        return obj
+    }
+    return await __generalLoadJson(path, fun, errops)
 }
 
 // write
@@ -224,47 +226,47 @@ function __generalWriteJson(
     path: string, 
     obj: any,
     writefun: any, 
-    err: ErrVersionCallerOptions = {}
+    errops: ErrVersionCallerOptions = {
+        msg: "Write failed"
+    }
 ) {
-    return errVersion({...err, 
-        fun: () => {
-            mkdirParent(path);
-            const jsonString = JSON.stringify(obj, null, 2);
-            const ret = writefun(jsonString)
-            if (ret instanceof Promise) {
-                return ret.then((ret1) => {
-                    console.log(`JSON written at: ${path}`);
-                    return ret1;
-                  })
-            } else {
+    const fun = () => {
+        mkdirParent(path);
+        const jsonString = JSON.stringify(obj, null, 2);
+        const ret = writefun(jsonString)
+        if (ret instanceof Promise) {
+            return ret.then((ret1) => {
                 console.log(`JSON written at: ${path}`);
-                return ret;
-            }
+                return ret1;
+            })
+        } else {
+            console.log(`JSON written at: ${path}`);
+            return ret;
         }
-    })
+    }
+    return tools.errVersion(fun, errops);
 }
 
 export async function writeJsonFileAsync(
     path: string, 
     obj: any,
-    err: ErrVersionCallerOptions = {}
+    errops: ErrVersionCallerOptions = {}
 ) {
-    return await __generalWriteJson(path, obj,
-        (txt: string) => { return writeFile(path, txt, 'utf-8') }, 
-        err
-    )
+    const fun = async (txt: string) => { 
+        await writeFile(path, txt, 'utf-8') 
+        return true
+    }
+    return await __generalWriteJson(path, obj, fun, errops)
 }
 
 export function writeJsonFileSync(
     path: string, 
     obj: any,
-    err: ErrVersionCallerOptions = {}
+    errops: ErrVersionCallerOptions = {}
 ) {
-    return __generalWriteJson(path, obj,
-        (txt: string) => { 
-            writeFileSync(path, txt, 'utf-8')
-            return true 
-        }, 
-        err
-    )
+    const fun = (txt: string) => { 
+        writeFileSync(path, txt, 'utf-8')
+        return true 
+    }
+    return __generalWriteJson(path, obj, fun, errops)
 }

@@ -2,35 +2,53 @@ import { EditorPosition, FileSystemAdapter, MarkdownView, Notice, TFile } from "
 import { join } from "path";
 import { OBA } from "src/oba-base/globals";
 import { isAbsolute } from "path";
-import { tools } from "./0-tools-modules";
+import { ErrVersionCallerOptions, tools } from "./0-tools-modules";
 
-export function getCurrNote({err = false} = {}): TFile | null  {
+export function getCurrNote(
+    errops: ErrVersionCallerOptions = {
+        strict: false,
+        msg: "No active file"
+    }
+): TFile | null  {
     const fun = () => {
         return OBA.app.workspace.getActiveFile();
     }
-    return tools.errVersion({err, fun, msg: "No active file"})
+    return tools.errVersion(fun, errops)
 }
-export function getCurrNotePath({err = false} = {}): string | null  {
+export function getCurrNotePath(
+    errops: ErrVersionCallerOptions = {
+        strict: false,
+        msg: "No active file"
+    }
+): string | null  {
     const fun = () => {
         const note = getCurrNote();
         return resolveNoteAbsPath(note)
     }
-    return tools.errVersion({err, fun, msg: "No active file"})
+    return tools.errVersion(fun, errops)
 }
 
-export function getVaultDir({err = false} = {}): string {
+export function getVaultDir(
+    errops: ErrVersionCallerOptions = {
+        strict: false,
+        msg: "Cannot determine base path."
+    }
+): string {
     // base path
     const fun = () => {
         if (OBA.app.vault.adapter instanceof FileSystemAdapter) {
             return OBA.app.vault.adapter.getBasePath();
         } else { return null; }
     }
-    return tools.errVersion({err, fun, 
-        msg: 'Cannot determine base path.'
-    })
+    return tools.errVersion(fun, errops)
 }
 
-export function getSelectedText({err = false} = {}) : string | null{
+export function getSelectedText(
+    errops: ErrVersionCallerOptions = {
+        strict: false,
+        msg: 'No text selected.'
+    }
+) : string | null{
     const fun = () => {
         const editor = OBA.app.workspace.activeEditor?.editor;
         if (!editor) { return null }
@@ -38,12 +56,15 @@ export function getSelectedText({err = false} = {}) : string | null{
         console.log("selectedText:\n ", selectedText);
         return selectedText ? selectedText : null
     }
-    return tools.errVersion({err, fun, 
-        msg: 'No text selected.'
-    })
+    return tools.errVersion(fun, errops)
 }
 
-export function getSelectionRange({err = false} = {}): { start: number, end: number } | null{
+export function getSelectionRange(
+    errops: ErrVersionCallerOptions = {
+        strict: false,
+        msg: 'No text selected.'
+    }
+): { start: number, end: number } | null{
     const fun = () => {
         const editor = OBA.app.workspace.activeEditor?.editor;
         if (!editor) { return null }
@@ -53,23 +74,30 @@ export function getSelectionRange({err = false} = {}): { start: number, end: num
         const end = editor.posToOffset(editor.getCursor('to'));
         return { start, end };
     }
-    return tools.errVersion({err, fun, 
-        msg: 'No text selected.'
-    })
+    return tools.errVersion(fun, errops)
 }
 
-export function getCursorPosition({err = false} = {}): { line: number, ch: number } | null {
+export function getCursorPosition(
+    errops: ErrVersionCallerOptions = {
+        strict: false,
+        msg: 'No active file.'
+    }
+): { line: number, ch: number } | null {
     const fun = () => {
         const editor = OBA.app.workspace.activeEditor?.editor;
         if (!editor) { return null }
         return editor.getCursor();
     }
-    return tools.errVersion({err, fun, 
-        msg: 'No active file.'
-    })
+    return tools.errVersion(fun, errops)
 }
 
-export function insertAtCursor(txt: string, {err = true} = {}): number {
+export function insertAtCursor(
+    txt: string, 
+    errops: ErrVersionCallerOptions = {
+        strict: true,
+        msg: 'No active file.'
+    }
+): number {
     const fun = () => {
         const view = OBA.app.workspace.getActiveViewOfType(MarkdownView);
         if (!view) {
@@ -80,9 +108,7 @@ export function insertAtCursor(txt: string, {err = true} = {}): number {
         view.editor.replaceRange(txt, cursor);
         return 1;
     }
-    return tools.errVersion({err, fun, 
-        msg: 'No active file.'
-    })
+    return tools.errVersion(fun, errops)
 }
 
 export function getTagsForFile(file: TFile): string[] | null {
@@ -143,15 +169,21 @@ export async function openNoteAtLine(
     }
 }
 
-export function absPath(path: string, {err = false} = {}): string | null {
+export function absPath(
+    path: string, 
+    errops: ErrVersionCallerOptions = {strict: false}
+): string | null {
     if (isAbsolute(path)) { return path; } 
-    return join(getVaultDir({err}), path);
+    return join(getVaultDir(errops), path);
 }
 
 export function resolveNoteAbsPath(
-        note: string | TFile | null, 
-        {err = false} = {}
-    ): string | null {
+    note: string | TFile | null, 
+    errops: ErrVersionCallerOptions = {
+        strict: false,
+        msg: 'Null note.'
+    }
+): string | null {
     const fun = () => {
         if (!note) { return null; }
         if (typeof note === 'string') {
@@ -160,9 +192,7 @@ export function resolveNoteAbsPath(
             return absPath(note.path)
         }
     }
-    return tools.errVersion({err, fun,
-        msg: 'Null note.'
-    })
+    return tools.errVersion(fun, errops)
 }
 
 // MARK: yaml section
@@ -192,13 +222,14 @@ export function getNoteYamlHeaderVal(
     note: TFile, 
     key: string, 
     dflt: any = null,
-    {err = false} = {}
+    errops: ErrVersionCallerOptions = {
+        strict: false,
+        msg: 'No frontmatter.'
+    }
 ): any | null {
     const fun = () => {
         const yaml = getNoteYamlHeader(note);
         return yaml?.[key] || dflt
     }
-    return tools.errVersion({err, fun,
-        msg: 'No frontmatter.'
-    })
+    return tools.errVersion(fun, errops)
 }

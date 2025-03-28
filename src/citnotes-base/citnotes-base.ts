@@ -1,7 +1,7 @@
 import { Notice, TFile } from "obsidian";
 import { obanotes } from "src/onanotes-base/0-obanotes-modules";
 import { biblio } from "src/biblio-base/0-biblio-modules";
-import { tools } from "src/tools-base/0-tools-modules";
+import { ErrVersionCallerOptions, tools } from "src/tools-base/0-tools-modules";
 import { basename } from "path";
 import { BiblIOData } from "src/biblio-base/biblio-data";
 
@@ -14,7 +14,13 @@ import { BiblIOData } from "src/biblio-base/biblio-data";
 // MARK: parse
 // TODO/TAI: do not rely on the note name
 // - Maybe add a citekey field on the yalm section of the note
-export function parseCitNoteCiteKey(note: any, {err = false} = {}) {
+export function parseCitNoteCiteKey(
+    note: any, 
+    errops: ErrVersionCallerOptions = {
+        strict: false,
+        msg: 'Error parsing citekey'
+    }
+) {
     const fun = () => {
         const path = tools.resolveNoteAbsPath(note);
         if (!path) { return null; }
@@ -22,16 +28,15 @@ export function parseCitNoteCiteKey(note: any, {err = false} = {}) {
             replace(/\.md$/, '')?.
             replace(/^@/, '')
     }
-    return tools.errVersion({err, fun,
-        msg: 'Error parsing citekey'
-    })
+    return tools.errVersion(fun, errops)
 }
 
 // MARK: get
 export async function getCitNoteBiblIO(
-    note: TFile = tools.getCurrNote()
+    note: TFile = tools.getCurrNote(),
+    errops: ErrVersionCallerOptions
 ) {
-    const citekey = parseCitNoteCiteKey(note);
+    const citekey = parseCitNoteCiteKey(note, errops);
     // TODO: this biblio object has not a 
     // resolved refs field
     return await biblio.consensusBiblIO({citekey})
@@ -50,6 +55,7 @@ export async function getCitNoteReferenceBiblIOs(
     for (let i = 1; i <= n; i++) {
         if (i in iders) {
             const biblIO = await biblio.consensusBiblIO(iders[i])
+            biblIOs.push(biblIO);
         } else {
             const msg = `Reference number ${i} not found in resolver map`;
             biblIOs.push(null);

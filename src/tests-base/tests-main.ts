@@ -1,8 +1,7 @@
-import { join } from "path";
 import { filesys } from "../oba-base/0-oba-modules";
 import { OBA } from "../oba-base/globals";
-import { tools } from "../tools-base/0-tools-modules";
 import { jsonIO_tests } from "./jsonio-tests";
+import { obaconfig_tests } from "./obaconfig-tests";
 
 export function onload() {
     console.log("Test:onload")
@@ -17,6 +16,7 @@ export function onload() {
             console.log()
             
             await jsonIO_tests();
+            obaconfig_tests();
         }
     });
 }

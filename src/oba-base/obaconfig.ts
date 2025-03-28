@@ -1,6 +1,6 @@
 import { statSync } from 'fs';
 import { join } from 'path';
-import * as tools from '../tools-base/0-tools-modules';
+import { JsonIO, tools } from '../tools-base/0-tools-modules';
 import { OBA } from './globals';
 import { vscode } from 'src/services-base/0-servises-modules';
 
@@ -8,13 +8,14 @@ import { vscode } from 'src/services-base/0-servises-modules';
     Handle Oba confg file
 */
 
-export let CONFIG: { [key: string]: any } = {};
+// export let CONFIG: { [key: string]: any } = {};
+export let CONFIG: JsonIO = new JsonIO();
 
 export function onload() {
     console.log("obaconfig:onload");
     
     // first load
-    loadConfig()
+    loadObaConfigOnDemand()
 
     OBA.addCommand({
         id: 'oba-obaconfig-open-confic-file',
@@ -25,20 +26,22 @@ export function onload() {
     });
 }
 
-export function loadConfig() : boolean {
+export function loadObaConfigOnDemand() : boolean {
     try {
         
         // Check file
         const configPath = getObaConfigPath()
-        const ev = tools.compareMtimeMsCached(configPath, 'loadConfig')
+        const ev = tools.compareMtimeMsCached(configPath, 'loadObaConfigOnDemand')
         if (ev["file.intact"]) { return false }
 
         // load
-        const json = tools.loadJsonFileSync(configPath)
-        if (!json) { return false; }
-        CONFIG = json; // update
+        const io = new JsonIO()
+        io.file(configPath).loadd({} as {[key: string]: any})
+        // const json = tools.loadJsonFileSync(configPath)
+        // if (!json) { return false; }
+        CONFIG = io; // update
         console.log("config loaded!");
-        console.log(CONFIG);
+        console.log(io.retDepot());
 
     } catch (err) {
         console.error("Error loading config", err);
@@ -48,19 +51,11 @@ export function loadConfig() : boolean {
 }   
 
 // read a key in the config file
-export function getConfig(key: string, dflt: any = null) {
-    try {
-        loadConfig();
-        if (!(key in CONFIG)) { 
-            console.warn(`Unknown key, key: `, key)
-            return dflt
-        } else {
-            return CONFIG[key]
-        }
-    } catch (err) {
-        console.warn("Error getting config", err);
-        return dflt
-    }
+export function getObaConfig(key: string, dflt: any = null) {
+    loadObaConfigOnDemand()
+    const val = CONFIG.getd(key, dflt).retVal()
+    console.log("CONFIG: ", CONFIG)
+    return val
 }
 
 export function obaConfigMtimeMs() {

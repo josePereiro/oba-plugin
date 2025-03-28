@@ -45,7 +45,7 @@ export function openNoteMD() {
 }
 
 export function getMarkerDir() {
-    const path = obaconfig.getConfig("markerpdf.dir")
+    const path = obaconfig.getObaConfig("markerpdf.dir")
     if (existsSync(path)) { return path; }
     const errorMsg = `"markerpdf.dir" config not found!!!`
     new Notice(`ERROR: ${errorMsg}`);

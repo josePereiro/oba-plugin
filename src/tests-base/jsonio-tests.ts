@@ -117,8 +117,8 @@ async function testLoadWriteAsync() {
     console.log("--------")
     const path = _getTestJsonPath()
     const obj0 = { "test": tools.randstring() }
-    await tools.writeJsonFileAsync(path, obj0)
-    const obj1 = await tools.loadJsonFileAsync(path)
+    await tools.writeJsonFileAsync(path, obj0, {strict: true})
+    const obj1 = await tools.loadJsonFileAsync(path, {strict: true})
     const eq = JSON.stringify(obj0) === JSON.stringify(obj1)
     if (eq) { console.log("Test passed!") } 
     else { console.error("Error obj0 != obj1") }

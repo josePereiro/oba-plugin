@@ -48,7 +48,7 @@ export async function gitCommitCmd() {
 
 export async function commitToBranch(): Promise<void> {
     try {
-        const targetBranch = obaconfig.getConfig("git.commit.branch.target")
+        const targetBranch = obaconfig.getObaConfig("git.commit.branch.target")
         if (!targetBranch) {
             new Notice(`Target brach not setup. See Oba.json "git.commit.branch.target"`)
             return;

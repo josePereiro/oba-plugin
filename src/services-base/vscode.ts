@@ -33,8 +33,8 @@ export function onload() {
 }
 
 export function call(args = "") {
-    const vscode = obaconfig.getConfig("vscode.exec", "code")
-    const wrokspace = obaconfig.getConfig("vscode.workspace", "")
+    const vscode = obaconfig.getObaConfig("vscode.exec", "code")
+    const wrokspace = obaconfig.getObaConfig("vscode.workspace", "")
     const command = `${vscode} ${wrokspace} ${args}`;
     console.log("command:\n", command);
     exec(command, (error, stdout, stderr) => {

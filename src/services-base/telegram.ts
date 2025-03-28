@@ -28,8 +28,8 @@ export class Telegram {
 
 // 		// Lettura delle credenziali dal file .env
 
-// 		const apiId = obaconfig.getConfig("telegram.api.id", null); //process.env.API_ID;
-// 		const apiHash = obaconfig.getConfig("telegram.api.hash", null); // process.env.API_HASH;
+// 		const apiId = obaconfig.getObaConfig("telegram.api.id", null); //process.env.API_ID;
+// 		const apiHash = obaconfig.getObaConfig("telegram.api.hash", null); // process.env.API_HASH;
 
 // 		if (!apiId || !apiHash) {
 // 			console.error("API_ID o API_HASH non sono stati trovati nel file .env.");

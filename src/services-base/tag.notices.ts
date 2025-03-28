@@ -26,7 +26,7 @@ export function onload() {
 }
 
 export function tagNoticesConfig() {
-    return obaconfig.getConfig("tag.notices", null)
+    return obaconfig.getObaConfig("tag.notices", null)
 }
 
 /*

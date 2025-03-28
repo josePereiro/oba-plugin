@@ -23,7 +23,7 @@ export function onload() {
         name: "Tools dev",
         callback: async () => {
             console.clear();
-            const note = tools.getCurrNote({err: true});
+            const note = tools.getCurrNote({strict: true});
             let yaml = tools.getNoteYamlHeader(note);
             console.log("yaml: ", yaml);
             yaml = await tools.modifyNoteYamlHeader(note, (yaml) => {

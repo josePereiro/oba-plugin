@@ -67,7 +67,7 @@ function _makeBiblIO(lb_data: any) {
 // MARK: merged
 export async function getMergedBiblIO(
     sourceFiles: string[] = 
-            obaconfig.getConfig("local.bib.files")
+            obaconfig.getObaConfig("local.bib.files")
 ): Promise<BiblIOData[]> {
     // Check for updates
     const valid = await _validateRAMCache(sourceFiles, 'getMergedBiblIO')
@@ -86,7 +86,7 @@ export async function getMergedBiblIO(
 
 async function _buildMergedBiblIO(
         sourceFiles: string[] = 
-            obaconfig.getConfig("local.bib.files")
+            obaconfig.getObaConfig("local.bib.files")
     ) {
     const mergedBiblIO: BiblIOData[] = [];
     for (const sourceFile of sourceFiles) {
@@ -156,7 +156,7 @@ export function clearRAMCache() {
 }
 
 async function _validateRAMCache(
-    sourceFiles: string[] = obaconfig.getConfig("local.bib.files"),
+    sourceFiles: string[] = obaconfig.getObaConfig("local.bib.files"),
     eventid = "validateRAMCache"
 ) {
     // Check spurce modifications

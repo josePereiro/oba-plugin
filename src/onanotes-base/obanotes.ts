@@ -32,7 +32,7 @@ export function onload() {
             for (const note of notes) {
                 console.log(`doing ${i}/${tot}`);
                 console.log("note: ", note.path);
-                const obaid = await obanotes.ensureObaNoteID(note, {err: false})
+                const obaid = await obanotes.ensureObaNoteID(note, {strict: false})
                 console.log("obaid: ", obaid);
                 i++;
             }
@@ -54,7 +54,7 @@ export function onload() {
         name: "ObaNotes open note config json",
         callback: async () => {
             console.clear()
-            const note = tools.getCurrNote({err: true})
+            const note = tools.getCurrNote({strict: true})
             const path = await getNoteConfigPath(note)
             vscode.goto(path)
         },
@@ -65,7 +65,7 @@ export function onload() {
         name: "ObaNotes log note config",
         callback: async () => {
             console.clear()
-            const note = tools.getCurrNote({err: true})
+            const note = tools.getCurrNote({strict: true})
             const config = await getObaNoteConfigJSON(note)
             console.log("config: ", config)
         },
@@ -76,7 +76,7 @@ export function onload() {
         name: "ObaNotes dev",
         callback: async () => {
             console.clear()
-            const note = tools.getCurrNote({err: true})
+            const note = tools.getCurrNote({strict: true})
             // const config = await getSetObaNoteConfig(note, "oba.test", genObaNoteId())
             const config = await getObaNoteConfigJSON(note)
             console.log("config: ", config)
@@ -86,7 +86,7 @@ export function onload() {
 }
 
 export function subNoteLinkFromSelection() {
-    const path = tools.getCurrNotePath({err: true})
+    const path = tools.getCurrNotePath({strict: true})
     const name0 = basename(path).
         replace(/.md$/, '')
     const sel = tools.getSelectedText().trim();

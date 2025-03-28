@@ -104,7 +104,7 @@ export function onload() {
         callback: async () => {
             console.clear();
             const note = tools.getCurrNote()
-            const citekey = parseCitNoteCiteKey(note, {err: true})
+            const citekey = parseCitNoteCiteKey(note, {strict: true})
             await copyNonLocalReferences({citekey});
         }
     });
