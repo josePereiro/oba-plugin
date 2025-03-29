@@ -25,6 +25,8 @@ import * as pdfrepo from "./pdfrepo"
 export { pdfrepo }
 import * as replacer from "./replacer"
 export { replacer }
+import * as statusbar from "./statusbar"
+export { statusbar }
 import * as tagnotices from "./tag.notices"
 export { tagnotices }
 // import * as telegram from "./telegram"

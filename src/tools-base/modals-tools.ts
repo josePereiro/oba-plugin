@@ -118,24 +118,36 @@ export class SimilarityModal extends Modal {
 // 
 export class SelectorModalV2 extends FuzzySuggestModal<string> {
   private items: string[];
-  private title: string;
-  private callback: (idx: number) => void;
+  private callback: (idx: number) => void | Promise<void>;
+  private initialValue: string;
 
   constructor(
-        items: string[], 
-        title = "Select an item", 
-        callback: (idx: number) => void = () => {}
-      ) {
-      super(OBA.app);
-      this.items = items;
-      this.title = title;
-      this.callback = callback;
+      items: string[], 
+      placeholder = "Select an item", 
+      initialValue = '',
+      callback: (idx: number) => void | Promise<void> = () => {}
+    ) {
+    super(OBA.app);
+    this.items = items;
+    this.setPlaceholder(placeholder)
+    this.initialValue = initialValue;
+    this.callback = callback;
+    this.setInstructions([{command: '↑↓', purpose: 'to navigate'},
+      // {command: '↵', purpose: `to search ${this.query}`},
+      {command: 'esc', purpose: 'to dismiss'}]);
   }
 
   onOpen(): void {
-      const { contentEl } = this;
-      contentEl.createEl("h2", { text: this.title }); 
       super.onOpen();
+      if (this.initialValue) {
+        const inputEl = this.inputEl;
+        console.log(inputEl)
+        if (inputEl) {
+          inputEl.value = this.initialValue;
+          inputEl.dispatchEvent(new Event('input'));
+          inputEl.select();
+        }
+      }
   }
 
   getItems(): string[] {

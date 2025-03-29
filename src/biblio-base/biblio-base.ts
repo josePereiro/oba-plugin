@@ -2,6 +2,7 @@ import { citnotes } from "src/citnotes-base/0-citnotes-modules";
 import { crossref, localbibs } from "./0-biblio-modules";
 import { BiblIOAuthor, BiblIOData, BiblIODate, BiblIOIder } from "./biblio-data";
 import { tools } from "src/tools-base/0-tools-modules";
+import { statusbar } from "src/services-base/0-servises-modules";
 
 // MARK: consensus
 /*
@@ -46,17 +47,19 @@ export async function consensusReferenceBiblIOs(
     const map = biblIO["references-map"]
     type T = BiblIOData | null;
     const biblIOs: T[] = []
-    for (let i = 1; i <= nref; i++) {
-        const ider = map?.[i]
+    for (let refi = 1; refi <= nref; refi++) {
+        const ider = map?.[refi]
+        await statusbar.setText(`fetching ${refi}/${nref}`);
         if (ider) {
             const biblIO = await consensusBiblIO(ider)
             biblIOs.push(biblIO);
         } else {
-            const msg = `Reference number ${i} not found in resolver map`;
+            const msg = `Reference number ${refi} not found in resolver map`;
             biblIOs.push(null);
             console.warn(msg);
         }
     }
+    await statusbar.setText(``);
     return biblIOs
 }
 
@@ -147,7 +150,9 @@ export async function resolveBiblIOIderDOI(id: BiblIOIder) {
     if (id?.["doi"]) { return true; } 
     if (id?.["citekey"]) {
         const lb_biblIO = await localbibs.findByCiteKey(id["citekey"])
-        id["doi"] = lb_biblIO?.["doi"]
+        const doi = lb_biblIO?.["doi"]
+        if (!doi) { return false; }
+        id["doi"] = doi
         return true; 
     } 
     if (id?.["citnote"]) {
@@ -155,7 +160,7 @@ export async function resolveBiblIOIderDOI(id: BiblIOIder) {
         const citekey = await citnotes.parseCitNoteCiteKey(note)
         if (citekey) {
             id["citekey"] = citekey 
-            return await resolveBiblIOIder(id); 
+            return await resolveBiblIOIderDOI(id); 
         }
     }
     if (id?.["query"]) {
@@ -163,17 +168,23 @@ export async function resolveBiblIOIderDOI(id: BiblIOIder) {
         let lb_biblIO;
         lb_biblIO = await localbibs.findByCiteKey(id["query"])
         if (lb_biblIO) {
-            id["doi"] = lb_biblIO?.["doi"]
-            return true; 
+            const doi = lb_biblIO?.["doi"]
+            if (doi) { 
+                id["doi"] = doi
+                return true; 
+            }
         }
         lb_biblIO = await localbibs.findByDoi(id["query"])
         if (lb_biblIO) {
-            id["doi"] = lb_biblIO?.["doi"]
-            return true; 
+            const doi = lb_biblIO?.["doi"]
+            if (doi) { 
+                id["doi"] = doi
+                return true; 
+            }
         }
         // default to doi
         id["doi"] = id["query"]
-        return true; 
+        return false; 
     }
     return false; 
 }
@@ -184,3 +195,16 @@ export async function resolveBiblIOIder(id: BiblIOIder) {
     return id
 }
 
+export function collectReferenceIders(
+    biblIO: BiblIOData
+) {
+    const nref = biblIO["references-count"]
+    const map = biblIO["references-map"]
+    type T = BiblIOIder | null;
+    const iders: T[] = []
+    for (let i = 1; i <= nref; i++) {
+        const ider = map?.[i] ?? null
+        iders.push(ider);
+    }
+    return iders
+}

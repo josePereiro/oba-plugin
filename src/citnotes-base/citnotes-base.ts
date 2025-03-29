@@ -1,9 +1,9 @@
-import { Notice, TFile } from "obsidian";
+import { TFile } from "obsidian";
 import { obanotes } from "src/onanotes-base/0-obanotes-modules";
 import { biblio } from "src/biblio-base/0-biblio-modules";
 import { ErrVersionCallerOptions, tools } from "src/tools-base/0-tools-modules";
 import { basename } from "path";
-import { BiblIOData, RefBiblIOIderMap } from "src/biblio-base/biblio-data";
+import { BiblIOData } from "src/biblio-base/biblio-data";
 import * as _ from 'lodash'
 import { consensusReferenceBiblIOs } from "src/biblio-base/biblio-base";
 

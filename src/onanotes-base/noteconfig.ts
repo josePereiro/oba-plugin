@@ -16,32 +16,32 @@ export async function getObaNoteConfigJsonIO(note: TFile) {
     const io = new JsonIO()
     const configpath = await getNoteConfigPath(note)
     io.file(configpath)
-    if (existsSync(configpath)) { io.load() }
+    // if (existsSync(configpath)) { io.load() }
     return io
 }
 
 export async function getObaNoteConfigJSON(note: any) {
     const io = await getObaNoteConfigJsonIO(note)
-    return io.retDepot()
+    return io.loadd({}).retDepot()
 }
 
 export async function writeObaNoteConfig(note: any, config: any) {
     const io = await getObaNoteConfigJsonIO(note)
-    return io.write()
+    return io.depot(config).write()
 }
 
 // read a key in the config file
 export async function getObaNoteConfig(note: any, key: string, dflt: any = null) {
     const io = await getObaNoteConfigJsonIO(note)
-    return io.getd(key, dflt).retVal()
+    return io.loadd({}).getd(key, dflt).retVal()
 }
 
 export async function setObaNoteConfig(note: any, key: string, val: any) {
     const io = await getObaNoteConfigJsonIO(note)
-    return io.set(key, val)
+    return io.loadd({}).set(key, val)
 }
 
 export async function getSetObaNoteConfig(note: any, key: string, val: any = null) {
     const io = await getObaNoteConfigJsonIO(note)
-    return io.getset(key, val).retVal()
+    return io.loadd({}).getset(key, val).retVal()
 }

@@ -1,8 +1,7 @@
 import { OBA } from "src/oba-base/globals";
 import { crossref, localbibs } from "./0-biblio-modules";
-import { BiblIOAuthor, BiblIOData, BiblIODate, BiblIOIder } from "./biblio-data";
-import { _extractFirst, _extractField, _mergeAll, tools } from "src/tools-base/0-tools-modules";
-import { citnotes } from "src/citnotes-base/0-citnotes-modules";
+import { tools } from "src/tools-base/0-tools-modules";
+import { consensusBiblIO } from "./biblio-base";
 export * from "./biblio-base"
 export * from "./biblio-data"
 
@@ -18,8 +17,8 @@ export function onload() {
 
     // MARK: commands
     OBA.addCommand({
-        id: 'oba-biblio-get-consensus-biblio',
-        name: 'BiblIO get consensus biblIO',
+        id: 'oba-biblio-get-selection-consensus-biblio',
+        name: 'BiblIO get selection consensus biblIO',
         callback: async () => {
             console.clear();
             const sel = tools.getSelectedText();

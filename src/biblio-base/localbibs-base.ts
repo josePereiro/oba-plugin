@@ -329,8 +329,15 @@ function extractReferencesMap(lb_data: any): null {
 }
 
 function extractExtras(lb_data: any): any {
-    // return { "localbib": lb_data }
-    return null
+    return { 
+        "flags.localbibs": true,
+        // "localbib.data": lb_data 
+    }
+}
+
+// MARK utils
+export function isLocal(biblIO: BiblIOData) {
+    return biblIO?.["extras"]?.["flags.localbibs"] === true
 }
 
 // MARK: find

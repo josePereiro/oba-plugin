@@ -7,10 +7,9 @@
 
 import { tools } from "src/tools-base/0-tools-modules";
 import { BiblIOAuthor, BiblIOData, BiblIODate, BiblIOIder, RefBiblIOIderMap } from "./biblio-data";
-import { Notice } from "obsidian";
 import { filesys } from "src/oba-base/0-oba-modules";
 import { join } from "path";
-import { existsSync, mkdirSync } from "fs";
+import { existsSync} from "fs";
 
 
 
@@ -147,7 +146,7 @@ function extractType(cr_data: any): string | null {
 function extractTitle(cr_data: any): string | null {
     try{
         const dat0 = cr_data['message']['title'][0]
-        if (!dat0) { return null}
+        if (!dat0) { return null; }
         return dat0
     } catch (error) { return null; }
 }
@@ -229,7 +228,7 @@ function extractPublishedDate(cr_data: any): BiblIODate | null {
 function extractJournalTitle(cr_data: any): string | null {
     try {
         const dat0 = cr_data['message']["publisher"]
-        if (!dat0) { return null}
+        if (!dat0) { return null; }
         return dat0
     } catch (error) { return null; }
 }
@@ -237,7 +236,7 @@ function extractJournalTitle(cr_data: any): string | null {
 function extractURL(cr_data: any): string | null {
     try {
         const dat0 = cr_data['message']["URL"]
-        if (!dat0) { return null}
+        if (!dat0) { return null; }
         return dat0
     } catch (error) { return null; }
 }
@@ -245,7 +244,7 @@ function extractURL(cr_data: any): string | null {
 function extractAbstract(cr_data: any): string | null {
     try {
         const dat0 = cr_data['message']["abstract"]
-        if (!dat0) { return null}
+        if (!dat0) { return null; }
         return dat0
     } catch (error) { return null; }
 }
@@ -257,7 +256,7 @@ function extractKeywords(cr_data: any): null {
 function extractReferencesCount(cr_data: any) {
     try {
         const dat0 = cr_data['message']["references-count"]
-        if (!dat0) { return null}
+        if (!dat0) { return null; }
         return dat0
     } catch (error) { return null; }
 }
@@ -265,7 +264,7 @@ function extractReferencesCount(cr_data: any) {
 function extractReferencesMap(cr_data: any): RefBiblIOIderMap | null {
     try {
         const dat0 = cr_data['message']["reference"]
-        if (!dat0) { return null}
+        if (!dat0) { return null; }
         const map: RefBiblIOIderMap = {};
         let refi = 1
         for (const refdati of dat0) {
@@ -279,8 +278,10 @@ function extractReferencesMap(cr_data: any): RefBiblIOIderMap | null {
 }
 
 function extractExtras(cr_data: any): any {
-    // return { "crossref": cr_data }
-    return null
+    return { 
+        "flags.crossref": true,
+        // "crossref.data": cr_data
+    }
 }
 
 /*

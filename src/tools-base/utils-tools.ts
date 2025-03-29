@@ -205,7 +205,7 @@ export function _extractField(key: string, ...sources: any[]) {
     const objs: any[] = []
     for (const obj of sources) {
         const val = obj?.[key];
-        if (val) { objs.push(obj); }
+        if (val) { objs.push(val); }
     }
     return objs
 } 
