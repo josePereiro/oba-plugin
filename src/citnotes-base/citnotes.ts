@@ -157,8 +157,12 @@ async function copySelectedCitNoteReferenceLinkFromList(
     }
     
     const query = !sel0 ? '' : sel0.trim()
-          .replace(/[^a-zA-Z0-9\s]/g, '')
-          .replace(/ et\.? al\.?,?;?/g, ' ')
+        .normalize("NFD")
+        .replace(/[^a-zA-Z0-9\s]/g, ' ')
+        .replace(/ et\.? al\.?,?;?/g, ' ')
+        .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
+        .replace(/\s\s/g, ' ')
+        .trim();
 
     const modal = new tools.SelectorModalV2(
         references, 
@@ -357,7 +361,10 @@ function getCitationStringToSearch(biblIOs: BiblIOData[]) {
         const title = biblIO?.["title"] || "Untitled";
         const citekey = biblIO?.["citekey"] ? `[@${biblIO["citekey"]}]` : "[No Citekey]";
         const year = biblIO?.["published-date"]?.["year"] || "Unknown Year";
-        return `${authorsStr} (${year}). "${title}" ${citekey}`;
+        const cit = `${authorsStr} (${year}). "${title}" ${citekey}`;
+        return cit.normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
+            .trim();
     });
 }
 

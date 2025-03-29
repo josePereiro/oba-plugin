@@ -155,7 +155,7 @@ export class SelectorModalV2 extends FuzzySuggestModal<string> {
   }
 
   getItemText(item: string): string {
-      return item;
+      return item
   }
 
   async onChooseItem(item: string, evt: MouseEvent | KeyboardEvent) {
