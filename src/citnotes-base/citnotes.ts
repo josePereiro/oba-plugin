@@ -156,7 +156,7 @@ async function copySelectedCitNoteReferenceLinkFromList(
         return;
     }
     
-    const query = !sel0 ? '' : sel0.trim()
+    const query = !sel0 ? '' : sel0
         .normalize("NFD")
         .replace(/[^a-zA-Z0-9\s]/g, ' ')
         .replace(/ et\.? al\.?,?;?/g, ' ')
