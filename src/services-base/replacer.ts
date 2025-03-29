@@ -29,7 +29,7 @@ export function onload() {
                     .replace(/{{mdate}}/g, _fileStatDate(notePath, "mtime", 'yyyy:MM:dd-HH:mm:ss'))
                     .replace(/{{adate}}/g, _fileStatDate(notePath, "atime", 'yyyy:MM:dd-HH:mm:ss'))
                     .replace(/{{cdate}}/g, _fileStatDate(notePath, "ctime", 'yyyy:MM:dd-HH:mm:ss'))
-                    .replace(/{{oba.id}}/g, obanotes.genObaNoteId())
+                    .replace(/{{oba-id}}/g, obanotes.genObaNoteId())
             })
         },
     });

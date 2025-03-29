@@ -21,7 +21,9 @@ export function onload() {
         id: 'oba-obaconfig-open-confic-file',
         name: 'obaconfig open Oba.json',
         callback: async () => {
-            vscode.goto(getObaConfigPath())
+            console.clear()
+            const path = getObaConfigPath()
+            vscode.goto(path)
         }
     });
 }
@@ -54,7 +56,6 @@ export function loadObaConfigOnDemand() : boolean {
 export function getObaConfig(key: string, dflt: any = null) {
     loadObaConfigOnDemand()
     const val = CONFIG.getd(key, dflt).retVal()
-    console.log("CONFIG: ", CONFIG)
     return val
 }
 

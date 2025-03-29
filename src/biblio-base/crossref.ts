@@ -2,7 +2,6 @@ import { OBA } from 'src/oba-base/globals';
 import * as tools from '../tools-base/0-tools-modules';
 import { getBiblIO } from './crossref-base';
 import * as crossrefbase from './crossref-base'
-import { resolve } from 'node:path';
 import { biblio } from './0-biblio-modules';
 export * from './crossref-base';
 

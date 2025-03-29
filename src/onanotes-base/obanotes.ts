@@ -23,7 +23,7 @@ export function onload() {
 
     OBA.addCommand({
         id: "oba-obanotes-add-ob.id-to-all",
-        name: "ObaNotes add oba.id to all",
+        name: "ObaNotes add oba-id to all",
         callback: async () => {
             console.clear()
             const notes = obanotes.getObaNotes();

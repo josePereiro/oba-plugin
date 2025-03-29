@@ -16,6 +16,14 @@ export function onload() {
     console.log("Dev:onload");
 
     _URLHandler_onload();
+
+    OBA.addCommand({
+        id: 'oba-dev-console-clear',
+        name: 'Dev console.clear',
+        callback: () => {
+            console.clear()
+        }
+    })
     
     OBA.addCommand({
         id: 'oba-dev-cmd',

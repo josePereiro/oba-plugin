@@ -32,11 +32,11 @@ export async function ensureObaNoteID(
 ) {
     const fun = async () => {
         const yaml = await tools.modifyNoteYamlHeader(note, (yaml) => {
-            const id = yaml?.["oba.id"]
+            const id = yaml?.["oba-id"]
             if (id) { return }
-            yaml["oba.id"] = genObaNoteId()
+            yaml["oba-id"] = genObaNoteId()
         })
-        return yaml?.["oba.id"]
+        return yaml?.["oba-id"]
     }
     return await tools.errVersion(fun, errops)
 }

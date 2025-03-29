@@ -3,21 +3,19 @@ import { biblio, crossref, localbibs } from 'src/biblio-base/0-biblio-modules';
 import { BiblIOData, BiblIOIder } from 'src/biblio-base/biblio-data';
 import { OBA } from 'src/oba-base/globals';
 import { tools } from 'src/tools-base/0-tools-modules';
-import { consensusReferences } from 'src/biblio-base/biblio';
-import { basename } from 'node:path';
-import { consensusCitNoteRefResolverMap, getCitNoteReferenceBiblIOs, newRefResolverMap } from './citnotes-base';
 import { obanotes } from 'src/onanotes-base/0-obanotes-modules';
+import { citNoteBiblIO, parseCitNoteCiteKey } from './citnotes-base';
 export * from './citnotes-base'
 
 /*
     Handle citation notes.
-    - parse metadata from citation notes
-        - keep a cache of such metadata
-    - Notify when format is invalid
-    - Replacements (DONE)
-        - Replace #!REF13 by the citekey if it is present in the bibtex db
-            - Use crossref for getting References
-    - TODO: create a per note metadata cache
+    - DONE/ parse metadata from citation notes
+        - TAI/ keep a cache of such metadata
+    - TODO/ Notify when format is invalid (linter)
+    - DONE/ Replacements        
+        - DEPRECATED/ Replace #!REF13 by the citekey if it is present in the bibtex db
+            - DONE/ Use crossref for getting References
+    - DONE/ create a per note metadata cache
         - For instance, I should be able to link reference numbers with biblIO data
         - Make a open note config .json in vscode
 */
@@ -30,6 +28,21 @@ export function onload() {
     OBA.addCommand({
         id: "CitNotes-dev",
         name: "CitNotes dev",
+        callback: async () => {
+            console.clear();
+            const note0 = tools.getCurrNote();
+            console.log("note0: ", note0);
+            const citekey = parseCitNoteCiteKey(note0)
+            console.log("citekey: ", citekey);
+            const biblIO1 = await localbibs.getBiblIO({citekey});
+            console.log("localbibs: ", biblIO1);
+            const doi = biblIO1["doi"]
+            console.log("doi: ", doi);
+            const biblIO2 = await crossref.getBiblIO({doi});
+            console.log("crossref: ", biblIO2);
+            const biblIO3 = await citNoteBiblIO(note0);
+            console.log("citnote: ", biblIO3);
+        }
     });
     
     OBA.addCommand({
@@ -39,7 +52,7 @@ export function onload() {
             console.clear();
             const note0 = tools.getCurrNote();
             console.log("note0: ", note0);
-            const biblIOs = await consensusReferences({"citnote": note0});
+            const biblIOs = await citNoteReferences({"citnote": note0});
             if (!biblIOs) {
                 new Notice(`No references found. note0: ${note0}`);
                 return;
@@ -161,7 +174,7 @@ export async function copyDoiReferences(id0: BiblIOIder) {
 
     // get biblio data
     const biblIO_0 = await biblio.consensusBiblIO(id0);
-    const refDOIs = biblIO_0["references-DOIs"];
+    const refDOIs = biblIO_0["references-map"];
     if (!refDOIs) { return; }
 
     // collect
@@ -198,7 +211,7 @@ async function copyNonLocalReferences(id0: BiblIOIder) {
 
     // get biblio data
     const biblIO_0 = await biblio.consensusBiblIO(id0);
-    const refDOIs = biblIO_0["references-DOIs"];
+    const refDOIs = biblIO_0["references-map"];
     if (!refDOIs) { return; }
 
     // get biblio data
@@ -229,7 +242,7 @@ export async function copyReferenceLink(
     console.log("biblIOs: ", biblIOs)
     return;
     const biblIO_0 = await biblio.consensusBiblIO({"citnote": note});
-    const refDOIs = biblIO_0["references-DOIs"];
+    const refDOIs = biblIO_0["references-map"];
     if (!refDOIs) { return; }
     const links: string[] = []
 

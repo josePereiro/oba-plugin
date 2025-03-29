@@ -6,7 +6,7 @@
 */
 
 import { tools } from "src/tools-base/0-tools-modules";
-import { BiblIOAuthor, BiblIOData, BiblIODate, BiblIOIder } from "./biblio-data";
+import { BiblIOAuthor, BiblIOData, BiblIODate, BiblIOIder, RefBiblIOIderMap } from "./biblio-data";
 import { Notice } from "obsidian";
 import { filesys } from "src/oba-base/0-oba-modules";
 import { join } from "path";
@@ -44,9 +44,8 @@ function _makeBiblIO(cr_data: any) {
         "abstract":         extractAbstract(cr_data),
         "keywords":         extractKeywords(cr_data),
         "references-count": extractReferencesCount(cr_data),
-        "references-DOIs":  extractReferencesDOIs(cr_data),
-        // "extras":        extractExtras(cr_data),
-        "extras":           {},
+        "references-map":   extractReferencesMap(cr_data),
+        "extras":           extractExtras(cr_data),
     }
     return biblio
 }
@@ -263,22 +262,25 @@ function extractReferencesCount(cr_data: any) {
     } catch (error) { return null; }
 }
 
-function extractReferencesDOIs(cr_data: any): string[] | null {
+function extractReferencesMap(cr_data: any): RefBiblIOIderMap | null {
     try {
         const dat0 = cr_data['message']["reference"]
         if (!dat0) { return null}
-        const dois: string[] = [];
-        for (const refi of dat0) {
-            const doi0 = refi?.["DOI"] ?? ''
-            const doi1 = tools.absDoi(doi0);
-            dois.push(doi1)
+        const map: RefBiblIOIderMap = {};
+        let refi = 1
+        for (const refdati of dat0) {
+            let doi0 = refdati?.["DOI"] 
+            doi0 = doi0 ? tools.absDoi(doi0) : null;
+            map[refi] = {"doi": doi0}
+            refi++;
         }
-        return dois
+        return map
     } catch (error) { return null; }
 }
 
 function extractExtras(cr_data: any): any {
-    return { "crossref": cr_data }
+    // return { "crossref": cr_data }
+    return null
 }
 
 /*

@@ -10,40 +10,34 @@ import { TFile } from "obsidian"
  
 
 // MARK: interfaces
-export interface RefBiblIOIderMap {
-    [key: string]: BiblIOIder
-}
-
-
 /*
     A bundle of unique BiblIO fields
-    TODO/
-    - Maybe turn it into BiblIOQuery
-        - An object to settup a biblio searching engine
 */ 
 export interface BiblIOIder {
-    "doi"?: string, 
-    "citekey"?: string,
+    "doi"?: string | null, 
+    "citekey"?: string | null,
     "citnote"?: TFile | string | null,
     "query"?: string, // to trigger search
 }
 
+export interface RefBiblIOIderMap {
+    [key: string]: BiblIOIder
+}
+
 export interface BiblIOAuthor {
-    "firstName": string,
-    "lastName": string,
+    "firstName": string | null,
+    "lastName": string | null,
     "ORCID": string | null,
     "affiliations": string[] | null,
 }
 export interface BiblIODate {
-    "year": number,
+    "year": number | null,
     "month": number | null,
     "day": number | null,
 }
 
 export interface BiblIOData {
-    
-    "doi": string,
-    
+    "doi": string| null,
     "citekey": string | null,
     "type": string | null,
     "title": string | null,
@@ -57,54 +51,6 @@ export interface BiblIOData {
     "abstract": string | null,
     "keywords": string[] | null,
     "references-count": number | null,
-    "references-DOIs": string[] | null,
+    "references-map": RefBiblIOIderMap | null,
     "extras": any | null,
 }
-
-// MARK: getters
-export function getDoi(biblio: BiblIOData) {
-    return biblio["doi"]
-}
-export function getType(biblio: BiblIOData) {
-    return biblio["type"]
-}
-export function getTitle(biblio: BiblIOData) {
-    return biblio["title"]
-}
-export function getAuthors(biblio: BiblIOData) {
-    return biblio["authors"]
-}
-export function getCreatedDate(biblio: BiblIOData) {
-    return biblio["created-date"]
-}
-export function getDepositedDate(biblio: BiblIOData) {
-    return biblio["deposited-date"]
-}
-export function getIssuedDate(biblio: BiblIOData) {
-    return biblio["issued-date"]
-}
-export function getPublishedDate(biblio: BiblIOData) {
-    return biblio["published-date"]
-}
-export function getJournalTitle(biblio: BiblIOData) {
-    return biblio["journaltitle"]
-}
-export function getUrl(biblio: BiblIOData) {
-    return biblio["url"]
-}
-export function getAbstract(biblio: BiblIOData) {
-    return biblio["abstract"]
-}
-export function getKeywords(biblio: BiblIOData) {
-    return biblio["keywords"]
-}
-export function getReferencesCount(biblio: BiblIOData) {
-    return biblio["references-count"]
-}
-export function getReferencesDOIs(biblio: BiblIOData) {
-    return biblio["references-DOIs"]
-}
-export function getExtras(biblio: BiblIOData) {
-    return biblio["extras"]
-}
-

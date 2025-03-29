@@ -51,9 +51,8 @@ function _makeBiblIO(lb_data: any) {
         "abstract": extractAbstract(lb_data),
         "keywords": extractKeywords(lb_data),
         "references-count": extractReferencesCount(lb_data),
-        "references-DOIs": extractReferencesDOIs(lb_data),
-        // "extras": extractExtras(lb_data),
-        "extras": {},
+        "references-map": extractReferencesMap(lb_data),
+        "extras": extractExtras(lb_data),
     }
     return biblio
 }
@@ -325,12 +324,13 @@ function extractReferencesCount(lb_data: any): null {
     return null
 }
 
-function extractReferencesDOIs(lb_data: any): null {
+function extractReferencesMap(lb_data: any): null {
     return null
 }
 
 function extractExtras(lb_data: any): any {
-    return { "localbib": lb_data }
+    // return { "localbib": lb_data }
+    return null
 }
 
 // MARK: find

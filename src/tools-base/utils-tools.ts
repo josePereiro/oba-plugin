@@ -1,9 +1,9 @@
-import { statSync } from "fs";
 import { tools } from "./0-tools-modules";
+import * as _ from 'lodash'
 
 export function uriToFilename(url: string): string {
     // 
-    let filename = tools.fixPoint(url, (texti) => {
+    let filename = tools.fixPoint(url, (texti: string) => {
         return texti.trim().replace(/[^0-9a-zA-Z]/g, '_')
     })
     // Trim the filename to a reasonable length (e.g., 255 characters)
@@ -15,7 +15,7 @@ export function uriToFilename(url: string): string {
     return filename;
 }
 
-export function fixPoint(str0: string, fun) {
+export function fixPoint(str0: string, fun: any) {
     let str1;
     while (true){
         str1 = fun(str0)
@@ -136,3 +136,76 @@ export function randstring(p = '', length = 8): string {
     }
     return `${p}${rand}`
 }
+
+export function _unionKeys(...objects: any[]) {
+    return _.union(...objects.map((obj) => Object.keys(obj)))
+}
+
+function __priorityMerge(
+    priorities: {[key: string]: number}, 
+    target = 0,
+    obj0: any, 
+    obj1: any
+) {
+    const keys = _unionKeys(obj0, obj1)
+    console.log("keys: ", keys)
+    for (const key of keys) {
+        console.log(key)
+        const val0 = obj0?.[key]
+        const val1 = obj1?.[key]
+
+        // check undefined
+        if (val0 === undefined) {
+            obj0[key] = val1
+            continue
+        } 
+        if (val1 === undefined) {
+            continue
+        }
+        if (val0 === undefined && val1 === undefined) {
+            continue
+        }
+
+        // check priority
+        const priority = priorities?.[key]
+        if (!priority) { continue }
+        if (priority == target) {
+            obj0[key] = val1
+            continue
+        }
+    }
+}
+
+export function _priorityMerge(priorities: {[key: string]: number}, ...objects: any[]) {
+    let obj0 = null;
+    let target = -1
+    for (const obji of objects) {
+        target++;
+        if (!obj0) {
+            obj0 = obji;
+            continue
+        }
+        __priorityMerge(priorities, target, obj0, obji)
+    }
+    return obj0
+}
+
+export function _mergeAll(...objects: any[]) {
+    return _priorityMerge({}, ...objects)
+}
+export function _extractFirst(key: string, ...sources: any[]) {
+    for (const obj of sources) {
+        const val = obj?.[key];
+        if (val) { return val; }
+    }
+    return null
+} 
+
+export function _extractField(key: string, ...sources: any[]) {
+    const objs: any[] = []
+    for (const obj of sources) {
+        const val = obj?.[key];
+        if (val) { objs.push(obj); }
+    }
+    return objs
+} 

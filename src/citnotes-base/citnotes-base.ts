@@ -3,7 +3,9 @@ import { obanotes } from "src/onanotes-base/0-obanotes-modules";
 import { biblio } from "src/biblio-base/0-biblio-modules";
 import { ErrVersionCallerOptions, tools } from "src/tools-base/0-tools-modules";
 import { basename } from "path";
-import { BiblIOData } from "src/biblio-base/biblio-data";
+import { BiblIOData, RefBiblIOIderMap } from "src/biblio-base/biblio-data";
+import * as _ from 'lodash'
+import { consensusReferenceBiblIOs } from "src/biblio-base/biblio-base";
 
 /*
 # RefResolverMap
@@ -32,64 +34,28 @@ export function parseCitNoteCiteKey(
 }
 
 // MARK: get
-export async function getCitNoteBiblIO(
+export async function citNoteBiblIO(
     note: TFile = tools.getCurrNote(),
-    errops: ErrVersionCallerOptions
+    errops: ErrVersionCallerOptions = {}
 ) {
     const citekey = parseCitNoteCiteKey(note, errops);
-    // TODO: this biblio object has not a 
-    // resolved refs field
-    return await biblio.consensusBiblIO({citekey})
+    const biblIO = await biblio.consensusBiblIO({citekey})
+    // merge reference-map
+    await _mergeRefBiblIOIderMap(biblIO, note)
+    return biblIO
 }
 
-export async function getCitNoteReferenceBiblIOs(
-    note: TFile = tools.getCurrNote()
+async function _mergeRefBiblIOIderMap(biblIO0: BiblIOData, note: TFile) {
+    const map0 = biblIO0["references-map"]
+    const map1 = await obanotes.getObaNoteConfig(note, "citnotes.references.resolver-map", null) 
+    _.merge(map0, map1) // user defined data has priority
+}
+
+export async function citNoteReferenceBiblIOs(
+    note: TFile = tools.getCurrNote(),
+    errops: ErrVersionCallerOptions = {}
 ) {
-    const iders = await consensusCitNoteRefResolverMap(note)
-    type T = BiblIOData | null;
-    const biblIOs: T[] = []
-    // Iterate through all reference numbers from 1 to the total number of keys in the iders object.
-    // If a reference number is missing in the iders object, throw an error indicating the missing reference.
-    // For each valid reference number found in iders, resolve the corresponding biblIO and add it to the biblIOs array.
-    const n = Object.keys(iders).length
-    for (let i = 1; i <= n; i++) {
-        if (i in iders) {
-            const biblIO = await biblio.consensusBiblIO(iders[i])
-            biblIOs.push(biblIO);
-        } else {
-            const msg = `Reference number ${i} not found in resolver map`;
-            biblIOs.push(null);
-            new Notice(msg);
-        }
-    }
-    return biblIOs
+    const biblIO = await citNoteBiblIO(note, errops)
+    return await consensusReferenceBiblIOs(biblIO)
 }
 
-// MARK: RefResolverMap
-export interface RefResolverMap {
-    [key: number]: any
-}
-
-// "citnotes.references.resolver-map"
-// load the consensus map for resolving CitNotes biblIO references
-export async function consensusCitNoteRefResolverMap(note: TFile) {
-    const map0 = await obanotes.getObaNoteConfig(note, "citnotes.references.resolver-map", null)
-    const map1 = await newRefResolverMap(note)
-    // merge objects
-    // User defined map has precedence
-    if (map0 && map1) { return {...map1, ...map0} } 
-    return map0 || map1
-}
-
-
-export async function newRefResolverMap(note: TFile) {
-    const biblIO = await getCitNoteBiblIO(note)
-    const map: { [key: number]: any } = {}
-    const refDOIs = biblIO["references-DOIs"]
-    if (!refDOIs) { return; }
-    for (let i = 0; i < refDOIs.length; i++) {
-        const ider = await biblio.resolveBiblIOIder({ "doi": refDOIs?.[i] })
-        map[i + 1] = ider
-    }
-    return map;
-}
