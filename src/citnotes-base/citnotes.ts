@@ -352,7 +352,9 @@ function extractRefNums(str: string): number[] {
 
 function getCitationStringToSearch(biblIOs: BiblIOData[]) {
     const MAX_AUTHORS = 5;
-    return biblIOs.map(biblIO => {
+    let refi = 1;
+    const citStrs: string[] = [];
+    for (const biblIO of biblIOs) {
         let authors = biblIO?.["authors"]?.map(author => author?.["lastName"]) || ["Unknown Author"];
         if (authors.length > MAX_AUTHORS) {
             authors = authors.slice(0, MAX_AUTHORS).concat(["et al."]);
@@ -361,10 +363,13 @@ function getCitationStringToSearch(biblIOs: BiblIOData[]) {
         const title = biblIO?.["title"] || "Untitled";
         const citekey = biblIO?.["citekey"] ? `[@${biblIO["citekey"]}]` : "[No Citekey]";
         const year = biblIO?.["published-date"]?.["year"] || "Unknown Year";
-        const cit = `${authorsStr} (${year}). "${title}" ${citekey}`;
-        return cit.normalize("NFD")
+        let cit = `[${refi}] ${authorsStr} (${year}). "${title}" ${citekey}`;
+        cit = cit.normalize("NFD")
             .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
             .trim();
-    });
+        citStrs.push(cit)
+        refi++;
+    }
+    return citStrs
 }
 

@@ -1,11 +1,12 @@
 import { Notice } from 'obsidian';
-import { backends, commands, git } from './0-servises-modules';
+import { backends, commands, git, replacer } from './0-servises-modules';
 import { tools } from 'src/tools-base/0-tools-modules';
 
 /*
     TODO: Add priority
 */ 
-export let CALLBACKS_REGISTRY: { [key: string]: (() => void)[] };
+export type TObaCallback = (() => void | Promise<void>)
+export let CALLBACKS_REGISTRY: { [key: string]: TObaCallback[] };
 export let LAST_CALLBACK: string;
 export let CALLBACK_ARGS: any[];
 
@@ -22,8 +23,10 @@ export function onload() {
     //      - You can just use bracket notation
     const callid = commands.getCommandCallbackId(1);
     this.registerCallback(callid, 
-        () => backends.signalBackend(),
-        () => git.gitCommitCmd()
+        // Order is relevant
+        async () => await backends.signalBackend(),
+        async () => await replacer.runReplacer(),
+        async () => await git.gitCommitCmd(),
     )
 
     this.registerCallback(
@@ -41,7 +44,7 @@ export function onload() {
 
 }
 
-export function registerCallback(key: string, ...fns: (() => void)[]): void {
+export function registerCallback(key: string, ...fns: TObaCallback[]): void {
     const calls = getCallbacks(key, true);
     fns.forEach((fn, _index) => {
         calls.push(fn); // Add the function to the array
@@ -52,7 +55,7 @@ export function getCallbackArgs() {
     return CALLBACK_ARGS
 }
 
-export function runCallbacks(key: string, ...args: any[]): void {
+export async function runCallbacks(key: string, ...args: any[]) {
     LAST_CALLBACK = key;
     CALLBACK_ARGS = args;
     console.clear();
@@ -61,7 +64,7 @@ export function runCallbacks(key: string, ...args: any[]): void {
     console.log(calls)
     for (const call of calls) {
         try {
-            call(); // Execute each function
+            await call(); // Execute each function
         } catch (err) {
             new Notice(`Failed callback "${key}" run: ${err.message}`);
             console.error(err);
@@ -71,9 +74,9 @@ export function runCallbacks(key: string, ...args: any[]): void {
     CALLBACK_ARGS = null
 }
 
-export function getCallbacks(key: string, mk = false): (() => void)[] {
+export function getCallbacks(key: string, mk = false): TObaCallback[] {
     if (!mk) { return CALLBACKS_REGISTRY?.[key] }
-    const calls = CALLBACKS_REGISTRY?.[key] ?? [] as (() => void)[];
+    const calls = CALLBACKS_REGISTRY?.[key] ?? [] as TObaCallback[];
     CALLBACKS_REGISTRY[key] = calls;
     return calls;
 }

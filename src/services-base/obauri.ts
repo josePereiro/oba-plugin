@@ -11,6 +11,6 @@ export function onload() {
     console.log("ObaUri:onload");
 
     OBA.registerObsidianProtocolHandler(OBAURI_ACTION_NAME, async (params) => {
-        callbacks.runCallbacks(`callbacks.obauri.action`, params);
+        await callbacks.runCallbacks(`callbacks.obauri.action`, params);
     });
 }

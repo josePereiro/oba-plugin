@@ -18,10 +18,10 @@ export function onload() {
         OBA.addCommand({
             id: getCommandId(i),
             name: getCommandName(i),
-            callback: () => {
+            callback: async () => {
                 // console.clear();
                 const callid = getCommandCallbackId(i);
-                callbacks.runCallbacks(callid);
+                await callbacks.runCallbacks(callid);
             }
         });
     }

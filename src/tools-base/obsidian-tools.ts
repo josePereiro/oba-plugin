@@ -233,3 +233,24 @@ export function getNoteYamlHeaderVal(
     }
     return tools.errVersion(fun, errops)
 }
+
+export async function processNoteByLines(
+    note: TFile,
+    processor: (line: string) => string
+) {
+    await OBA.app.vault.process(note, (content) => {
+        return replaceByLines(content, processor)
+    })
+}
+
+export function replaceByLines(
+    txt: string, 
+    processor: (line: string) => string
+) {
+    const lines: string[] = txt.split('\n')
+    const nlines = lines.length
+    for (let li = 0; li < nlines; li++) {
+        lines[li] = processor(lines[li])
+    }
+    return lines.join('\n')
+}

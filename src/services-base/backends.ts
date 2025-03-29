@@ -34,7 +34,7 @@ export function onload() {
 		id: 'oba-git-signal-backends',
 		name: 'BackEnds signal backends',
 		callback: async () => {
-			signalBackend();
+			await signalBackend();
 		}
 	});
 }

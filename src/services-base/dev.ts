@@ -24,6 +24,18 @@ export function onload() {
             console.clear()
         }
     })
+
+    OBA.addCommand({
+        id: 'oba-dev-injection',
+        name: 'Dev injection',
+        callback: () => {
+            console.clear()
+            // TODO/TAI/ This approach is no secure
+            // But Im not important neither
+            const expression = "console.log(OBA)"
+            eval(expression)
+        }
+    })
     
     OBA.addCommand({
         id: 'oba-dev-cmd',
@@ -59,7 +71,11 @@ export function onload() {
     });
 }
 
+// TODO/ implement thsi... To handle incoming comunication from backends
 function _URLHandler_onload() {
+
+    // Example: [link](obsidian://oba-uri?vault=MetXVault&_file=2_notes%2F%40alterProteomeRegulationPatterns2021.md&_line=101)
+
 
     const ACTION_NAME = 'open-with-line';
     // const ACTION_NAME = 'open';
