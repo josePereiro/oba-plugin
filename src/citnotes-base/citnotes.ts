@@ -13,6 +13,8 @@ export * from './citnotes-base'
     - DONE/ parse metadata from citation notes
         - TAI/ keep a cache of such metadata
     - TODO/ Notify when format is invalid (linter)
+    - TODO/ find dois in a note and update them to citekey if found
+        - An automatic replacement
     - DONE/ Replacements        
         - DEPRECATED/ Replace #!REF13 by the citekey if it is present in the bibtex db
             - DONE/ Use crossref for getting References
