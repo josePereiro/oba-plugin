@@ -1,8 +1,8 @@
-import { clearJSONCache, clearRAMCache, getBiblIO, getMergedBiblIO} from './localbibs-base';
+import { clearJSONCache, clearRAMCache, getMergedBiblIO} from './localbibs-base';
 import { OBA } from 'src/oba-base/globals';
-import { tools } from 'src/tools-base/0-tools-modules';
 import * as localbibsbase from './localbibs-base';
-import { biblio } from './0-biblio-modules';
+import { obaconfig } from 'src/oba-base/0-oba-modules';
+import { vscode } from 'src/services-base/0-servises-modules';
 export * from "./localbibs-base"
 
 
@@ -56,18 +56,47 @@ export function onload() {
     });
 
     OBA.addCommand({
+        id: "LocalBibs-vscode-open-localbibs",
+        name: "LocalBibs vscode open localbibs",
+        callback: async () => {
+            console.clear();
+            const sourceFiles: string[] = 
+                obaconfig.getObaConfig("local.bib.files")
+            for (const file of sourceFiles) {
+                console.log("file: ", file)
+                vscode.goto(file)
+            }
+        },
+    });
+
+    OBA.addCommand({
         id: "LocalBibs-dev",
         name: "LocalBibs dev",
         callback: async () => {
-            console.clear();
-            const sel = tools.getSelectedText();
-            console.log("sel: ", sel);
-            const ider = await biblio.resolveBiblIOIder({query: sel});
-            console.log("ider: ", ider);
-            const biblIO = await getBiblIO(ider);
-            console.log("biblIO")
-            console.log(biblIO)
+            console.clear()
+            const sourceFiles: string[] = 
+                obaconfig.getObaConfig("local.bib.files")
+            console.log("sourceFiles: ", sourceFiles)
+            const lb_data0 = await localbibsbase.parseBibFileFullFile(sourceFiles[0])
+            console.log("lb_data0: ", lb_data0)
+            const lb_data1 = await localbibsbase.parseBibFileStream(sourceFiles[0])
+            console.log("lb_data1: ", lb_data1)
         }
     });
+
+    // OBA.addCommand({
+    //     id: "LocalBibs-dev",
+    //     name: "LocalBibs dev",
+    //     callback: async () => {
+    //         console.clear();
+    //         const sel = tools.getSelectedText();
+    //         console.log("sel: ", sel);
+    //         const ider = await biblio.resolveBiblIOIder({query: sel});
+    //         console.log("ider: ", ider);
+    //         const biblIO = await getBiblIO(ider);
+    //         console.log("biblIO")
+    //         console.log(biblIO)
+    //     }
+    // });
 }
 

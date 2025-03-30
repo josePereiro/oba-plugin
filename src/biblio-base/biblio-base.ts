@@ -49,7 +49,7 @@ export async function consensusReferenceBiblIOs(
     const biblIOs: T[] = []
     for (let refi = 1; refi <= nref; refi++) {
         const ider = map?.[refi]
-        await statusbar.setText(`fetching ${refi}/${nref}`);
+        statusbar.setText(`fetching ${refi}/${nref}`);
         if (ider) {
             const biblIO = await consensusBiblIO(ider)
             biblIOs.push(biblIO);
@@ -59,7 +59,7 @@ export async function consensusReferenceBiblIOs(
             console.warn(msg);
         }
     }
-    await statusbar.setText(``);
+    statusbar.clear();
     return biblIOs
 }
 

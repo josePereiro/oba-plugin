@@ -1,6 +1,8 @@
 import { OBA } from "src/oba-base/globals";
 
-export let STATUSBAR: HTMLElement
+let STATUSBAR: HTMLElement
+let lastLoggedTime = Date.now();
+let loggingPeriod = 100; // ms
 
 export function onload() {
 
@@ -13,10 +15,10 @@ export function onload() {
         name: "StatusBar dev",
         callback: async () => {
             for (let i = 0; i < 10; i++) {
-                setText(`HI ${i}`)
+                await setText(`HI ${i}`)
                 await sleep(500)
             }
-            setText('')
+            await setText('')
         },
     });
 }
@@ -25,13 +27,24 @@ export function onunload() {
     remove();
 }
 
-export async function clear() {
-    await setText('')
+function _setText(txt: string) {
+    STATUSBAR.setText(txt);
+}
+export function setText(txt: string, force = false) {
+    if (force) {
+       _setText(txt)
+        return
+    } 
+    const currTime = Date.now();
+    if (currTime - lastLoggedTime > loggingPeriod) {
+       _setText(txt)
+        lastLoggedTime = currTime
+        return
+    }
 }
 
-export async function setText(txt: string, wt = 1) {
-    STATUSBAR.setText(txt);
-    await sleep(wt)
+export function clear() {
+    _setText('')
 }
 
 export function remove() {

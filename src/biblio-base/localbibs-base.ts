@@ -1,11 +1,23 @@
-import * as tools from '../tools-base/0-tools-modules';
-import { parse } from '@retorquere/bibtex-parser';
-import { existsSync, mkdirSync } from 'fs';
+import { tools } from '../tools-base/0-tools-modules';
+import * as bibparser from '@retorquere/bibtex-parser';
+import * as readline from 'readline';
+import { existsSync } from 'fs';
 import { readFile, rm } from 'fs/promises';
 import { join } from 'path';
 import { BiblIOAuthor, BiblIOData, BiblIODate, BiblIOIder } from './biblio-data';
 import { obaconfig, filesys } from 'src/oba-base/0-oba-modules';
-import { OBA } from 'src/oba-base/globals';
+import { createReadStream } from 'fs';
+import { statusbar } from 'src/services-base/0-servises-modules';
+
+interface BibTexData {
+    comments?: any[],
+    entries?: any[],
+    errors?: any[],
+    jabref?: any,
+    preamble?: any,
+    string?: any,
+}
+
 
 /*
     Allow using local .bib files as sources of bibliography data. 
@@ -21,6 +33,7 @@ export function onload() {
     MERGED_BIBLIO = [];
     DOI_IDX_MAP = {};
     CITEKEY_IDX_MAP = {};
+
 }
 
 // MARK: biblio
@@ -104,19 +117,6 @@ async function _buildMergedBiblIO(
     return mergedBiblIO
 }
 
-
-// MARK: parse/load
-async function _parseBibFile(sourceFile: string) {
-    try {
-        const bibContent = await readFile(sourceFile, 'utf-8');
-        const parsedBib = parse(bibContent);
-        return parsedBib;
-    } catch (error) {
-        console.error('Error reading or parsing .bib file:', error);
-        throw error;
-    }
-}
-
 async function parseOnDemandLocalBib(
         sourceFile: string,
         cacheFile: string = _getJSONCachePath(sourceFile)
@@ -132,7 +132,8 @@ async function parseOnDemandLocalBib(
 
     // parse/catch
     console.log(`parsing! ${sourceFile}`)
-    const lb_data = await _parseBibFile(sourceFile)
+    // const lb_data = await parseBibFileFullFile(sourceFile)
+    const lb_data = await parseBibFileStream(sourceFile)
     if (!lb_data) { return; }
     // Write cache
     await tools.writeJsonFileAsync(cacheFile, lb_data);
@@ -403,4 +404,83 @@ export async function findByCiteKey(
         },
         CITEKEY_IDX_MAP
     )
+}
+
+
+// MARK: parse
+async function _parseBibFileStream(
+    filePath: string, 
+    onEntry: (entry: any) => void
+): Promise<void> {
+    return new Promise((resolve, reject) => {
+        let bibtexContent = '';
+        let chunck: string[] = []
+        const stream = createReadStream(filePath);
+        const rl = readline.createInterface({ input: stream, crlfDelay: Infinity });
+
+        rl.on('line', (line) => {
+            // bibtexContent += line + '\n';
+            chunck.push(line)
+            if (line.trim() === '}') { // Likely end of an entry
+                try {
+                    bibtexContent = chunck.join('\n')
+                    const parsedEntry = bibparser.parseAsync(bibtexContent);
+                    onEntry(parsedEntry);
+                    // bibtexContent = ''; // Reset for the next entry
+                    chunck = [] as string[] // Reset for the next entry
+                } catch (error) {
+                    console.error('Error parsing BibTeX entry:', error);
+                }
+            }
+        });
+
+        rl.on('close', () => resolve());
+        rl.on('error', (error: any) => reject(error));
+    });
+}
+
+
+export async function parseBibFileStream(
+    filePath: string
+) {
+    let parsed = 1
+    const lb_data: BibTexData = {
+        "comments": [],
+        "entries": [],
+        "errors": [],
+    };
+    const comments0 = lb_data['comments']
+    const entries0 = lb_data['entries']
+    const errors0 = lb_data['errors']
+    
+    statusbar.setText(`parsing bibtex`, 5)
+    await _parseBibFileStream(
+        filePath, 
+        async (bibDataPromise: any) => {
+
+            const bibData = await bibDataPromise
+            statusbar.setText(`parsed ${parsed} entries!`, -1)
+            const entries = bibData?.['entries']
+            if (entries) { entries0.push(...entries) } 
+            const comments = bibData?.['comments']
+            if (comments) { comments0.push(...comments) } 
+            const errors = bibData?.['errors']
+            if (errors) { errors0.push(...errors) } 
+            parsed++;
+        }
+    )
+    statusbar.clear()
+    return lb_data
+}
+
+// 
+export async function parseBibFileFullFile(sourceFile: string) {
+    try {
+        const bibContent = await readFile(sourceFile, 'utf-8');
+        const parsedBib = await bibparser.parseAsync(bibContent);
+        return parsedBib;
+    } catch (error) {
+        console.error('Error reading or parsing .bib file:', error);
+        throw error;
+    }
 }

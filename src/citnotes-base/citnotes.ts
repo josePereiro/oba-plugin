@@ -334,11 +334,11 @@ export async function downloadAllLocalReferences() {
     const tot = biblIODB.length;
     for (const biblIO of biblIODB) {
         const doi = biblIO["doi"];
-        await statusbar.setText(`crossrefing: ${i + 1}/${tot}`);
+        statusbar.setText(`crossrefing: ${i + 1}/${tot}`);
         await crossref.fetchOnDemandCrossrefData(doi);
         i++;
     }
-    await statusbar.setText('')
+    statusbar.clear()
 }
 
 // MARK: utils
