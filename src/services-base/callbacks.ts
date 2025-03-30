@@ -1,6 +1,8 @@
 import { Notice } from 'obsidian';
 import { backends, commands, git, replacer } from './0-servises-modules';
 import { tools } from 'src/tools-base/0-tools-modules';
+import { crossref, localbibs } from 'src/biblio-base/0-biblio-modules';
+import { citnotes } from 'src/citnotes-base/0-citnotes-modules';
 
 /*
     TODO: Add priority
@@ -27,6 +29,8 @@ export function onload() {
         async () => await backends.signalBackend(),
         async () => await replacer.runReplacer(),
         async () => await git.gitCommitCmd(),
+        // async () => await localbibs.parseOnDemandLocalBibAll(),
+        // async () => await citnotes.downloadAllLocalReferences(),
     )
 
     this.registerCallback(

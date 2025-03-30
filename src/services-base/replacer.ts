@@ -9,6 +9,7 @@ import { processNoteByLines, tools } from "src/tools-base/0-tools-modules";
 import { DateTime } from 'luxon';
 import { obanotes } from "./0-servises-modules";
 import { TFile } from "obsidian";
+import { citnotes } from "src/citnotes-base/0-citnotes-modules";
 
 export function onload() {
     console.log("Replacer:onload");
@@ -40,18 +41,58 @@ export async function runReplacer() {
     const noteTFile = tools.getCurrNote()
     console.log("noteTFile: ", noteTFile)
 
+    const replacePairs = [
+        [
+            "mdate", 
+            _fileStatDate(notePath, "mtime", 'yyyy:MM:dd-HH:mm:ss')
+        ],
+        [
+            "mtime", 
+            _fileStatDate(notePath, "mtime", 'yyyy:MM:dd-HH:mm:ss')
+        ],
+        [
+            "adate", 
+            _fileStatDate(notePath, "atime", 'yyyy:MM:dd-HH:mm:ss')
+        ],
+        [
+            "atime", 
+            _fileStatDate(notePath, "atime", 'yyyy:MM:dd-HH:mm:ss')
+        ],
+        [
+            "cdate", 
+            _fileStatDate(notePath, "ctime", 'yyyy:MM:dd-HH:mm:ss')
+        ],
+        [
+            "ctime", 
+            _fileStatDate(notePath, "ctime", 'yyyy:MM:dd-HH:mm:ss')
+        ],
+        [
+            "gen-oba-id", 
+            obanotes.genObaNoteId()
+        ],
+        [
+            "citekey", 
+            citnotes.parseCitNoteCiteKey(noteTFile)
+        ],
+    ]
+
     await processNoteByLines(
         noteTFile, 
         (line: string) => {
+            for (const pair of replacePairs) {
+                const val = pair[1]
+                for (const regstr of _replacerRegexes(pair[0])) {
+                    const reg = new RegExp(regstr, "g")
+                    line = line.replace(reg, val)
+                }   
+            }
             return line
-                .replace(/{{mdate}}/g, _fileStatDate(notePath, "mtime", 'yyyy:MM:dd-HH:mm:ss'))
-                .replace(/{{adate}}/g, _fileStatDate(notePath, "atime", 'yyyy:MM:dd-HH:mm:ss'))
-                .replace(/{{cdate}}/g, _fileStatDate(notePath, "ctime", 'yyyy:MM:dd-HH:mm:ss'))
-                .replace(/{{gen-oba-id}}/g, obanotes.genObaNoteId())
-                .replace(/#!mdate/g, _fileStatDate(notePath, "mtime", 'yyyy:MM:dd-HH:mm:ss'))
-                .replace(/#!adate/g, _fileStatDate(notePath, "atime", 'yyyy:MM:dd-HH:mm:ss'))
-                .replace(/#!cdate/g, _fileStatDate(notePath, "ctime", 'yyyy:MM:dd-HH:mm:ss'))
-                .replace(/#!gen-oba-id/g, obanotes.genObaNoteId())
         }
     )
+}
+
+function _replacerRegexes(src: string) {
+    return [
+        `#!${src}`, `{{${src}}}`
+    ] as string[]
 }

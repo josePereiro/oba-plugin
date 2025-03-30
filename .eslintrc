@@ -14,6 +14,9 @@
         "sourceType": "module",
         "project": "./tsconfig.json" // Path to your tsconfig.json
     },
+    // "module.exports" : {
+    //   "ignorePatterns": ["dev", "build", "npm", "node_modules", "npm node_modules"]
+    // },
     "rules": {
       "no-unused-vars": "off",
       "@typescript-eslint/no-explicit-any": 0, // TODO/ think about it

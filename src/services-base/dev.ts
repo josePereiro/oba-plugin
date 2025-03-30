@@ -5,6 +5,11 @@ import { OBA } from 'src/oba-base/globals';
 import { tools } from 'src/tools-base/0-tools-modules';
 
 /*
+    TODO/ Make a log system controlable by a flag
+    - The flag must be changable from Obsidian too (a command)
+*/ 
+
+/*
     A playground for new features
 */
 

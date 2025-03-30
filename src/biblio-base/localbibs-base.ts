@@ -117,29 +117,6 @@ async function _buildMergedBiblIO(
     return mergedBiblIO
 }
 
-async function parseOnDemandLocalBib(
-        sourceFile: string,
-        cacheFile: string = _getJSONCachePath(sourceFile)
-    ) {
-    
-    // validate
-    const valid = _validateJSONCache(cacheFile, sourceFile)
-    console.log(`json.cache.valid: ${valid}`)
-    if (valid) { 
-        console.log(`cached! ${sourceFile}`)
-        return "cached"
-    }
-
-    // parse/catch
-    console.log(`parsing! ${sourceFile}`)
-    // const lb_data = await parseBibFileFullFile(sourceFile)
-    const lb_data = await parseBibFileStream(sourceFile)
-    if (!lb_data) { return; }
-    // Write cache
-    await tools.writeJsonFileAsync(cacheFile, lb_data);
-    return "parsed";
-}
-
 export async function getLocalBib(
         sourceFile: string,
         cacheFile: string = _getJSONCachePath(sourceFile)
@@ -474,7 +451,9 @@ export async function parseBibFileStream(
 }
 
 // 
-export async function parseBibFileFullFile(sourceFile: string) {
+export async function parseBibFileFullFile(
+    sourceFile: string
+) {
     try {
         const bibContent = await readFile(sourceFile, 'utf-8');
         const parsedBib = await bibparser.parseAsync(bibContent);
@@ -482,5 +461,37 @@ export async function parseBibFileFullFile(sourceFile: string) {
     } catch (error) {
         console.error('Error reading or parsing .bib file:', error);
         throw error;
+    }
+}
+
+export async function parseOnDemandLocalBib(
+    sourceFile: string,
+    cacheFile: string = _getJSONCachePath(sourceFile)
+) {
+
+    // validate
+    const valid = _validateJSONCache(cacheFile, sourceFile)
+    console.log(`json.cache.valid: ${valid}`)
+    if (valid) { 
+        console.log(`cached! ${sourceFile}`)
+        return "cached"
+    }
+
+    // parse/catch
+    console.log(`parsing! ${sourceFile}`)
+    // const lb_data = await parseBibFileFullFile(sourceFile)
+    const lb_data = await parseBibFileStream(sourceFile)
+    if (!lb_data) { return; }
+    // Write cache
+    await tools.writeJsonFileAsync(cacheFile, lb_data);
+    return "parsed";
+}
+
+export async function parseOnDemandLocalBibAll(
+    sourceFiles: string[] = 
+        obaconfig.getObaConfig("local.bib.files")
+) {
+    for (const file of sourceFiles) {
+        await parseOnDemandLocalBib(file)
     }
 }
