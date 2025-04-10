@@ -3,6 +3,7 @@ import * as tools from '../tools-base/0-tools-modules';
 import { getBiblIO } from './crossref-base';
 import * as crossrefbase from './crossref-base'
 import { biblio } from './0-biblio-modules';
+import { getSelectedText } from 'src/tools-base/obsidian-tools';
 export * from './crossref-base';
 
 /*
@@ -23,7 +24,7 @@ export function onload() {
     //     name: "CrossRef dev",
     //     callback: async () => {
     //         console.clear();
-    //         const sel = tools.getSelectedText();
+    //         const sel = getSelectedText();
     //         console.log("sel: ", sel);
     //         const doi = tools.absDoi(sel);
 
@@ -44,7 +45,7 @@ export function onload() {
         name: 'Crossref fetch selected doi',
         callback: async () => {
             console.clear();
-            const sel = tools.getSelectedText();
+            const sel = getSelectedText();
             console.log("sel: ", sel);
             const ider = await biblio.resolveBiblIOIder({query: sel});
             console.log("ider: ", ider);
@@ -58,7 +59,7 @@ export function onload() {
         name: 'Crossref dev',
         callback: async () => {
             console.clear();
-            const sel = tools.getSelectedText();
+            const sel = getSelectedText();
             console.log("sel: ", sel);
             const ider = await biblio.resolveBiblIOIder({query: sel});
             console.log("ider: ", ider);

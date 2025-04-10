@@ -1,6 +1,7 @@
 import { OBA } from "src/oba-base/globals";
 import { tools } from "./0-tools-modules";
 import { obanotes } from "src/services-base/0-servises-modules";
+import { getCurrNote, getNoteYamlHeader, modifyNoteYamlHeader } from "./obsidian-tools";
 
 export function onload() {
         
@@ -11,7 +12,7 @@ export function onload() {
     //     name: "Tools dev",
     //     callback: async () => {
     //         console.clear();
-    //         const sel = tools.getSelectedText();
+    //         const sel = getSelectedText();
     //         console.log("sel: ", sel);
     //         const h = tools.hash64(sel);
     //         console.log("hash64: ", h);
@@ -23,10 +24,10 @@ export function onload() {
         name: "Tools dev",
         callback: async () => {
             console.clear();
-            const note = tools.getCurrNote({strict: true});
-            let yaml = tools.getNoteYamlHeader(note);
+            const note = getCurrNote({strict: true});
+            let yaml = getNoteYamlHeader(note);
             console.log("yaml: ", yaml);
-            yaml = await tools.modifyNoteYamlHeader(note, (yaml) => {
+            yaml = await modifyNoteYamlHeader(note, (yaml) => {
                 yaml["oba.test"] = tools.randstring()
             })
             console.log("yaml: ", yaml);

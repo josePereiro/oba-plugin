@@ -5,11 +5,12 @@
 */
 import { existsSync, statSync } from "fs";
 import { OBA } from "src/oba-base/globals";
-import { processNoteByLines, tools } from "src/tools-base/0-tools-modules";
+import { tools } from "src/tools-base/0-tools-modules";
 import { DateTime } from 'luxon';
 import { obanotes } from "./0-servises-modules";
 import { TFile } from "obsidian";
 import { citnotes } from "src/citnotes-base/0-citnotes-modules";
+import { getCurrNote, getCurrNotePath, processNoteByLines } from "src/tools-base/obsidian-tools";
 
 export function onload() {
     console.log("Replacer:onload");
@@ -36,9 +37,9 @@ function _fileStatDate(path: string, statid: "atime" | "mtime" | "ctime", format
 
 export async function runReplacer() {
     // "yyyy:mm:dd-HH:MM:SS"
-    const notePath = tools.getCurrNotePath()
+    const notePath = getCurrNotePath()
     console.log("notePath: ", notePath)
-    const noteTFile = tools.getCurrNote()
+    const noteTFile = getCurrNote()
     console.log("noteTFile: ", noteTFile)
 
     const replacePairs = [

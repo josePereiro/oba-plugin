@@ -3,6 +3,7 @@ import { exec } from 'child_process';
 import { OBA } from 'src/oba-base/globals';
 import { obaconfig } from '../oba-base/0-oba-modules'
 import { tools } from 'src/tools-base/0-tools-modules';
+import { getCurrNotePath, getCursorPosition } from 'src/tools-base/obsidian-tools';
 
 /*
     Handle integration with vscode
@@ -24,8 +25,8 @@ export function onload() {
         name: "VSCode goto position",
         callback: () => {
             console.clear()
-            const path = tools.getCurrNotePath();
-            const cursor = tools.getCursorPosition();
+            const path = getCurrNotePath();
+            const cursor = getCursorPosition();
             goto(path, cursor.line, cursor.ch)
         },
     });

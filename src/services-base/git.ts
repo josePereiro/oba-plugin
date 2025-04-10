@@ -3,6 +3,7 @@ import { Notice } from 'obsidian';
 import { tools } from 'src/tools-base/0-tools-modules';
 import { obaconfig } from 'src/oba-base/0-oba-modules';
 import { OBA } from 'src/oba-base/globals';
+import { getVaultDir } from 'src/tools-base/obsidian-tools';
 
 /*
     Add a few git utilities
@@ -16,7 +17,7 @@ let GIT: SimpleGit;
 export function onload() {
     console.log("Git:onload");
 
-    GIT = simpleGit(tools.getVaultDir());
+    GIT = simpleGit(getVaultDir());
 
     OBA.addCommand({
         id: 'oba-git-commit-default-branch',

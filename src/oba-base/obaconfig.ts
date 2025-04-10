@@ -3,6 +3,7 @@ import { join } from 'path';
 import { JsonIO, tools } from '../tools-base/0-tools-modules';
 import { OBA } from './globals';
 import { vscode } from 'src/services-base/0-servises-modules';
+import { getVaultDir } from 'src/tools-base/obsidian-tools';
 
 /*
     Handle Oba confg file
@@ -66,6 +67,6 @@ export function obaConfigMtimeMs() {
 }
 
 export function getObaConfigPath(): string {
-    const vaultDir = tools.getVaultDir()
+    const vaultDir = getVaultDir()
     return join(vaultDir, "Oba.json")
 }

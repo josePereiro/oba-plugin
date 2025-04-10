@@ -30,17 +30,17 @@ export function onload() {
         }
     })
 
-    OBA.addCommand({
-        id: 'oba-dev-injection',
-        name: 'Dev injection',
-        callback: () => {
-            console.clear()
-            // TODO/TAI/ This approach is no secure
-            // But Im not important neither
-            const expression = "console.log(OBA)"
-            eval(expression)
-        }
-    })
+    // OBA.addCommand({
+    //     id: 'oba-dev-injection',
+    //     name: 'Dev injection',
+    //     callback: () => {
+    //         console.clear()
+    //         // TODO/TAI/ This approach is no secure
+    //         // But Im not important neither
+    //         const expression = "console.log(OBA)"
+    //         eval(expression)
+    //     }
+    // })
     
     OBA.addCommand({
         id: 'oba-dev-cmd',
@@ -48,7 +48,7 @@ export function onload() {
         callback: () => {
             // () => { new Notice('hello oba') }, 
             // () => {
-            // 	const question = this.tools.getSelectedText();
+            // 	const question = this.getSelectedText();
             // 	this.tools.askLLM(question).then(console.log).catch(console.error);
             // },
             // () => {

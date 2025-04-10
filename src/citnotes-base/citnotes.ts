@@ -6,6 +6,7 @@ import { tools } from 'src/tools-base/0-tools-modules';
 import { obanotes } from 'src/onanotes-base/0-obanotes-modules';
 import { citNoteBiblIO, citNoteReferenceBiblIOs, parseCitNoteCiteKey } from './citnotes-base';
 import { statusbar } from 'src/services-base/0-servises-modules';
+import { getCurrNote, getSelectedText } from 'src/tools-base/obsidian-tools';
 export * from './citnotes-base'
 
 /*
@@ -13,6 +14,7 @@ export * from './citnotes-base'
     - DONE/ parse metadata from citation notes
         - TAI/ keep a cache of such metadata
     - TODO/ Notify when format is invalid (linter)
+    - TODO/ Make a parser (see ObaASTs)
     - TODO/ find dois in a note and update them to citekey if found
         - An automatic replacement
     - DONE/ Replacements        
@@ -33,7 +35,7 @@ export function onload() {
         name: "CitNotes dev",
         callback: async () => {
             console.clear();
-            const note0 = tools.getCurrNote();
+            const note0 = getCurrNote();
             console.log("note0: ", note0);
             const citekey = parseCitNoteCiteKey(note0)
             console.log("citekey: ", citekey);
@@ -48,6 +50,8 @@ export function onload() {
         }
     });
     
+    // TODO\ Make something like this but from all 
+    // localbibs + references
     OBA.addCommand({
         id: "CitNotes-copy-selected-reference-link-from-list",
         name: "CitNotes copy selected reference link from list",
@@ -55,9 +59,9 @@ export function onload() {
             console.clear();
 
             // copy selection
-            const sel0 = tools.getSelectedText()
+            const sel0 = getSelectedText()
             await tools.copyToClipboard(sel0)
-            const note0 = tools.getCurrNote();
+            const note0 = getCurrNote();
             await copySelectedCitNoteReferenceLinkFromList(note0, sel0)
         },
     });
@@ -67,7 +71,7 @@ export function onload() {
     //     name: 'CitNotes copy references of selected doi',
     //     callback: async () => {
     //         console.clear();
-    //         const doi0 = tools.getSelectedText()
+    //         const doi0 = getSelectedText()
     //         if (!doi0) {
     //             new Notice('Select a doi');
     //             return;
@@ -82,7 +86,7 @@ export function onload() {
         name: 'CitNotes copy references of current note',
         callback: async () => {
             console.clear();
-            const note = tools.getCurrNote()
+            const note = getCurrNote()
             await this.copyCitNoteReferencesSection(note);
         }
     });
@@ -92,8 +96,19 @@ export function onload() {
         name: 'CitNotes generate references resolver map',
         callback: async () => {
             console.clear();
-            const citnote = tools.getCurrNote()
+            const citnote = getCurrNote()
             await generateCitNoteConfigRefResolverMap(citnote)
+        }
+    });
+
+    OBA.addCommand({
+        id: "CitNotes-copy-citstr-from-list",
+        name: "CitNotes search citation from list",
+        callback: async () => {
+            console.clear();
+            const sel0 = getSelectedText() || ''
+            const citnote = getCurrNote()
+            await copySelectedCitationFromList(citnote, sel0)
         }
     });
 
@@ -102,7 +117,7 @@ export function onload() {
         name: 'CitNotes copy non-local references of current note',
         callback: async () => {
             console.clear();
-            const note = tools.getCurrNote()
+            const note = getCurrNote()
             await copyCitNoteNonLocalReferences(note);
         }
     });
@@ -112,11 +127,11 @@ export function onload() {
         name: "CitNotes copy link of selected reference number",
         callback: async () => {
             console.clear();
-            // const str = tools.getSelectedText().
+            // const str = getSelectedText().
                 // replace(/\D+/g, "")
-            const str = tools.getSelectedText()
+            const str = getSelectedText()
             const refnums = extractRefNums(str);
-            const note = tools.getCurrNote()
+            const note = getCurrNote()
             await copyCitNoteReferenceLink(note, refnums)
         }
     });
@@ -141,6 +156,74 @@ export function onload() {
 //      - or just use a incomplete BiblIOData object
 
 // MARK: copy
+
+
+// DEV
+// TODO: make a search bib interface
+// - It is just this but with all local bibs
+// - Maybe if a citenote is open, search also in its references
+// - Maybe search in all crossref cache
+// - Signal the procedence of each item
+//  -  citref, local, crossref
+//  - Make an interface for loading all crossref cache
+// TODO/ I need to improve searching
+//  - Maybe take over it completelly
+//  - 
+// const localBiblIOs = await localbibs.getMergedBiblIO()
+// refBiblIOs.push(...localBiblIOs)
+
+async function copySelectedCitationFromList(
+    note0: TFile,
+    sel0 = ''
+) {
+    // select from list
+    console.log("note0: ", note0);
+    const biblIOs = [] as BiblIOData[];
+    const refBiblIOs = await citNoteReferenceBiblIOs(note0);
+    if (!refBiblIOs) {
+        console.log("No references found. note0: ", note0);
+    } else {
+        biblIOs.push(...refBiblIOs)
+    }
+    const localBiblIOs = await localbibs.getMergedBiblIO()
+    if (!localBiblIOs) {
+        console.log("localBiblIOs not found");
+    } else {
+        biblIOs.push(...localBiblIOs)
+    }
+    // TODO: add all from crossref cache?
+
+    const references = getCitationStringToSearch(biblIOs);
+    if (!references || references.length === 0) {
+        console.log(`No references found. citekey: ${note0}`);
+        return;
+    }
+    
+    const query = !sel0 ? '' : sel0
+        .normalize("NFD")
+        .replace(/[^a-zA-Z0-9\s]/g, ' ')
+        .replace(/ et\.? al\.?,?;?/g, ' ')
+        .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
+        .replace(/\s\s/g, ' ')
+        .trim();
+
+    const modal = new tools.SelectorModalV2(
+        references, 
+        "Select reference to copy link",
+        query,
+        async (refnum: number) => {
+            if (refnum == -1) { return; }
+            console.clear();
+            console.log("refnum: ", refnum+1);
+            const ref = references?.[refnum]
+            if (!ref) { return; }
+            await tools.copyToClipboard(ref)
+            new Notice(`Cit copied. cit: ${ref}`);
+        }
+    );
+    modal.open()
+}
+
 async function copySelectedCitNoteReferenceLinkFromList(
     note0: TFile,
     sel0 = ''
@@ -352,23 +435,30 @@ function extractRefNums(str: string): number[] {
     return matches.map(num => parseInt(num, 10));
 }
 
-function getCitationStringToSearch(biblIOs: BiblIOData[]) {
+function getCitationStringV1(biblIO: BiblIOData) {
     const MAX_AUTHORS = 5;
+    let authors = biblIO?.["authors"]?.map(author => author?.["lastName"]) || ["Unknown Author"];
+    if (authors.length > MAX_AUTHORS) {
+        authors = authors.slice(0, MAX_AUTHORS).concat(["et al."]);
+    }
+    const authorsStr = authors.join(", ");
+    const title = biblIO?.["title"] || "Untitled";
+    const citekey = biblIO?.["citekey"] || "No Citekey";
+    const year = biblIO?.["published-date"]?.["year"] || "Unknown Year";
+    const doi = biblIO?.["doi"] || "No DOI";
+    let cit = `${authorsStr} (${year}). "${title}" [${citekey}] (${doi})`;
+    return cit.normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
+        .trim();
+}
+
+function getCitationStringToSearch(biblIOs: BiblIOData[]) {
+    
     let refi = 1;
     const citStrs: string[] = [];
     for (const biblIO of biblIOs) {
-        let authors = biblIO?.["authors"]?.map(author => author?.["lastName"]) || ["Unknown Author"];
-        if (authors.length > MAX_AUTHORS) {
-            authors = authors.slice(0, MAX_AUTHORS).concat(["et al."]);
-        }
-        const authorsStr = authors.join(", ");
-        const title = biblIO?.["title"] || "Untitled";
-        const citekey = biblIO?.["citekey"] ? `[@${biblIO["citekey"]}]` : "[No Citekey]";
-        const year = biblIO?.["published-date"]?.["year"] || "Unknown Year";
-        let cit = `[${refi}] ${authorsStr} (${year}). "${title}" ${citekey}`;
-        cit = cit.normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
-            .trim();
+        let cit = `[${refi}] `
+        cit += getCitationStringV1(biblIO);
         citStrs.push(cit)
         refi++;
     }

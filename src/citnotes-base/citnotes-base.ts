@@ -6,6 +6,7 @@ import { basename } from "path";
 import { BiblIOData } from "src/biblio-base/biblio-data";
 import * as _ from 'lodash'
 import { consensusReferenceBiblIOs } from "src/biblio-base/biblio-base";
+import { getCurrNote, resolveNoteAbsPath } from "src/tools-base/obsidian-tools";
 
 /*
 # RefResolverMap
@@ -24,7 +25,7 @@ export function parseCitNoteCiteKey(
     }
 ) {
     const fun = () => {
-        const path = tools.resolveNoteAbsPath(note);
+        const path = resolveNoteAbsPath(note);
         if (!path) { return null; }
         return basename(path).
             replace(/\.md$/, '')?.
@@ -35,24 +36,33 @@ export function parseCitNoteCiteKey(
 
 // MARK: get
 export async function citNoteBiblIO(
-    note: TFile = tools.getCurrNote(),
+    note: TFile = getCurrNote(),
     errops: ErrVersionCallerOptions = {}
 ) {
     const citekey = parseCitNoteCiteKey(note, errops);
     const biblIO = await biblio.consensusBiblIO({citekey})
+    
     // merge reference-map
     await _mergeRefBiblIOIderMap(biblIO, note)
+    // merge reference-count
+    await _mergeReferencesCount(biblIO, note)
+    
     return biblIO
 }
 
-async function _mergeRefBiblIOIderMap(biblIO0: BiblIOData, note: TFile) {
-    const map0 = biblIO0["references-map"]
+async function _mergeReferencesCount(biblIO: BiblIOData, note: TFile) {
+    const rcount1 = await obanotes.getObaNoteConfig(note, "citnotes.references.count", null) 
+    if (rcount1) { biblIO["references-count"] = rcount1; }
+}
+
+async function _mergeRefBiblIOIderMap(biblIO: BiblIOData, note: TFile) {
+    const map0 = biblIO["references-map"]
     const map1 = await obanotes.getObaNoteConfig(note, "citnotes.references.resolver-map", null) 
     _.merge(map0, map1) // user defined data has priority
 }
 
 export async function citNoteReferenceBiblIOs(
-    note: TFile = tools.getCurrNote(),
+    note: TFile = getCurrNote(),
     errops: ErrVersionCallerOptions = {}
 ) {
     const biblIO = await citNoteBiblIO(note, errops)

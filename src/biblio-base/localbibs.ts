@@ -89,7 +89,7 @@ export function onload() {
     //     name: "LocalBibs dev",
     //     callback: async () => {
     //         console.clear();
-    //         const sel = tools.getSelectedText();
+    //         const sel = getSelectedText();
     //         console.log("sel: ", sel);
     //         const ider = await biblio.resolveBiblIOIder({query: sel});
     //         console.log("ider: ", ider);

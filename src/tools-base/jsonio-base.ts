@@ -47,7 +47,12 @@ export class JsonIO {
 
     public loadd(dflt: any = {}) {
         const depot = loadJsonFileSync(this.state["file"], {strict: false})
-        console.log(depot)
+        this.state["depot"] = depot || dflt
+        return this
+    }
+    
+    public loaddOnDemand(dflt: any = {}) {
+        const depot = loadJsonFileSync(this.state["file"], {strict: false})
         this.state["depot"] = depot || dflt
         return this
     }

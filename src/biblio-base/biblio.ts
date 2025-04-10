@@ -2,6 +2,7 @@ import { OBA } from "src/oba-base/globals";
 import { crossref, localbibs } from "./0-biblio-modules";
 import { tools } from "src/tools-base/0-tools-modules";
 import { consensusBiblIO } from "./biblio-base";
+import { getSelectedText } from "src/tools-base/obsidian-tools";
 export * from "./biblio-base"
 export * from "./biblio-data"
 
@@ -21,7 +22,7 @@ export function onload() {
         name: 'BiblIO get selection consensus biblIO',
         callback: async () => {
             console.clear();
-            const sel = tools.getSelectedText();
+            const sel = getSelectedText();
             console.log("sel: ", sel);
             const data = await consensusBiblIO({"query": sel});
             console.log("data: ", data);

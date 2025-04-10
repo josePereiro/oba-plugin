@@ -6,7 +6,7 @@ const CProc = require('child_process');
 const target_vault = process.argv[2]
 if (!target_vault) { throw {msg: "target vault path not defined"}; }
 if (!fs.existsSync(target_vault)) { throw {msg: "target vault path not found"}; }
-const src_plugin_dir = process.cwd()
+const src_plugin_dir = path.dirname(__filename)
 const src_plugin_dist_dir = path.join(src_plugin_dir, "dist")
 if (!fs.existsSync(src_plugin_dist_dir)) {
     fs.mkdirSync(src_plugin_dist_dir, { recursive: true })
@@ -40,16 +40,16 @@ console.log("obsidian_target_plugin_folder: ", obsidian_target_plugin_folder)
 // ------------------------------------------------------------------------
 function run_compile(cmd) {
     log_newsection("compiling ts");
-    CProc.execSync(cmd, function callback(error, stdout, stderr) {
+    CProc.execSync(cmd, 
+        { cwd: src_plugin_dir }, 
+    function callback(error, stdout, stderr) {
         if (error) throw error;
-        console.log(`stdout: ${stdout}`);
+            console.log(`stdout: ${stdout}`);
     });
 }
 
-
 // ------------------------------------------------------------------------
 function copy_file() {
-
     log_newsection("copying files");
     const tocopy = ["dist/main.js", "manifest.json"]
     tocopy.forEach(function (file, idx) {

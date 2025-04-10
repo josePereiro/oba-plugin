@@ -5,6 +5,7 @@ import { tools } from 'src/tools-base/0-tools-modules';
 import { filesys } from 'src/oba-base/0-oba-modules';
 import { callbacks } from './0-servises-modules';
 import { OBA } from 'src/oba-base/globals';
+import { getCurrNotePath, getCursorPosition, getSelectedText, getSelectionRange } from 'src/tools-base/obsidian-tools';
 
 /*
 	Deal with signals to backends.
@@ -78,10 +79,10 @@ export async function signalBackend(extras = BACKENDS_EXTRAS) {
 	const rlen = 15;
 	const hash = tools.randstring('O.', rlen)
 	
-	const notepath = tools.getCurrNotePath();
-	const selectionText = tools.getSelectedText();
-	const selectionRange = tools.getSelectionRange();
-	const cursorPos = tools.getCursorPosition();
+	const notepath = getCurrNotePath();
+	const selectionText = getSelectedText();
+	const selectionRange = getSelectionRange();
+	const cursorPos = getCursorPosition();
 	const callbackLast = callbacks.LAST_CALLBACK;
 
 	const hashsignal = { 

@@ -3,6 +3,7 @@ import { backends, commands, git, replacer } from './0-servises-modules';
 import { tools } from 'src/tools-base/0-tools-modules';
 import { crossref, localbibs } from 'src/biblio-base/0-biblio-modules';
 import { citnotes } from 'src/citnotes-base/0-citnotes-modules';
+import { openNoteAtLine } from 'src/tools-base/obsidian-tools';
 
 /*
     TODO: Add priority
@@ -40,7 +41,7 @@ export function onload() {
             if (!params) { return; }
             console.log("obauri.params:\n", params?.[0])
             // open "obsidian://oba-uri?vault=MetXVault&_file=2_notes%2F%40edwardsEscherichiaColiMG16552000.md&_line=13"
-            await tools.openNoteAtLine(params?.["_file"], params?.["_line"])
+            await openNoteAtLine(params?.["_file"], params?.["_line"])
         }
     )
 
@@ -62,7 +63,7 @@ export function getCallbackArgs() {
 export async function runCallbacks(key: string, ...args: any[]) {
     LAST_CALLBACK = key;
     CALLBACK_ARGS = args;
-    console.clear();
+    // console.clear();
     console.log(`runCallbacks:${key}`);
     const calls = getCallbacks(key, true);
     console.log(calls)

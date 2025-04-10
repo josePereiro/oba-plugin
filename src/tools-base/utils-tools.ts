@@ -88,20 +88,44 @@ export function absDoi(doi: string): string {
     return doi
 }
 
-export function hash64(input: string, base = 16): string {
-    let hash = 0n; // Use BigInt for 64-bit precision
+// TODO/ Use a pro hash alg
+export function hash64Number(
+    input: string, 
+    hash0: bigint = 0n
+) {
+    // Use BigInt for 64-bit precision
 
+    let hash = hash0; 
     for (let i = 0; i < input.length; i++) {
         const charCode = BigInt(input.charCodeAt(i));
         hash = (hash << 5n) - hash + charCode; // Simple hash algorithm
         hash &= 0xFFFFFFFFFFFFFFFFn; // Ensure it stays 64-bit
     }
+    return hash
+}
 
+export function hash64(
+    input: string, 
+    hash0: bigint = 0n,  
+    base = 16
+): string {
+    const hash = hash64Number(input, hash0)
     // pad = precision * log_{base} {2}
     // log_{base} {2} = 1 / log_{2} {base}
     let pad = 64 / Math.log2(base)
     pad = Math.ceil(pad)
     return hash.toString(base).padStart(pad, '0');
+}
+
+export function hash64Chain(
+    val0: string, 
+    ...vals: string[]
+) {
+    let hash = tools.hash64Number(val0, 0n)
+    for (const val of vals) {
+        hash = tools.hash64Number(val, hash)
+    }
+    return hash.toString(16).padStart(16, '0');
 }
 
 export function toCamelCase(sentence: string): string {

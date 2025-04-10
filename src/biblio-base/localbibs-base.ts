@@ -383,37 +383,32 @@ export async function findByCiteKey(
     )
 }
 
-
 // MARK: parse
 async function _parseBibFileStream(
     filePath: string, 
     onEntry: (entry: any) => void
 ): Promise<void> {
-    return new Promise((resolve, reject) => {
-        let bibtexContent = '';
-        let chunck: string[] = []
-        const stream = createReadStream(filePath);
-        const rl = readline.createInterface({ input: stream, crlfDelay: Infinity });
 
-        rl.on('line', (line) => {
-            // bibtexContent += line + '\n';
+    let bibtexContent = '';
+    let chunck: string[] = []
+    
+    await tools.readFileLineByLine(
+        filePath,
+        (line: string, li: number) => {
+            line = line.trim()
             chunck.push(line)
-            if (line.trim() === '}') { // Likely end of an entry
+            if (line === '}') { // Likely end of an entry
                 try {
                     bibtexContent = chunck.join('\n')
                     const parsedEntry = bibparser.parseAsync(bibtexContent);
                     onEntry(parsedEntry);
-                    // bibtexContent = ''; // Reset for the next entry
                     chunck = [] as string[] // Reset for the next entry
                 } catch (error) {
                     console.error('Error parsing BibTeX entry:', error);
                 }
             }
-        });
-
-        rl.on('close', () => resolve());
-        rl.on('error', (error: any) => reject(error));
-    });
+        }
+    ) 
 }
 
 

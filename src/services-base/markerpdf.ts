@@ -5,6 +5,7 @@ import { OBA } from 'src/oba-base/globals';
 import { tools } from 'src/tools-base/0-tools-modules';
 import { vscode } from './0-servises-modules';
 import { obaconfig } from 'src/oba-base/0-oba-modules';
+import { getCurrNotePath } from 'src/tools-base/obsidian-tools';
 
 /*
     Integration with marker pdf.
@@ -28,7 +29,7 @@ export function onload() {
     Open marker note directory in vscode
 */ 
 export function openNoteMD() {
-    const notePath = tools.getCurrNotePath();
+    const notePath = getCurrNotePath();
     const noteName = basename(notePath).
         replace("@", "").
         replace(".md", "")
