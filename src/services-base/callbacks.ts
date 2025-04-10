@@ -66,7 +66,6 @@ export async function runCallbacks(key: string, ...args: any[]) {
     // console.clear();
     console.log(`runCallbacks:${key}`);
     const calls = getCallbacks(key, true);
-    console.log(calls)
     for (const call of calls) {
         try {
             await call(); // Execute each function

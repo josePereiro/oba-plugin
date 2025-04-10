@@ -4,11 +4,9 @@ import { Notice, TFile } from "obsidian";
 import * as path from "path";
 import { obaconfig } from "src/oba-base/0-oba-modules";
 import { OBA } from "src/oba-base/globals";
-import { obanotes } from "src/onanotes-base/0-obanotes-modules";
 import { getCallbackArgs, registerCallback, runCallbacks } from "src/services-base/callbacks";
 import { JsonIO, tools } from "src/tools-base/0-tools-modules";
 import { getNoteYamlHeader, getSelectedText, getVaultDir, resolveNoteAbsPath } from "src/tools-base/obsidian-tools";
-
 
 
 /*
@@ -27,6 +25,10 @@ import { getNoteYamlHeader, getSelectedText, getVaultDir, resolveNoteAbsPath } f
     - a per note action-manifest for each use
         - contain detailed actions for each note
         - it might even contain a log of past actions
+
+    - // TODO, at some point, I can split the depot manifest 
+    // in different files, for instance, a file for each first letter of a key.
+    // This to avoid loading/writing a big file
 */ 
 
 
@@ -58,9 +60,10 @@ export function onload() {
             const thisUserName = obaconfig.getObaConfig("obasync.me", null)
             let signalType = 'notice'
             let signalContent = { "msg": sel }
-            let manContent = sendObaSyncMainSignal({
+            let manContent = sendObaSyncSignal({
                 remoteDir,
                 userName: thisUserName, 
+                manKey: 'main',
                 signalType,
                 signalContent,
             }) 
@@ -78,9 +81,10 @@ export function onload() {
             const thisUserName = obaconfig.getObaConfig("obasync.me", null)
             let signalType = 'hello.world'
             let signalContent = {}
-            let manContent = sendObaSyncMainSignal({
+            let manContent = sendObaSyncSignal({
                 remoteDir,
                 userName: thisUserName, 
+                manKey: 'main',
                 signalType,
                 signalContent,
             }) 
@@ -95,7 +99,7 @@ export function onload() {
             console.clear()
             const remoteDir = getRemoteDir("TankeFactory")
             const thisUserName = obaconfig.getObaConfig("obasync.me", null)
-            await handleMainSignals(remoteDir, thisUserName) 
+            await handleSignals(remoteDir, thisUserName, 'main') 
         },
     });
 
@@ -109,6 +113,7 @@ export function onload() {
         const msg = context?.['signalContent']?.['msg']
         // TODO: find a better notification
         new Notice(`${sender} says: ${msg}!`)
+        context["handlingStatus"] = 'ok'
     }
 
     registerCallback(
@@ -119,7 +124,7 @@ export function onload() {
     )
 
     registerCallback(
-        `obasync.signal.newer:notice`, 
+        `obasync.signal.timetag.mine.newer:notice`, 
         async () => {
             await handleNotice()
         }
@@ -131,6 +136,7 @@ export function onload() {
         if (!context) { return; }
         console.log("context:\n", context)
         new Notice(`${context?.["userName"]} says Hello!`)
+        context["handlingStatus"] = 'ok'
     }
 
     registerCallback(
@@ -141,7 +147,7 @@ export function onload() {
     )
 
     registerCallback(
-        `obasync.signal.newer:hello.world`, 
+        `obasync.signal.timetag.mine.newer:hello.world`, 
         async () => {
             await handleHello()
         }
@@ -157,50 +163,32 @@ function remoteObsSyncDir(
     return tools.getSubDir(remoteDir, ".obasync")
 }
 
-function remoteMainManifestFile(
+function remoteManifestFile(
     remoteDir: string, 
     userName: string, 
+    manKey: string
 ) {
     const obasyncDir = remoteObsSyncDir(remoteDir);
-    return path.join(obasyncDir, `${userName}-main-man.json`)
+    return path.join(obasyncDir, `${userName}-${manKey}-man.json`)
 }
 
-// TODO, at some point, I can split the depot manifest 
-// in different files, for instance, a file for each first letter of a key.
-// This to avoid loading/writing a big file
-function remoteDepotManifestFile(
+function remoteManifest(
     remoteDir: string, 
     userName: string, 
+    manKey: string
 ) {
-    const obasyncDir = remoteObsSyncDir(remoteDir);
-    return path.join(obasyncDir, `${userName}-depot-man.json`)
-}
-
-function remoteMainManifest(
-    remoteDir: string, 
-    userName: string, 
-) {
-    const man = remoteMainManifestFile(remoteDir, userName);
+    const man = remoteManifestFile(remoteDir, userName, manKey);
     const io = new JsonIO()
     io.file(man)
     return io
 }
 
-function remoteDepotManifest(
-    remoteDir: string, 
-    userName: string, 
-) {
-    const man = remoteDepotManifestFile(remoteDir, userName);
-    const io = new JsonIO()
-    io.file(man)
-    return io
-}
-
-async function _loadAllManifests(
+async function loadAllManifests(
     remoteDir: string,
-    suffix: string
+    manKey: string
 ) {
     const mans: {[keys: string]: JsonIO} = {} 
+    const suffix = `-${manKey}-man.json`
     await tools.readDir(
         remoteDir, 
         {
@@ -219,61 +207,13 @@ async function _loadAllManifests(
     return mans
 }
 
-async function loadAllMainManifests(
-    remoteDir: string
-) {
-    return _loadAllManifests(remoteDir, '-main-man.json')
-}
-
-async function loadAllDepotManifests(
-    remoteDir: string
-) {
-    return _loadAllManifests(remoteDir, '-depot-man.json')
-}
-
-// DOING/ drying this
 function modifyObaSyncManifest(
     remoteDir: string,
     userName: string, 
-    suffix: '-depot-man.json',
+    manKey: string,
     onmod: (manContent: any) => any
 ) {
-    const manIO = remoteMainManifest(remoteDir, userName)
-    manIO.loadd({})
-    manIO.withDepot((manContent: any) => {
-        // defaults
-        manContent["user"] = userName
-        manContent["modified.timestamp"] = utcTimeTag()
-        onmod(manContent)
-    })
-    manIO.write()
-    return manIO.retDepot()
-}
-
-
-function modifyObaSyncMainManifest(
-    remoteDir: string,
-    userName: string, 
-    onmod: (manContent: any) => any
-) {
-    const manIO = remoteMainManifest(remoteDir, userName)
-    manIO.loadd({})
-    manIO.withDepot((manContent: any) => {
-        // defaults
-        manContent["user"] = userName
-        manContent["modified.timestamp"] = utcTimeTag()
-        onmod(manContent)
-    })
-    manIO.write()
-    return manIO.retDepot()
-}
-
-function modifyObaSyncDepotManifest(
-    remoteDir: string,
-    userName: string, 
-    onmod: (manContent: any) => any
-) {
-    const manIO = remoteDepotManifest(remoteDir, userName)
+    const manIO = remoteManifest(remoteDir, userName, manKey)
     manIO.loadd({})
     manIO.withDepot((manContent: any) => {
         // defaults
@@ -291,6 +231,7 @@ export interface SignalOptions {
     remoteDir: string,
     userName: string, 
     signalType: string, 
+    manKey: string,
     signalContent?: any,
     hashDig?: string[]
 } 
@@ -300,6 +241,16 @@ function _signalHashKey(val0: string, ...vals: string[]) {
     return hash
 }
 
+/*
+{
+    "signals": {
+        "adasdf6546sad5f65": {
+            "signalType": "hello",
+            "timestamp": "2025-04-10T14:30:00.000Z"
+        }
+    }
+}
+*/ 
 function _writeSignal(
     userName: string, 
     signalType: string, 
@@ -314,16 +265,18 @@ function _writeSignal(
     manContent['signals'][hashKey] = signalContent
 }
 
-function sendObaSyncMainSignal({
+function sendObaSyncSignal({
     remoteDir,
     userName, 
     signalType, 
+    manKey,
     signalContent = {},
     hashDig = []
 }: SignalOptions ) {
-    return modifyObaSyncMainManifest(
+    return modifyObaSyncManifest(
         remoteDir,
         userName, 
+        manKey,
         (manContent: any) => {
             // akn
             _writeSignal(userName, "signal.sended", manContent, {}, [])
@@ -335,51 +288,51 @@ function sendObaSyncMainSignal({
     )
 }
 
-/*
-{
-    "signals": {
-        "adasdf6546sad5f65": {
-            "signalType": "hello",
-            "timestamp": "2025-04-10T14:30:00.000Z"
-        }
-    }
-}
-*/ 
-function sendObaSyncDepotSignal(
-    remoteDir: string,
-    userName: string, 
-    signalType: string, 
-    signalContent: any,
-    ...hashDig: string[]
+
+async function _runHandlingCallback(
+    callbackID: string,
+    context: any
 ) {
-    return modifyObaSyncDepotManifest(
-        remoteDir,
-        userName, 
-        (manContent: any) => {
-            _writeSignal(
-                userName, signalType, manContent, signalContent, hashDig
-            ) 
+    // reset status
+    context['handlingStatus'] = 'unknown'
+
+    // Run callback
+    await runCallbacks(callbackID, context)
+    
+    // Validate run
+    const thisRecordsContent = context["thisRecordsContent"]
+    const hashKey = context["hashKey"]
+    const signalContent = context["signalContent"]
+    const userName = context["userName"]
+    const status = context['handlingStatus']
+    if (status == 'ok') {
+        thisRecordsContent[hashKey] = {
+            ...signalContent,
+            userName,
+            'callback': 'obasync.signal.unrecorded',
+            'handlingStatus': status
         }
-    )
+    } else if (status == 'unknown') {
+        console.log(`Unknown status, callbackID:  ${callbackID},  status: ${status}`)
+    } else {
+        new Notice(`Callback failed, callbackID:  ${callbackID},  status: ${status}`)
+    }
 }
 
 /*
-    Run the callbacks for each main signal event
+    Run the callbacks for each signal event
 */ 
-async function handleMainSignals(
+async function handleSignals(
     remoteDir: string,
     thisUserName: string, 
+    manKey: string,
 ) {
+
     const obsSyncDir = remoteObsSyncDir(remoteDir)
-    const manIOs = await loadAllMainManifests(obsSyncDir) 
+    const manIOs = await loadAllManifests(obsSyncDir, manKey) 
     // get my manifest
-    const thisManIO = remoteMainManifest(remoteDir, thisUserName);
-    const thisMan = thisManIO.loaddOnDemand({}).retDepot()
-    console.log('thisMan 0: ', thisMan)
-    const thisRecordsContent = thisManIO.getset('records', {}).retVal();
-    console.log('thisMan 1: ', thisMan)
-    console.log('thisUserName: ', thisUserName)
-    console.log('thisRecordsContent: ', thisRecordsContent)
+    const thisManIO = remoteManifest(remoteDir, thisUserName, manKey);
+    const thisRecordsContent = thisManIO.loadd({}).getset('records', {}).retVal();
 
     // handle others manifest
     for (const userName in manIOs) {
@@ -392,7 +345,6 @@ async function handleMainSignals(
         const signalsContent = manIO.getd('signals', null).retVal()
 
         for (const hashKey in signalsContent) {
-            // console.log('hashKey: ', hashKey)
 
             // signal content
             const signalContent = signalsContent[hashKey]
@@ -401,101 +353,74 @@ async function handleMainSignals(
             // get record
             let thisRecordContent = thisRecordsContent?.[hashKey]
 
+            // call context
+            const context = {userName, thisUserName, hashKey, signalType, signalContent, thisRecordContent, thisRecordsContent, handlingStatus: 'unknown'}
+            console.log('context: ', context)
+
             // obasync.signal.unrecorded
             if (!thisRecordContent) {
                 // run callbacks
-                const context = {userName, thisUserName, hashKey, signalType, signalContent, thisRecordContent}
                 const callbackID = `obasync.signal.unrecorded:${signalType}`
                 console.log("running callbackID: ", callbackID)
-                // console.log('thisMan 2: ', thisMan)
-                await runCallbacks(callbackID, context)
-                // console.log('thisMan 3: ', thisMan)
-                // update
-                // TODO/ Use JsonIO interface
-                thisRecordsContent[hashKey] = {
-                    ...signalContent,
-                    userName,
-                    'callback': 'obasync.signal.unrecorded'
-                }
-                // console.log('thisMan 4: ', thisMan)
-                // console.log('thisRecordsContent: ', thisRecordsContent)
+                await _runHandlingCallback(callbackID, context)
             }
-            
-            // obasync.signal.newer
+
             const timestampStr = signalContent?.['timestamp']
             const thisTimestampStr = thisRecordContent?.['timestamp']
             if (thisTimestampStr && timestampStr) {
-                // console.log('timestampStr: ', timestampStr)
-                // console.log('thisTimestampStr: ', thisTimestampStr)
                 const timestamp = new Date(timestampStr)
                 const thisTimestamp = new Date(thisTimestampStr)
+
+                // both.present
+                const callbackID = `obasync.signal.timetag.both.present:${signalType}`
+                console.log("running callbackID: ", callbackID)
+                await _runHandlingCallback(callbackID, context)
+
                 if (thisTimestamp < timestamp) {
-                    const context = {userName, thisUserName, hashKey, signalType, signalContent, thisRecordContent}
-                    const callbackID = `obasync.signal.newer:${signalType}`
+                    // mine.newer
+                    const callbackID = `obasync.signal.timetag.mine.newer:${signalType}`
                     console.log("running callbackID: ", callbackID)
-                    await runCallbacks(callbackID, context)
-                    // update
-                    thisRecordsContent[hashKey] = {
-                        ...signalContent,
-                        userName,
-                        'callback': 'obasync.signal.newer'
-                    }
+                    await _runHandlingCallback(callbackID, context)
                 }
+                if (thisTimestamp == timestamp) {
+                    // both.equal
+                    const callbackID = `obasync.signal.timetag.both.equal:${signalType}`
+                    console.log("running callbackID: ", callbackID)
+                    await _runHandlingCallback(callbackID, context)
+                }
+                if (thisTimestamp > timestamp) {
+                    // both.equal
+                    const callbackID = `obasync.signal.timetag.mine.older:${signalType}`
+                    console.log("running callbackID: ", callbackID)
+                    await _runHandlingCallback(callbackID, context)
+                }
+            }
+
+            // obasync.signal.timetag.mine.missing
+            if (thisTimestampStr && !timestampStr) {
+                const callbackID = `obasync.signal.timetag.mine.missing:${signalType}`
+                console.log("running callbackID: ", callbackID)
+                await _runHandlingCallback(callbackID, context)
+            }
+
+            // obasync.signal.timetag.other.missing
+            if (!thisTimestampStr && timestampStr) {
+                const callbackID = `obasync.signal.timetag.other.missing:${signalType}`
+                console.log("running callbackID: ", callbackID)
+                await _runHandlingCallback(callbackID, context)
+            }
+
+            // obasync.signal.timetag.both.mising
+            if (!thisTimestampStr && !timestampStr) {
+                const callbackID = `obasync.signal.timetag.both.missing:${signalType}`
+                console.log("running callbackID: ", callbackID)
+                await _runHandlingCallback(callbackID, context)
             }
         }
     }
 
-    // console.log('thisMan 5: ', thisMan)
     thisManIO.write()
 }
-
-// // Low res
-
-// async function lowResolutionPullOne(
-//     srcPath: string,
-//     remotePath: string,
-//     vaultDir: string,
-//     remoteDir: string,
-// ) {
-
-//     // Get abstract file by path
-//     const remoteYaml = await tools.parseYamlHeaderStream(srcPath)
-//     if (!remoteYaml) {
-//         new Notice(`Remote: note with missing yaml, note: ${srcPath}`)
-//         return;
-//     }
-
-//     console.log(remoteYaml)
-// }
-
-// /*
-//     Pull the newest remote files
-// */ 
-// async function lowResolutionPullAll(
-//     vaultDir: string,
-//     remoteDir: string
-// ) {
-
-//     // check remote and pull newest notes
-//     await tools.readDir(
-//         remoteDir, 
-//         {
-//             walkdown: true,
-//             onpath: (_path: string) => {
-//             },
-//             onfile: async (_path: string) => {
-//                 // Process only .md files
-//                 if (_path.contains(".trash")) { return; }
-//                 if (path.extname(_path).toLowerCase() !== '.md') { return; }
-//                 console.log(_path)
-//                 await lowResolutionPullOne(_path, vaultDir, remoteDir)
-//             },
-//             ondir: (_path: string) => {
-//             }
-//         } 
-//     ) 
-// }
-
 
 // // Utils
 // get universal time
@@ -512,92 +437,3 @@ function getRemoteDir(
     return remotePath
 }
 
-// function pushSubVaultNote(subVault: string) {
-
-//     const subVaultsConfig = obaconfig.getObaConfig("obasync.subvaults", {})
-//     console.log(subVaultsConfig)
-
-//     const thisOwner = obaconfig.getObaConfig("obasync.me", null)
-//     if (!thisOwner) {
-//         new Notice(`obasync.me missing`)
-//         return
-//     }
-//     console.log(`obasync.me ${thisOwner}`)
-    
-//     const subVaultConf = subVaultsConfig?.[subVault] ?? {}
-//     const vaultPath = getVaultDir()
-//     const remotePath = subVaultConf?.["remote.path"] ?? ''
-//     if (!remotePath) {
-//         new Notice(`obasync.subvaults:remote.path is missing`)
-//         return
-//     }
-//     if (!existsSync(remotePath)) {
-//         new Notice(`remote folder is missing, remote ${remotePath}`)
-//         return
-//     }
-
-//     const srcNoteTFiles = obanotes.getObaNotes()
-//     for (const srcNoteTFile of srcNoteTFiles) {
-
-//         const srcNotePath = resolveNoteAbsPath(srcNoteTFile)
-//         console.log(`srcNotePath: ${srcNotePath}`)
-//         const yaml = getNoteYamlHeader(srcNoteTFile)
-//         // console.log(yaml)
-
-//         // Get push parameters
-//         const noteTimeTagStr = yaml?.['obasync-timetag'] 
-//         if (!noteTimeTagStr) {
-//             console.log(`obasync-timetag missing, file: ${srcNoteTFile.name}`)
-//             continue
-//         }
-//         const noteTimeTag = new Date(noteTimeTagStr);
-//         if (isNaN(noteTimeTag.getTime())) {
-//             console.log(`obasync-timetag invalid, file: ${srcNoteTFile.name}, timetag: ${noteTimeTagStr}`)
-//             continue
-//         }
-//         const noteOwner = yaml?.['obasync-owner'] 
-//         if (!noteOwner) {
-//             console.log(`obasync-owner missing, file: ${srcNoteTFile.name}`)
-//             continue
-//         }
-
-
-//         vaultPath
-//         remotePath
-//         const remoteNoteTFile = getRemoteFilePath(
-//             srcNotePath, vaultPath, thisOwner, 
-//         )
-//         console.log(`remoteNoteTFile: ${remoteNoteTFile}`)
-//         continue
-
-//     }
-
-// }
-
-// /*
-//     given a note, get its path in the remote
-// */ 
-// function getRemoteFilePath(
-//     localPath: string, 
-//     vaultDir: string,
-//     vaultOwner: string,
-//     noteOwner: string,
-//     remoteDir: string,
-// ) {
-//     const localDirName = path.dirname(localPath)
-//     const remoteDirName = localDirName.replace(vaultDir, remoteDir)
-//     const localBaseName = path.basename(localPath)
-//     let remoteBaseName = localBaseName
-//     // Make sure the owner tag is placed
-//     if (vaultOwner == noteOwner) {
-//         remoteBaseName = remoteBaseName
-//             .replace(new RegExp(`^${vaultOwner} - `), '')
-//         remoteBaseName = `${vaultOwner} - ${remoteBaseName}`
-//     } else {
-//         remoteBaseName = remoteBaseName
-//             .replace(new RegExp(`^${noteOwner} - `), '')
-//             .replace(new RegExp(`^${vaultOwner} - `), '')
-//         remoteBaseName = `${noteOwner} - ${remoteBaseName}`
-//     }
-//     return path.join(remoteDirName, remoteBaseName)
-// }
