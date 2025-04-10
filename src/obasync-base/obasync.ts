@@ -6,7 +6,7 @@ import { obaconfig } from "src/oba-base/0-oba-modules";
 import { OBA } from "src/oba-base/globals";
 import { getCallbackArgs, registerCallback, runCallbacks } from "src/services-base/callbacks";
 import { JsonIO, tools } from "src/tools-base/0-tools-modules";
-import { getNoteYamlHeader, getSelectedText, getVaultDir, resolveNoteAbsPath } from "src/tools-base/obsidian-tools";
+import { getCurrNote, getCurrNotePath, getNoteYamlHeader, getSelectedText, getVaultDir, resolveNoteAbsPath } from "src/tools-base/obsidian-tools";
 
 
 /*
@@ -76,7 +76,6 @@ export function onload() {
         name: "ObaSync Dev",
         callback: async () => {
             console.clear()
-            const vaultDir = getVaultDir()
             const remoteDir = getRemoteDir("TankeFactory")
             const thisUserName = obaconfig.getObaConfig("obasync.me", null)
             let signalType = 'hello.world'
@@ -103,6 +102,14 @@ export function onload() {
         },
     });
 
+    registerCallback(
+        `oba-interval-1`, 
+        async () => {
+            const remoteDir = getRemoteDir("TankeFactory")
+            const thisUserName = obaconfig.getObaConfig("obasync.me", null)
+            await handleSignals(remoteDir, thisUserName, 'main') 
+        }
+    )
 
     const handleNotice = async () => {
         console.log(getCallbackArgs())
@@ -152,6 +159,29 @@ export function onload() {
             await handleHello()
         }
     )
+
+    // 'changed'
+    OBA.registerEvent(
+        OBA.app.workspace.on('editor-change', (editor, info) => {
+            const activeFile = getCurrNotePath();
+            if (!activeFile) { return }
+            console.clear()
+            const remoteDir = getRemoteDir("TankeFactory")
+            const thisUserName = obaconfig.getObaConfig("obasync.me", null)
+            let signalType = 'notice'
+            let signalContent = { "msg": 
+                `${thisUserName} is working on ${path.basename(activeFile)}!!!` 
+            }
+            let manContent = sendObaSyncSignal({
+                remoteDir,
+                userName: thisUserName, 
+                manKey: 'main',
+                signalType,
+                signalContent,
+            }) 
+            console.log(manContent)
+        })
+    );
 
 }
 

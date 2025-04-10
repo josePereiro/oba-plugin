@@ -9,6 +9,8 @@ import * as dev from "./dev"
 export { dev }
 import * as git from "./git"
 export { git }
+import * as intervals from "./intervals"
+export { intervals }
 // import * as linecmds from "./line.cmds"
 // export { linecmds }
 // import * as llm from "./llm"
