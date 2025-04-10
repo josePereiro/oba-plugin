@@ -183,6 +183,16 @@ export function onload() {
         })
     );
 
+    OBA.registerEvent(
+        OBA.app.workspace.on('editor-change', async (editor, info) => {
+            const activeFile = getCurrNotePath();
+            if (!activeFile) { return }
+            const remoteDir = getRemoteDir("TankeFactory")
+            const thisUserName = obaconfig.getObaConfig("obasync.me", null)
+            await handleSignals(remoteDir, thisUserName, 'main') 
+        })
+    );
+
 }
 
 // MARK: manifest
