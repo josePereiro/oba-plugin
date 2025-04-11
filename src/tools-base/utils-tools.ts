@@ -233,3 +233,34 @@ export function _extractField(key: string, ...sources: any[]) {
     }
     return objs
 } 
+
+
+export class DelayManager {
+
+    constructor(
+        public ignoreTime: number = 3000,
+        public sleepTime: number = 100,
+        public delayTime: number = 3000,
+        public lastAction: number = -1,
+    ) {}
+
+    public async manageTime(
+        onwait: (elapsed: number) => any = () => null
+    ): Promise<'notyet' | 'go'> {
+        const now = new Date().getTime()
+        const elapsed = now - this.lastAction
+        this.lastAction = now
+        if (elapsed < this.ignoreTime) { return 'notyet' }
+        // roll action to future
+        while (true) {
+            const now = new Date().getTime()
+            const elapsed = now - this.lastAction
+            await onwait(elapsed)
+            if (this.delayTime < 0) { break; }
+            if (elapsed > this.delayTime) { break; }
+            await sleep(this.sleepTime)
+        }
+        return 'go'
+    }
+    
+}

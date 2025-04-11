@@ -191,11 +191,11 @@ function __generalLoadJson(
         const ret = loadfun();
         if (ret instanceof Promise) {
             return ret.then((ret1) => {
-                console.log(`JSON loaded from: ${path}`);
+                // console.log(`JSON loaded from: ${path}`);
                 return ret1;
                 })
         } else {
-            console.log(`JSON loaded from: ${path}`);
+            // console.log(`JSON loaded from: ${path}`);
             return ret;
         }
     }

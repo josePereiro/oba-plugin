@@ -60,11 +60,13 @@ export function getCallbackArgs() {
     return CALLBACK_ARGS
 }
 
-export async function runCallbacks(key: string, ...args: any[]) {
+export async function runCallbacks(
+    key: string, ...args: any[]
+) {
     LAST_CALLBACK = key;
     CALLBACK_ARGS = args;
     // console.clear();
-    console.log(`runCallbacks:${key}`);
+    // console.log(`runCallbacks:${key}`);
     const calls = getCallbacks(key, true);
     for (const call of calls) {
         try {
