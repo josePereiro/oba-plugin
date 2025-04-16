@@ -3,7 +3,7 @@ import { getVaultDir } from "src/tools-base/obsidian-tools";
 
 
 export function buildObaDirPath(vault: string) {
-    return tools.getSubDir(vault, ".Oba")
+    return tools.mkSubDir(vault, ".Oba")
 }
 
 /*
@@ -11,5 +11,5 @@ export function buildObaDirPath(vault: string) {
 */ 
 export function getObaDir(...names: string[]): string {
     const obaDir = buildObaDirPath(getVaultDir())
-    return tools.getSubDir(obaDir, ...names);
+    return tools.mkSubDir(obaDir, ...names);
 }

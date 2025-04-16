@@ -9,7 +9,6 @@ import { checkEnable, DelayManager, JsonIO, obsidianTools, tools } from "src/too
 import { getCurrNote, getCurrNotePath, getNoteYamlHeader, getSelectedText, getVaultDir, resolveNoteAbsPath } from "src/tools-base/obsidian-tools";
 import objectHash from 'object-hash';
 import { statusbar } from "src/services-base/0-servises-modules";
-import { exec } from "child_process";
 
 /*
     Main module to handle syncronization with other vaults
@@ -85,46 +84,217 @@ export function onload() {
         },
     });
 
-    OBA.addCommand({
-        id: "oba-obasync-handle-main-signals",
-        name: "ObaSync handle main signals",
-        callback: async () => {
-            checkEnable("obasync", {err: true, notice: true})
-            console.clear()
-            const pushDepot = getSyncChannelsConfig("TankeFactory", "push.depot", null)
-            const pullDepots = getSyncChannelsConfig("TankeFactory", "pull.depots", [])
-            const userName0 = obaconfig.getObaConfig("obasync.me", null)
-            for (const pullDepot of pullDepots) {
-                await handleSignals(
-                    pushDepot, pullDepot, userName0, 'main',
-                    () => {
-                        // preD2vPull
-                        console.log("pulling from: ", pullDepot)
-                        _r2dPull(pullDepot)
-                    },
-                    () => {
-                        // postD2vPull
-                        console.log("pushing to: ", pushDepot)
-                        _d2rPush(pushDepot)
-                    }
-                ) 
-            }
-        },
-    });
+    // OBA.addCommand({
+    //     id: "oba-obasync-handle-main-signals",
+    //     name: "ObaSync handle main signals",
+    //     callback: async () => {
+    //         checkEnable("obasync", {err: true, notice: true})
+    //         console.clear()
+    //         const remoteDir = getSyncDepotDir("TankeFactory")
+    //         const userName0 = obaconfig.getObaConfig("obasync.me", null)
+    //         await handleSignals(remoteDir, userName0, 'main') 
+    //     },
+    // });
 
-    registerCallback(
-        `obasync.signal.missing.in.record0.or.newer:notice`, 
-        async () => {
-            const context = getCallbackContext()
-            if (!context) { return; }
-            const sender = context?.["userName1"]
-            const msg = context?.['signal1Content']?.['msg']
-            // TODO: find a better notification system
-            new Notice(`${sender} says: ${msg}!`)
-            context["handlingStatus"] = 'ok'
-            console.log("handle.notice.context: ", context)
-        }
-    )
+    // OBA.addCommand({
+    //     id: "oba-obasync-push-current-note",
+    //     name: "ObaSync push current note",
+    //     callback: async () => {
+    //         checkEnable("obasync", {err: true, notice: true})
+    //         // TODO
+    //     }
+    // })
+
+
+    // MARK: anymove
+    // 'changed'
+    if (checkEnable("obasync", {err: false, notice: false})) {
+        OBA.registerEvent(
+            OBA.app.workspace.on('editor-drop', (...args) => {
+                runCallbacks('__obasync.obsidian.anymove')
+            })
+        );
+        OBA.registerEvent(
+            OBA.app.workspace.on('editor-change', (...args) => {
+                runCallbacks('__obasync.obsidian.anymove')
+            })
+        );
+        OBA.registerEvent(
+            OBA.app.workspace.on('layout-change', (...args) => {
+                runCallbacks('__obasync.obsidian.anymove')
+            })
+        );
+        OBA.registerEvent(
+            OBA.app.workspace.on('file-open', (...args) => {
+                runCallbacks('__obasync.obsidian.anymove')
+            })
+        );
+        OBA.registerEvent(
+            OBA.app.workspace.on('active-leaf-change', (...args) => {
+                runCallbacks('__obasync.obsidian.anymove')
+            })
+        );
+        OBA.registerDomEvent(window.document, "wheel", () => {
+            runCallbacks('__obasync.obsidian.anymove')
+        });
+        OBA.registerDomEvent(window.document, "mousemove", () => {
+            runCallbacks('__obasync.obsidian.anymove')
+        });
+        OBA.registerDomEvent(window.document, "click", () => {
+            runCallbacks('__obasync.obsidian.anymove')
+        });
+    
+        registerCallback(
+            `__obasync.obsidian.anymove`, 
+            async () => {
+                const now: Date = new Date()
+                const flag = await ANYMOVE_DELAY.manageTime()
+                if (flag == "go") { 
+                    await runCallbacks('obasync.obsidian.anymove')
+                }
+                
+            }
+        )
+
+        // // push
+        // OBA.registerDomEvent(window.document, "keyup", async () => {
+
+        //     console.clear()
+
+        //     // context data
+        //     const localFile = getCurrNotePath();
+        //     if (!localFile) { return }
+
+        //     const channelName = "TankeFactory"
+        //     const remoteDir = getSyncDepotDir(channelName)
+        //     const fileName = path.basename(localFile)
+        //     const userName0 = obaconfig.getObaConfig("obasync.me", null)
+
+        //     //  control flow
+        //     const flag = await PUSH_DELAY
+        //     .manageTime((elapsed) => {
+        //         const conutdown = PUSH_DELAY.delayTime - elapsed
+        //         statusbar.setText(`pushing in: ${conutdown}`)
+        //     })
+        //     if (flag == "notyet") { return }
+        //     statusbar.setText('pushing')
+
+        //     let signal0: ObaSyncSignal = { 
+        //         "type": `push`,
+        //         "fileName": fileName,
+        //         "channelName": channelName
+        //     }
+
+        //     // push file
+        //     runCallbacks('obasync.before.push')
+        //     const destFile = path.join(remoteDir, fileName)
+        //     cp(localFile, destFile, { force: true })
+        //     sendObaSyncSignal(remoteDir, userName0, 'main', signal0, [fileName]) 
+        //     runCallbacks('obasync.after.push')
+
+        //     // new Notice("NOTE PUSHED!")
+        //     statusbar.clear()
+        //     statusbar.setText('NOTE PUSHED!', true)
+        //     await sleep(1000)
+        //     statusbar.clear()
+        //     statusbar.clear()
+        // });
+
+        // MARK: send
+        // notice
+        // OBA.registerEvent(
+        //     OBA.app.workspace.on('editor-change', async (editor, info) => {
+        //         console.clear()
+        //         const activeFile = getCurrNotePath();
+        //         if (!activeFile) { return }
+        //         const remoteDir = getSyncDepotDir("TankeFactory")
+        //         const userName0 = obaconfig.getObaConfig("obasync.me", null)
+        //         let signal0: ObaSyncSignal = { 
+        //             "type": 'notice',
+        //             "msg": `Im working on '${path.basename(activeFile)}'!!!` 
+        //         }
+        //         sendObaSyncSignal(remoteDir, userName0, 'main', signal0) 
+        //     })
+        // );
+
+        
+        // MARK: handle
+        registerCallback(
+            `obasync.obsidian.anymove`, 
+            async () => {
+                return; // DEV
+                const remoteDir = getSyncDepotDir("TankeFactory")
+                const userName0 = obaconfig.getObaConfig("obasync.me", null)
+                await handleSignals(remoteDir, userName0, 'main')
+            }
+        )
+
+        // pull
+        registerCallback(
+            `obasync.signal.missing.in.record0.or.newer:push`, 
+                async () => {
+                    const context = getCallbackContext()
+                if (!context) { return; }
+                const signal = context?.['signal1Content']
+                console.log("push.signal: ", signal)
+                const remoteFile = signal?.['fileName']
+                const channelName = signal?.['channelName']
+                const remoteDir = getSyncDepotDir(channelName)
+                const vaultDir = getVaultDir()
+
+                // "pull.dest.folder.relpath"
+                const pullDir = path.join(vaultDir, getRemotePullDir(channelName, ''))
+                console.clear()
+                console.log("pullDir: ", pullDir)
+                const srcPath = path.join(remoteDir, remoteFile)
+                if (!existsSync(srcPath)) {
+                    context["handlingStatus"] = 'ok'
+                    new Notice(`srcPath missing! ${srcPath}!`)
+                    return
+                }
+                const destPath = path.join(pullDir, remoteFile)
+                // if (!existsSync(destPath)) {
+                //     context["handlingStatus"] = 'ok'
+                //     new Notice(`destPath missing! ${destPath}!`)
+                //     return
+                // }
+                console.log("pullDir: ", pullDir)
+                console.log("srcPath: ", srcPath)
+                console.log("destPath: ", destPath)
+                await cp(srcPath, destPath, { force: true })
+
+                new Notice(`pulled: ${remoteFile}!`)
+                context["handlingStatus"] = 'ok'
+                console.log("handle.push.context: ", context)
+            }
+        )
+
+        // registerCallback(
+        //     `obasync.signal.missing.in.record0.or.newer:notice`, 
+        //     async () => {
+        //         const context = getCallbackContext()
+        //         if (!context) { return; }
+        //         const sender = context?.["userName1"]
+        //         const msg = context?.['signal1Content']?.['msg']
+        //         // TODO: find a better notification system
+        //         new Notice(`${sender} says: ${msg}!`)
+        //         context["handlingStatus"] = 'ok'
+        //         console.log("handle.notice.context: ", context)
+        //     }
+        // )
+
+        registerCallback(
+            `obasync.signal.missing.in.record0.or.newer:hello.world`, 
+            async () => {
+                const context = getCallbackContext()
+                if (!context) { return; }
+                new Notice(`${context?.["userName1"]} says Hello!`)
+                context["handlingStatus"] = 'ok'
+                console.log("handle.hello.context: ", context)
+            }
+        )
+    }
+
 }
 
 // MARK: manifest
@@ -245,17 +415,9 @@ function sendObaSyncSignal(
     userName: string, 
     manKey: string,
     signal: ObaSyncSignal,
-    hashDig: string[] = [], 
-    preV2dPush: (() => any) = () => null,
-    postV2dPush: (() => any) = () => null,
+    hashDig: string[] = []
 ) {
-
-    // run callbacks
-    preV2dPush()
-    runCallbacks(`obasync.pre.depot.to.remote.push`)
-
-    // push signal to depot
-    modifyObaSyncManifest(
+    return modifyObaSyncManifest(
         pushDepotDir,
         userName, 
         manKey,
@@ -267,42 +429,6 @@ function sendObaSyncSignal(
             console.log("Signal.sended: ", signal)
         }
     )
-
-    runCallbacks(`obasync.pre.depot.to.remote.push.2`)
-    
-    // push depot
-    _d2rPush(pushDepotDir)
-
-    postV2dPush()
-    runCallbacks(`obasync.post.depot.to.remote.push`)
-}
-
-function _d2rPush(
-    pushDepotDir: string
-) {
-    // TODO: use git service
-    const command = `cd ${pushDepotDir}; git add .; git commit -m"obasync.pushed!"; git push --all`;
-    console.log("command:\n", command);
-    exec(command, (error, stdout, stderr) => {
-        if (stdout) {
-            console.log(`Stdout: ${stdout}`);
-        }
-        console.log(`Executed: ${command}`);
-    });
-}
-
-function _r2dPull(
-    pullDepotDir: string
-) {
-    // TODO: use git service
-    const command = `cd ${pullDepotDir}; git add .; git fetch --all; git pull`;
-    console.log("command:\n", command);
-    exec(command, (error, stdout, stderr) => {
-        if (stdout) {
-            console.log(`Stdout: ${stdout}`);
-        }
-        console.log(`Executed: ${command}`);
-    });
 }
 
 
@@ -336,13 +462,11 @@ async function _runHandlingCallback(
             'callback': 'obasync.signal.missing.in.record0',
             'handlingStatus': status
         } as ObaSyncRecord
-        console.log(`Callback handled, callbackID:  ${callbackID},  status: ${status}`)
+        // console.log(`callback handled, ID:  ${callbackID},  status: ${status}`)
     } else if (status == 'unknown') {
-        console.warn(`Unknown status, callbackID:  ${callbackID}`)
+        // console.log(`callback handled, ID:  ${callbackID},  status: ${status}`)
     } else {
-        const msg = `Callback failed, callbackID:  ${callbackID},  status: ${status}`
-        console.error(msg)
-        new Notice(msg)
+        new Notice(`Callback failed, callbackID:  ${callbackID},  status: ${status}`)
     }
 }
 
@@ -352,25 +476,15 @@ async function _runHandlingCallback(
     - bla1 means something from other user manifest
 */ 
 async function handleSignals(
-    pushDepot: string,
-    pullDepot: string,
+    remoteDir: string,
     userName0: string, 
     manKey: string,
-    preD2vPull: (() => any) = () => null,
-    postD2vPull: (() => any) = () => null
 ) {
 
-    // callbacks
-    preD2vPull()
-    runCallbacks(`obasync.pre.depot.to.vault.pull`)
-    
-    console.clear()
-
-    const obsSyncDir1 = getObsSyncDir(pullDepot)
-    const manIOs = await loadAllManifests(obsSyncDir1, manKey) 
+    const obsSyncDir = getObsSyncDir(remoteDir)
+    const manIOs = await loadAllManifests(obsSyncDir, manKey) 
     // get my manifest
-    const man0IO = remoteManifest(pushDepot, userName0, manKey)
-    console.log("manIO: ", man0IO)
+    const man0IO = manIOs?.[userName0] || remoteManifest(remoteDir, userName0, manKey)
     const man0Records = man0IO.loaddOnDemand({}).getset('records', {}).retVal();
     let callbackID;
     const man0IOContentHash0 = objectHash(
@@ -379,21 +493,17 @@ async function handleSignals(
             algorithm: 'sha1'   
         }
     )
-    console.log("man0IOContentHash0: ", man0IOContentHash0)
 
     // handle others manifest
-    console.log("userName0: ", userName0)
     for (const userName1 in manIOs) {
-        console.log("userName1: ", userName1)
         if (userName1 == userName0) { continue } // ignore mine
         
         const man1IO = manIOs[userName1]
 
         // handle signals
-        const man1Signals = man1IO.getd('signals', {}).retVal()
+        const man1Signals = man1IO.getd('signals', null).retVal()
 
         for (const signal1HashKey in man1Signals) {
-            console.log("signal1HashKey: ", signal1HashKey)
 
             // signal content
             const signal1Content = man1Signals[signal1HashKey]
@@ -468,7 +578,7 @@ async function handleSignals(
                 callbackID = `obasync.signal.timetags.both.missing:${signal1Type}`
                 await _runHandlingCallback(callbackID, context)
             }
-        } // for (const signal1HashKey in man1Signals)
+        }
     }
 
     // write if changed
@@ -478,15 +588,11 @@ async function handleSignals(
             algorithm: 'sha1'   
         }
     )
-    console.log("man0IOContentHash1: ", man0IOContentHash1)
     if (man0IOContentHash0 == man0IOContentHash1) {
         console.log("man0IO unchanged!")
     } else {
         man0IO.write()
     }
-
-    postD2vPull()
-    runCallbacks(`obasync.post.depot.to.vault.pull`)
 }
 
 // MARK: Utils

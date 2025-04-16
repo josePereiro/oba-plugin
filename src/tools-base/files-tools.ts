@@ -12,7 +12,7 @@ export function mkdirParent(filePath: string): void {
 }
 
 
-export function getSubDir(
+export function mkSubDir(
     root: string, 
     ...names: string[]
 ): string {
@@ -20,6 +20,14 @@ export function getSubDir(
     if (!existsSync(_dir)) {
         mkdirSync(_dir, { recursive: true });
     }
+    return _dir;
+}
+
+export function getSubDir(
+    root: string, 
+    ...names: string[]
+): string {
+    const _dir = path.join(root, ...names);
     return _dir;
 }
 
