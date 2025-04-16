@@ -1,4 +1,4 @@
-import * as obaup from './obaup'
+import * as obaup from '../services-base/obaup'
 export { obaup }
 import * as obasync from './obasync'
 export { obasync }

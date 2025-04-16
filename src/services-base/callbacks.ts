@@ -25,7 +25,7 @@ export function onload() {
     //  - "callback.oba-signal" : ["signalBackendCmd", "gitCommitCmd"]
     //      - You can just use bracket notation
     const callid = commands.getCommandCallbackId(1);
-    this.registerCallback(callid, 
+    this.registerObaCallback(callid, 
         // Order is relevant
         async () => await backends.signalBackend(),
         async () => await replacer.runReplacer(),
@@ -34,7 +34,7 @@ export function onload() {
         // async () => await citnotes.downloadAllLocalReferences(),
     )
 
-    this.registerCallback(
+    this.registerObaCallback(
         "callbacks.obauri.action", async () => {
             if (!checkEnable("obauri", {err: false, notice: true})) { return; }
             console.clear()
@@ -50,7 +50,7 @@ export function onload() {
 
 }
 
-export function registerCallback(key: string, ...fns: TObaCallback[]): void {
+export function registerObaCallback(key: string, ...fns: TObaCallback[]): void {
     const calls = getCallbacks(key, true);
     fns.forEach((fn, _index) => {
         calls.push(fn); // Add the function to the array
@@ -61,13 +61,13 @@ export function getCallbackArgs() {
     return CALLBACK_ARGS
 }
 
-export async function runCallbacks(
+export async function runObaCallbacks(
     key: string, ...args: any[]
 ) {
     LAST_CALLBACK = key;
     CALLBACK_ARGS = args;
     // console.clear();
-    // console.log(`runCallbacks:${key}`);
+    // console.log(`runObaCallbacks:${key}`);
     const calls = getCallbacks(key, true);
     for (const call of calls) {
         try {

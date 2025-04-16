@@ -23,7 +23,7 @@ export function onload() {
                 // console.clear();
                 checkEnable("commands", {err: true, notice: true})
                 const callid = getCommandCallbackId(i);
-                await callbacks.runCallbacks(callid);
+                await callbacks.runObaCallbacks(callid);
             }
         });
     }
