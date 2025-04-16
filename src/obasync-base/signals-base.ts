@@ -5,7 +5,7 @@ import { hash64Chain } from "src/tools-base/utils-tools"
 import { Notice } from "obsidian"
 import objectHash from "object-hash"
 import { loadAllManifestIOs, modifyObaSyncManifest, remoteManifestIO } from "./manifests-base"
-import { _d2rPush } from "./channels-base"
+import { _d2rPush, _r2dPull } from "./channels-base"
 
 // MARK: base
 export interface ObaSyncSignal {
@@ -26,6 +26,8 @@ export interface ObaSyncRecord {
 export interface ObaSyncCallbackContext {
     "userName0": string,
     "userName1": string,
+    "pullDepot0": string,
+    "pushDepot0": string,
     "signal1HashKey": string,
     "signal1Content": {[keys: string]: any} | null,
     "man0Records": {[keys: string]: any} | null,
@@ -81,9 +83,6 @@ export function sendObaSyncSignal(
     )
 
     runObaCallbacks(`obasync.pre.depot.to.remote.push.2`)
-    
-    // push depot
-    _d2rPush(pushDepotDir)
 
     postV2dPush()
     runObaCallbacks(`obasync.post.depot.to.remote.push`)
@@ -131,9 +130,9 @@ async function _runHandlingCallback(
     - bla0 means something from my manifest
     - bla1 means something from other user manifest
 */ 
-export async function handleObaSyncSignals(
-    pushDepot: string,
-    pullDepot: string,
+export async function resolveObaSyncSignals(
+    pushDepot0: string,
+    pullDepot0: string,
     userName0: string, 
     manKey: string,
     preD2vPull: (() => any) = () => null,
@@ -146,10 +145,10 @@ export async function handleObaSyncSignals(
     
     console.clear()
 
-    const obsSyncDir1 = getObsSyncDir(pullDepot)
+    const obsSyncDir1 = getObsSyncDir(pullDepot0)
     const manIOs = await loadAllManifestIOs(obsSyncDir1, manKey) 
     // get my manifest
-    const man0IO = remoteManifestIO(pushDepot, userName0, manKey)
+    const man0IO = remoteManifestIO(pushDepot0, userName0, manKey)
     console.log("manIO: ", man0IO)
     const man0Records = man0IO.loaddOnDemand({}).getset('records', {}).retVal();
     let callbackID;
@@ -187,6 +186,7 @@ export async function handleObaSyncSignals(
                 userName0, userName1, 
                 signal1HashKey, signal1Content, 
                 man0Records, 
+                pullDepot0, pushDepot0,
                 handlingStatus: 'unknown'
             }
 

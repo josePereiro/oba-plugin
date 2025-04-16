@@ -3,7 +3,7 @@ import { biblio, crossref, localbibs } from 'src/biblio-base/0-biblio-modules';
 import { BiblIOData, BiblIOIder } from 'src/biblio-base/biblio-data';
 import { OBA } from 'src/oba-base/globals';
 import { checkEnable, tools } from 'src/tools-base/0-tools-modules';
-import { obanotes } from 'src/onanotes-base/0-obanotes-modules';
+import { obanotes } from 'src/obanotes-base/0-obanotes-modules';
 import { citNoteBiblIO, citNoteReferenceBiblIOs, parseCitNoteCiteKey } from './citnotes-base';
 import { statusbar } from 'src/services-base/0-servises-modules';
 import { getCurrNote, getSelectedText } from 'src/tools-base/obsidian-tools';

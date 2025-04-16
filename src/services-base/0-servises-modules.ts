@@ -19,7 +19,9 @@ import * as markerpdf from "./markerpdf"
 export { markerpdf }
 import * as mdjson from "./mdjson"
 export { mdjson }
-import * as obanotes from "../onanotes-base/obanotes"
+import * as obanotes from "../obanotes-base/obanotes"
+import * as obaup from './obaup'
+export { obaup }
 export { obanotes }
 import * as obauri from "./obauri"
 export { obauri }

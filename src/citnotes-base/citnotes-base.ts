@@ -1,5 +1,5 @@
 import { TFile } from "obsidian";
-import { obanotes } from "src/onanotes-base/0-obanotes-modules";
+import { obanotes } from "src/obanotes-base/0-obanotes-modules";
 import { biblio } from "src/biblio-base/0-biblio-modules";
 import { ErrVersionCallerOptions, tools } from "src/tools-base/0-tools-modules";
 import { basename } from "path";

@@ -13,26 +13,18 @@ export function utcTimeTag() {
     return new Date().toISOString();
 }
 
+// export function getSyncChannelsConfigVal(
+//     channelName: string,
+//     key: string,
+//     dflt: any = null
+// ) {
+//     const subVaultsConfig = obaconfig.getObaConfig("obasync.channels", {})
+//     const subVaultConf = subVaultsConfig?.[channelName] ?? {}
+//     return subVaultConf?.[key] ?? dflt
+// }
+
 export function getSyncChannelsConfig(
-    channelName: string,
-    key: string,
-    dflt: any = null
+    dflt: any = {}
 ) {
-    const subVaultsConfig = obaconfig.getObaConfig("obasync.channels", {})
-    const subVaultConf = subVaultsConfig?.[channelName] ?? {}
-    return subVaultConf?.[key] ?? dflt
-}
-
-export function getRemotePullDir(
-    channelName: string,
-    dflt: any = null
-) {
-    return getSyncChannelsConfig(channelName, "pull.dest.folder.relpath", dflt)
-}
-
-export function getRemotePath(
-    localPath: string, 
-    remoteDir: string
-) {
-    path.join(remoteDir, path.basename(localPath))
+    return obaconfig.getObaConfig("obasync.channels", dflt)
 }

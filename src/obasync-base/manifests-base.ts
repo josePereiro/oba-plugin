@@ -5,7 +5,10 @@ import { readDir } from "src/tools-base/files-tools";
 import { ObaSyncCallbackContext } from "./signals-base";
 import { getCallbackArgs } from "src/services-base/callbacks";
 
-// MARK: manifest
+/*
+    Each channel will have a manifest with signals and report of actions. 
+*/ 
+
 export function depotManifestFile(
     depotDir: string, 
     userName: string, 

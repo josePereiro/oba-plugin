@@ -35,8 +35,6 @@ import { _serviceCallbacks } from "./callbacks-base";
 
 export function onload() {
     console.log("ObaSync:onload");
-
     _serviceCommands()
     _serviceCallbacks()
-    
 }
