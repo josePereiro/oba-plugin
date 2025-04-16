@@ -4,7 +4,7 @@ import { exec } from 'child_process';
 import { platform } from "os";
 import { existsSync } from 'fs';
 import { OBA } from 'src/oba-base/globals';
-import { tools } from 'src/tools-base/0-tools-modules';
+import { checkEnable, tools } from 'src/tools-base/0-tools-modules';
 import { obaconfig } from 'src/oba-base/0-oba-modules';
 import { BiblIOIder } from 'src/biblio-base/biblio-data';
 import { getCurrNote, getSelectedText } from 'src/tools-base/obsidian-tools';
@@ -15,12 +15,13 @@ import { getCurrNote, getSelectedText } from 'src/tools-base/obsidian-tools';
 */
 
 export function onload() {
-    console.log("OpenPdf:onload");
+    console.log("PDFRepo:onload");
     
     OBA.addCommand({
         id: "oba-pdfrepo-open-notes-pdf",
         name: "PDFRepo Open note's pdf",
         callback: () => {
+            checkEnable("pdfrepo", {err: true, notice: true})
             openPdfFromNote()
         },
     });
@@ -29,6 +30,7 @@ export function onload() {
         id: "oba-pdfrepo-check-notes-pdf",
         name: "PDFRepo check note's pdf",
         callback: () => {
+            checkEnable("pdfrepo", {err: true, notice: true})
             const sel = getSelectedText();
             checkPdfFromNote(sel)
         },

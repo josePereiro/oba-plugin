@@ -1,6 +1,6 @@
 import { Notice, TFile } from 'obsidian';
 import * as obaconfig from '../oba-base/obaconfig'
-import { tools } from 'src/tools-base/0-tools-modules';
+import { checkEnable, tools } from 'src/tools-base/0-tools-modules';
 import { OBA } from 'src/oba-base/globals';
 import { getCurrNote, getTags } from 'src/tools-base/obsidian-tools';
 
@@ -10,20 +10,23 @@ export function onload() {
     console.log("TagNotices:onload");
 
     // 'changed'
-    OBA.registerEvent(
-        OBA.app.workspace.on('editor-change', (editor, info) => {
-            const activeFile = getCurrNote();
-            if (!activeFile) { return }
-            execNotices(activeFile, 'changed');
-        })
-    );
-
-    // 'file-open'
-    OBA.registerEvent(
-        OBA.app.workspace.on('file-open', (file: TFile) => {
-            execNotices(file, 'file-open');
-        })
-    );
+    if (checkEnable("tagnotices", {err: false, notice: false})) {
+        OBA.registerEvent(
+            OBA.app.workspace.on('editor-change', (editor, info) => {
+                const activeFile = getCurrNote();
+                if (!activeFile) { return }
+                execNotices(activeFile, 'changed');
+            })
+        );
+    
+        // 'file-open'
+        OBA.registerEvent(
+            OBA.app.workspace.on('file-open', (file: TFile) => {
+                execNotices(file, 'file-open');
+            })
+        );
+    }
+    
 }
 
 export function tagNoticesConfig() {

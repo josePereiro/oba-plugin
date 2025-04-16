@@ -1,4 +1,5 @@
 import { OBA } from "src/oba-base/globals";
+import { checkEnable } from "src/tools-base/oba-tools";
 import { DelayManager } from "src/tools-base/utils-tools";
 
 let STATUSBAR: HTMLElement
@@ -17,6 +18,7 @@ export function onload() {
         id: "oba-statusbar-dev",
         name: "StatusBar dev",
         callback: async () => {
+            checkEnable("statusbar", {err: true, notice: true})
             for (let i = 0; i < 10; i++) {
                 setText(`HI ${i}`)
                 await sleep(500)

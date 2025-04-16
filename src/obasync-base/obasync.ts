@@ -5,7 +5,7 @@ import * as path from "path";
 import { obaconfig } from "src/oba-base/0-oba-modules";
 import { OBA } from "src/oba-base/globals";
 import { getCallbackArgs, registerCallback, runCallbacks } from "src/services-base/callbacks";
-import { DelayManager, JsonIO, obsidianTools, tools } from "src/tools-base/0-tools-modules";
+import { checkEnable, DelayManager, JsonIO, obsidianTools, tools } from "src/tools-base/0-tools-modules";
 import { getCurrNote, getCurrNotePath, getNoteYamlHeader, getSelectedText, getVaultDir, resolveNoteAbsPath } from "src/tools-base/obsidian-tools";
 import objectHash from 'object-hash';
 import { statusbar } from "src/services-base/0-servises-modules";
@@ -43,6 +43,7 @@ export function onload() {
         id: "oba-obasync-rm-remote-obasync-dir",
         name: "ObaSync rm remote obasync dir",
         callback: async () => {
+            checkEnable("obasync", {err: true, notice: true})
             console.clear()
             const remoteDir = getRemoteDir("TankeFactory")
             const obsSyncDir = remoteObsSyncDir(remoteDir)
@@ -54,6 +55,7 @@ export function onload() {
         id: "oba-obasync-send-notice-from-selected",
         name: "ObaSync send notice from selected",
         callback: async () => {
+            checkEnable("obasync", {err: true, notice: true})
             console.clear()
             const sel = getSelectedText()
             if (!sel) {
@@ -74,6 +76,7 @@ export function onload() {
         id: "oba-obasync-handle-main-signals",
         name: "ObaSync handle main signals",
         callback: async () => {
+            checkEnable("obasync", {err: true, notice: true})
             console.clear()
             const remoteDir = getRemoteDir("TankeFactory")
             const userName0 = obaconfig.getObaConfig("obasync.me", null)
@@ -81,205 +84,202 @@ export function onload() {
         },
     });
 
-
-    // MARK: anymove
-    // 'changed'
-    OBA.registerEvent(
-        OBA.app.workspace.on('editor-drop', (...args) => {
-            runCallbacks('__obasync.obsidian.anymove')
-        })
-    );
-    OBA.registerEvent(
-        OBA.app.workspace.on('editor-change', (...args) => {
-            runCallbacks('__obasync.obsidian.anymove')
-        })
-    );
-    OBA.registerEvent(
-        OBA.app.workspace.on('layout-change', (...args) => {
-            runCallbacks('__obasync.obsidian.anymove')
-        })
-    );
-    OBA.registerEvent(
-        OBA.app.workspace.on('file-open', (...args) => {
-            runCallbacks('__obasync.obsidian.anymove')
-        })
-    );
-    OBA.registerEvent(
-        OBA.app.workspace.on('active-leaf-change', (...args) => {
-            runCallbacks('__obasync.obsidian.anymove')
-        })
-    );
-    OBA.registerDomEvent(window.document, "wheel", () => {
-        runCallbacks('__obasync.obsidian.anymove')
-    });
-    OBA.registerDomEvent(window.document, "mousemove", () => {
-        runCallbacks('__obasync.obsidian.anymove')
-    });
-    OBA.registerDomEvent(window.document, "click", () => {
-        runCallbacks('__obasync.obsidian.anymove')
-    });
-
-    registerCallback(
-        `__obasync.obsidian.anymove`, 
-        async () => {
-            const now: Date = new Date()
-            const flag = await ANYMOVE_DELAY.manageTime()
-            if (flag == "go") { 
-                await runCallbacks('obasync.obsidian.anymove')
-            }
-            
-        }
-    )
-
-    // MARK: send
-    // notice
-    // OBA.registerEvent(
-    //     OBA.app.workspace.on('editor-change', async (editor, info) => {
-    //         console.clear()
-    //         const activeFile = getCurrNotePath();
-    //         if (!activeFile) { return }
-    //         const remoteDir = getRemoteDir("TankeFactory")
-    //         const userName0 = obaconfig.getObaConfig("obasync.me", null)
-    //         let signal0: ObaSyncSignal = { 
-    //             "type": 'notice',
-    //             "msg": `Im working on '${path.basename(activeFile)}'!!!` 
-    //         }
-    //         sendObaSyncSignal(remoteDir, userName0, 'main', signal0) 
-    //     })
-    // );
-    
-    // push
-    OBA.registerDomEvent(window.document, "keyup", async () => {
-
-        console.clear()
-
-        // context data
-        const localFile = getCurrNotePath();
-        if (!localFile) { return }
-
-        const remoteName = "TankeFactory"
-        const remoteDir = getRemoteDir(remoteName)
-        const fileName = path.basename(localFile)
-        const userName0 = obaconfig.getObaConfig("obasync.me", null)
-
-        //  control flow
-        const flag = await PUSH_DELAY
-        .manageTime((elapsed) => {
-            const conutdown = PUSH_DELAY.delayTime - elapsed
-            statusbar.setText(`pushing in: ${conutdown}`)
-        })
-        if (flag == "notyet") { return }
-        statusbar.setText('pushing')
-
-        let signal0: ObaSyncSignal = { 
-            "type": `push`,
-            "fileName": fileName,
-            "remoteName": remoteName
-        }
-
-        // push file
-        runCallbacks('obasync.before.push')
-        const destFile = path.join(remoteDir, fileName)
-        cp(localFile, destFile, { force: true })
-        sendObaSyncSignal(remoteDir, userName0, 'main', signal0, [fileName]) 
-        runCallbacks('obasync.after.push')
-
-        // new Notice("NOTE PUSHED!")
-        statusbar.clear()
-        statusbar.setText('NOTE PUSHED!', true)
-        await sleep(1000)
-        statusbar.clear()
-    });
-
     OBA.addCommand({
         id: "oba-obasync-push-current-note",
         name: "ObaSync push current note",
         callback: async () => {
-            
+            checkEnable("obasync", {err: true, notice: true})
+            // TODO
         }
     })
 
-    // OBA.registerEvent(
-    //     OBA.app.workspace.on('editor-change', async (editor, info) => {
-            
-    //     })
-    // );
 
+    // MARK: anymove
+    // 'changed'
+    if (checkEnable("obasync", {err: false, notice: false})) {
+        OBA.registerEvent(
+            OBA.app.workspace.on('editor-drop', (...args) => {
+                runCallbacks('__obasync.obsidian.anymove')
+            })
+        );
+        OBA.registerEvent(
+            OBA.app.workspace.on('editor-change', (...args) => {
+                runCallbacks('__obasync.obsidian.anymove')
+            })
+        );
+        OBA.registerEvent(
+            OBA.app.workspace.on('layout-change', (...args) => {
+                runCallbacks('__obasync.obsidian.anymove')
+            })
+        );
+        OBA.registerEvent(
+            OBA.app.workspace.on('file-open', (...args) => {
+                runCallbacks('__obasync.obsidian.anymove')
+            })
+        );
+        OBA.registerEvent(
+            OBA.app.workspace.on('active-leaf-change', (...args) => {
+                runCallbacks('__obasync.obsidian.anymove')
+            })
+        );
+        OBA.registerDomEvent(window.document, "wheel", () => {
+            runCallbacks('__obasync.obsidian.anymove')
+        });
+        OBA.registerDomEvent(window.document, "mousemove", () => {
+            runCallbacks('__obasync.obsidian.anymove')
+        });
+        OBA.registerDomEvent(window.document, "click", () => {
+            runCallbacks('__obasync.obsidian.anymove')
+        });
     
-    // MARK: handle
-    registerCallback(
-        `obasync.obsidian.anymove`, 
-        async () => {
-            const remoteDir = getRemoteDir("TankeFactory")
-            const userName0 = obaconfig.getObaConfig("obasync.me", null)
-            await handleSignals(remoteDir, userName0, 'main')
-        }
-    )
+        registerCallback(
+            `__obasync.obsidian.anymove`, 
+            async () => {
+                const now: Date = new Date()
+                const flag = await ANYMOVE_DELAY.manageTime()
+                if (flag == "go") { 
+                    await runCallbacks('obasync.obsidian.anymove')
+                }
+                
+            }
+        )
 
-    // pull
-    registerCallback(
-        `obasync.signal.missing.in.record0.or.newer:push`, 
+        // push
+        OBA.registerDomEvent(window.document, "keyup", async () => {
+
+            console.clear()
+
+            // context data
+            const localFile = getCurrNotePath();
+            if (!localFile) { return }
+
+            const remoteName = "TankeFactory"
+            const remoteDir = getRemoteDir(remoteName)
+            const fileName = path.basename(localFile)
+            const userName0 = obaconfig.getObaConfig("obasync.me", null)
+
+            //  control flow
+            const flag = await PUSH_DELAY
+            .manageTime((elapsed) => {
+                const conutdown = PUSH_DELAY.delayTime - elapsed
+                statusbar.setText(`pushing in: ${conutdown}`)
+            })
+            if (flag == "notyet") { return }
+            statusbar.setText('pushing')
+
+            let signal0: ObaSyncSignal = { 
+                "type": `push`,
+                "fileName": fileName,
+                "remoteName": remoteName
+            }
+
+            // push file
+            runCallbacks('obasync.before.push')
+            const destFile = path.join(remoteDir, fileName)
+            cp(localFile, destFile, { force: true })
+            sendObaSyncSignal(remoteDir, userName0, 'main', signal0, [fileName]) 
+            runCallbacks('obasync.after.push')
+
+            // new Notice("NOTE PUSHED!")
+            statusbar.clear()
+            statusbar.setText('NOTE PUSHED!', true)
+            await sleep(1000)
+            statusbar.clear()
+        });
+
+        // MARK: send
+        // notice
+        // OBA.registerEvent(
+        //     OBA.app.workspace.on('editor-change', async (editor, info) => {
+        //         console.clear()
+        //         const activeFile = getCurrNotePath();
+        //         if (!activeFile) { return }
+        //         const remoteDir = getRemoteDir("TankeFactory")
+        //         const userName0 = obaconfig.getObaConfig("obasync.me", null)
+        //         let signal0: ObaSyncSignal = { 
+        //             "type": 'notice',
+        //             "msg": `Im working on '${path.basename(activeFile)}'!!!` 
+        //         }
+        //         sendObaSyncSignal(remoteDir, userName0, 'main', signal0) 
+        //     })
+        // );
+
+        
+        // MARK: handle
+        registerCallback(
+            `obasync.obsidian.anymove`, 
+            async () => {
+                const remoteDir = getRemoteDir("TankeFactory")
+                const userName0 = obaconfig.getObaConfig("obasync.me", null)
+                await handleSignals(remoteDir, userName0, 'main')
+            }
+        )
+
+        // pull
+        registerCallback(
+            `obasync.signal.missing.in.record0.or.newer:push`, 
+                async () => {
+                    const context = getCallbackContext()
+                if (!context) { return; }
+                const signal = context?.['signal1Content']
+                console.log("push.signal: ", signal)
+                const remoteFile = signal?.['fileName']
+                const remoteName = signal?.['remoteName']
+                const remoteDir = getRemoteDir(remoteName)
+                const vaultDir = getVaultDir()
+
+                // "pull.dest.folder.relpath"
+                const pullDir = path.join(vaultDir, getRemotePullDir(remoteName, ''))
+                console.clear()
+                console.log("pullDir: ", pullDir)
+                const srcPath = path.join(remoteDir, remoteFile)
+                if (!existsSync(srcPath)) {
+                    context["handlingStatus"] = 'ok'
+                    new Notice(`srcPath missing! ${srcPath}!`)
+                    return
+                }
+                const destPath = path.join(pullDir, remoteFile)
+                // if (!existsSync(destPath)) {
+                //     context["handlingStatus"] = 'ok'
+                //     new Notice(`destPath missing! ${destPath}!`)
+                //     return
+                // }
+                console.log("pullDir: ", pullDir)
+                console.log("srcPath: ", srcPath)
+                console.log("destPath: ", destPath)
+                await cp(srcPath, destPath, { force: true })
+
+                new Notice(`pulled: ${remoteFile}!`)
+                context["handlingStatus"] = 'ok'
+                console.log("handle.push.context: ", context)
+            }
+        )
+
+        // registerCallback(
+        //     `obasync.signal.missing.in.record0.or.newer:notice`, 
+        //     async () => {
+        //         const context = getCallbackContext()
+        //         if (!context) { return; }
+        //         const sender = context?.["userName1"]
+        //         const msg = context?.['signal1Content']?.['msg']
+        //         // TODO: find a better notification system
+        //         new Notice(`${sender} says: ${msg}!`)
+        //         context["handlingStatus"] = 'ok'
+        //         console.log("handle.notice.context: ", context)
+        //     }
+        // )
+
+        registerCallback(
+            `obasync.signal.missing.in.record0.or.newer:hello.world`, 
             async () => {
                 const context = getCallbackContext()
-            if (!context) { return; }
-            const signal = context?.['signal1Content']
-            console.log("push.signal: ", signal)
-            const remoteFile = signal?.['fileName']
-            const remoteName = signal?.['remoteName']
-            const remoteDir = getRemoteDir(remoteName)
-            const vaultDir = getVaultDir()
-
-            // "pull.dest.folder.relpath"
-            const pullDir = path.join(vaultDir, getRemotePullDir(remoteName, ''))
-            console.clear()
-            console.log("pullDir: ", pullDir)
-            const srcPath = path.join(remoteDir, remoteFile)
-            if (!existsSync(srcPath)) {
+                if (!context) { return; }
+                new Notice(`${context?.["userName1"]} says Hello!`)
                 context["handlingStatus"] = 'ok'
-                new Notice(`srcPath missing! ${srcPath}!`)
-                return
+                console.log("handle.hello.context: ", context)
             }
-            const destPath = path.join(pullDir, remoteFile)
-            // if (!existsSync(destPath)) {
-            //     context["handlingStatus"] = 'ok'
-            //     new Notice(`destPath missing! ${destPath}!`)
-            //     return
-            // }
-            console.log("pullDir: ", pullDir)
-            console.log("srcPath: ", srcPath)
-            console.log("destPath: ", destPath)
-            await cp(srcPath, destPath, { force: true })
-
-            new Notice(`pulled: ${remoteFile}!`)
-            context["handlingStatus"] = 'ok'
-            console.log("handle.push.context: ", context)
-        }
-    )
-
-    // registerCallback(
-    //     `obasync.signal.missing.in.record0.or.newer:notice`, 
-    //     async () => {
-    //         const context = getCallbackContext()
-    //         if (!context) { return; }
-    //         const sender = context?.["userName1"]
-    //         const msg = context?.['signal1Content']?.['msg']
-    //         // TODO: find a better notification system
-    //         new Notice(`${sender} says: ${msg}!`)
-    //         context["handlingStatus"] = 'ok'
-    //         console.log("handle.notice.context: ", context)
-    //     }
-    // )
-
-    registerCallback(
-        `obasync.signal.missing.in.record0.or.newer:hello.world`, 
-        async () => {
-            const context = getCallbackContext()
-            if (!context) { return; }
-            new Notice(`${context?.["userName1"]} says Hello!`)
-            context["handlingStatus"] = 'ok'
-            console.log("handle.hello.context: ", context)
-        }
-    )
+        )
+    }
 
 }
 

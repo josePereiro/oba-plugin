@@ -6,7 +6,7 @@
 
 import { readFileSync } from "fs";
 import { OBA } from "src/oba-base/globals";
-import { tools } from "src/tools-base/0-tools-modules";
+import { checkEnable, tools } from "src/tools-base/0-tools-modules";
 import { getCurrNotePath } from "src/tools-base/obsidian-tools";
 
 export function onload() {
@@ -16,6 +16,7 @@ export function onload() {
         id: "oba-mdjson-parse-current-note",
         name: "MdJSON parse current note",
         callback: () => {
+            checkEnable("mdjson", {err: true, notice: true})
             console.clear()
             const path = getCurrNotePath()
             const text = readFileSync(path, 'utf8')

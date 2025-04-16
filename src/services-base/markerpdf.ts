@@ -2,7 +2,7 @@ import { existsSync } from 'fs';
 import { basename, join } from 'path';
 import { Notice } from 'obsidian';
 import { OBA } from 'src/oba-base/globals';
-import { tools } from 'src/tools-base/0-tools-modules';
+import { checkEnable, tools } from 'src/tools-base/0-tools-modules';
 import { vscode } from './0-servises-modules';
 import { obaconfig } from 'src/oba-base/0-oba-modules';
 import { getCurrNotePath } from 'src/tools-base/obsidian-tools';
@@ -19,6 +19,7 @@ export function onload() {
         id: "oba-markerpdf-open-note-md",
         name: "MarkerPDF open notes md",
         callback: () => {
+            checkEnable("markerpdf", {err: true, notice: true})
             console.clear()
             openNoteMD()
         },

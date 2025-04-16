@@ -1,6 +1,6 @@
 import simpleGit, { SimpleGit, StatusResult } from 'simple-git';
 import { Notice } from 'obsidian';
-import { tools } from 'src/tools-base/0-tools-modules';
+import { checkEnable, tools } from 'src/tools-base/0-tools-modules';
 import { obaconfig } from 'src/oba-base/0-oba-modules';
 import { OBA } from 'src/oba-base/globals';
 import { getVaultDir } from 'src/tools-base/obsidian-tools';
@@ -23,6 +23,7 @@ export function onload() {
         id: 'oba-git-commit-default-branch',
         name: 'Git commit default branch',
         callback: async () => {
+            checkEnable("git", {err: true, notice: true})
             await commitToBranch();
         }
     });

@@ -1,5 +1,5 @@
 import { OBA } from "src/oba-base/globals";
-import { tools } from "src/tools-base/0-tools-modules";
+import { checkEnable, tools } from "src/tools-base/0-tools-modules";
 
 export function onload() {
 
@@ -11,6 +11,7 @@ export function onload() {
         id: "oba-scihub-fetch-selected-doi",
         name: "SciHub fetch selected doi",
         callback: async () => {
+            checkEnable("scihub", {err: true, notice: true})
             console.clear()
             const sel = getSelectedText()
             await fetchPdfFromSciHubWithCurl(sel)

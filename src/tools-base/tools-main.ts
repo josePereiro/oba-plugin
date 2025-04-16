@@ -1,5 +1,5 @@
 import { OBA } from "src/oba-base/globals";
-import { tools } from "./0-tools-modules";
+import { checkEnable, tools } from "./0-tools-modules";
 import { obanotes } from "src/services-base/0-servises-modules";
 import { getCurrNote, getNoteYamlHeader, modifyNoteYamlHeader } from "./obsidian-tools";
 
@@ -23,6 +23,7 @@ export function onload() {
         id: "tools-dev",
         name: "Tools dev",
         callback: async () => {
+            checkEnable("tools", {err: true, notice: true})
             console.clear();
             const note = getCurrNote({strict: true});
             let yaml = getNoteYamlHeader(note);

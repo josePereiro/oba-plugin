@@ -1,6 +1,6 @@
 import { Notice } from 'obsidian';
 import { backends, commands, git, replacer } from './0-servises-modules';
-import { tools } from 'src/tools-base/0-tools-modules';
+import { checkEnable, tools } from 'src/tools-base/0-tools-modules';
 import { crossref, localbibs } from 'src/biblio-base/0-biblio-modules';
 import { citnotes } from 'src/citnotes-base/0-citnotes-modules';
 import { openNoteAtLine } from 'src/tools-base/obsidian-tools';
@@ -36,6 +36,7 @@ export function onload() {
 
     this.registerCallback(
         "callbacks.obauri.action", async () => {
+            if (!checkEnable("obauri", {err: false, notice: true})) { return; }
             console.clear()
             const params = getCallbackArgs()?.[0]
             if (!params) { return; }

@@ -1,7 +1,7 @@
 import { join } from 'path';
 import { Notice } from 'obsidian';
 import { existsSync, mkdirSync } from 'fs';
-import { tools } from 'src/tools-base/0-tools-modules';
+import { checkEnable, tools } from 'src/tools-base/0-tools-modules';
 import { filesys } from 'src/oba-base/0-oba-modules';
 import { callbacks } from './0-servises-modules';
 import { OBA } from 'src/oba-base/globals';
@@ -32,9 +32,10 @@ export function onload() {
 	BACKENDS_EXTRAS = {}
 
 	OBA.addCommand({
-		id: 'oba-git-signal-backends',
+		id: 'oba-backends-signal-backends',
 		name: 'BackEnds signal backends',
 		callback: async () => {
+			checkEnable("backends", {err: true, notice: true})
 			await signalBackend();
 		}
 	});

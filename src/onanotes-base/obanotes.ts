@@ -1,12 +1,12 @@
 import { TFile } from 'obsidian';
 import { basename } from 'path';
 import { OBA } from 'src/oba-base/globals';
-import { tools } from 'src/tools-base/0-tools-modules';
+import { checkEnable, tools } from 'src/tools-base/0-tools-modules';
 import { obanotes } from './0-obanotes-modules';
 import { vscode } from 'src/services-base/0-servises-modules';
 import { getNoteConfigPath, getObaNoteConfigJSON, getSetObaNoteConfig } from './noteconfig';
 import { genObaNoteId } from './obanotes-base';
-import { getCurrNote, getSelectedText } from 'src/tools-base/obsidian-tools';
+import { getCurrNote, getCurrNotePath, getSelectedText } from 'src/tools-base/obsidian-tools';
 
 // index
 export * from './obanotes-base'
@@ -26,6 +26,7 @@ export function onload() {
         id: "oba-obanotes-add-ob.id-to-all",
         name: "ObaNotes add oba-id to all",
         callback: async () => {
+            checkEnable("backends", {err: true, notice: true})
             console.clear()
             const notes = obanotes.getObaNotes();
             let i = 1;
@@ -44,6 +45,7 @@ export function onload() {
         id: "oba-obanotes-subnote-link",
         name: "ObaNotes subnote link",
         callback: async () => {
+            checkEnable("backends", {err: true, notice: true})
             console.clear()
             const link = subNoteLinkFromSelection()
             await tools.copyToClipboard(link)
@@ -54,6 +56,7 @@ export function onload() {
         id: "oba-obanotes-open-note-config-json",
         name: "ObaNotes open note config json",
         callback: async () => {
+            checkEnable("backends", {err: true, notice: true})
             console.clear()
             const note = getCurrNote({strict: true})
             const path = await getNoteConfigPath(note)
@@ -65,6 +68,7 @@ export function onload() {
         id: "oba-obanotes-log-note-config",
         name: "ObaNotes log note config",
         callback: async () => {
+            checkEnable("backends", {err: true, notice: true})
             console.clear()
             const note = getCurrNote({strict: true})
             const config = await getObaNoteConfigJSON(note)
@@ -76,6 +80,7 @@ export function onload() {
         id: "oba-obanotes-dev",
         name: "ObaNotes dev",
         callback: async () => {
+            checkEnable("backends", {err: true, notice: true})
             console.clear()
             const note = getCurrNote({strict: true})
             // const config = await getSetObaNoteConfig(note, "oba.test", genObaNoteId())

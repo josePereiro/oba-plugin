@@ -1,6 +1,6 @@
 import { statSync } from 'fs';
 import { join } from 'path';
-import { JsonIO, tools } from '../tools-base/0-tools-modules';
+import { checkEnable, JsonIO, tools } from '../tools-base/0-tools-modules';
 import { OBA } from './globals';
 import { vscode } from 'src/services-base/0-servises-modules';
 import { getVaultDir } from 'src/tools-base/obsidian-tools';
@@ -22,6 +22,7 @@ export function onload() {
         id: 'oba-obaconfig-open-confic-file',
         name: 'obaconfig open Oba.json',
         callback: async () => {
+            checkEnable("obaconfig", true)
             console.clear()
             const path = getObaConfigPath()
             vscode.goto(path)

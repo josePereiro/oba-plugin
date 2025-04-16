@@ -200,7 +200,9 @@ function __priorityMerge(
     }
 }
 
-export function _priorityMerge(priorities: {[key: string]: number}, ...objects: any[]) {
+export function _priorityMerge(
+    priorities: {[key: string]: number}, ...objects: any[]
+) {
     let obj0 = null;
     let target = -1
     for (const obji of objects) {

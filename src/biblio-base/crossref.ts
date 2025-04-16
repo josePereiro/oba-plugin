@@ -23,6 +23,7 @@ export function onload() {
     //     id: "CrossRef-dev",
     //     name: "CrossRef dev",
     //     callback: async () => {
+    //         tools.checkEnable("crossref", true)
     //         console.clear();
     //         const sel = getSelectedText();
     //         console.log("sel: ", sel);
@@ -44,6 +45,7 @@ export function onload() {
         id: 'oba-crossref-selected-doi',
         name: 'Crossref fetch selected doi',
         callback: async () => {
+            tools.checkEnable("crossref", true)
             console.clear();
             const sel = getSelectedText();
             console.log("sel: ", sel);
@@ -58,6 +60,7 @@ export function onload() {
         id: 'oba-crossref-dev',
         name: 'Crossref dev',
         callback: async () => {
+            tools.checkEnable("crossref", true)
             console.clear();
             const sel = getSelectedText();
             console.log("sel: ", sel);

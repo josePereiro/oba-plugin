@@ -5,7 +5,7 @@
 */
 import { existsSync, statSync } from "fs";
 import { OBA } from "src/oba-base/globals";
-import { tools } from "src/tools-base/0-tools-modules";
+import { checkEnable, tools } from "src/tools-base/0-tools-modules";
 import { DateTime } from 'luxon';
 import { obanotes } from "./0-servises-modules";
 import { TFile } from "obsidian";
@@ -21,6 +21,7 @@ export function onload() {
         id: "oba-replacer-replace all",
         name: "Replacer replace all",
         callback: async () => {
+            checkEnable("replacer", {err: true, notice: true})
             console.clear()
             await runReplacer()
         },

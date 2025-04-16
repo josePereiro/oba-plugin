@@ -1,6 +1,6 @@
 import { OBA } from "src/oba-base/globals";
 import { crossref, localbibs } from "./0-biblio-modules";
-import { tools } from "src/tools-base/0-tools-modules";
+import { checkEnable, tools } from "src/tools-base/0-tools-modules";
 import { consensusBiblIO } from "./biblio-base";
 import { getSelectedText } from "src/tools-base/obsidian-tools";
 export * from "./biblio-base"
@@ -21,6 +21,7 @@ export function onload() {
         id: 'oba-biblio-get-selection-consensus-biblio',
         name: 'BiblIO get selection consensus biblIO',
         callback: async () => {
+            checkEnable("biblio", true)
             console.clear();
             const sel = getSelectedText();
             console.log("sel: ", sel);

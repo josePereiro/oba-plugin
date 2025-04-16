@@ -1,6 +1,7 @@
 import { OBA } from "src/oba-base/globals";
 import { callbacks } from "./0-servises-modules";
 import { obaconfig } from "src/oba-base/0-oba-modules";
+import { checkEnable } from "src/tools-base/oba-tools";
 
 /*
     General purpose commands.
@@ -20,6 +21,7 @@ export function onload() {
             name: getCommandName(i),
             callback: async () => {
                 // console.clear();
+                checkEnable("commands", {err: true, notice: true})
                 const callid = getCommandCallbackId(i);
                 await callbacks.runCallbacks(callid);
             }

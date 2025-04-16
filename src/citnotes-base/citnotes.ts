@@ -2,7 +2,7 @@ import { Notice, TFile } from 'obsidian';
 import { biblio, crossref, localbibs } from 'src/biblio-base/0-biblio-modules';
 import { BiblIOData, BiblIOIder } from 'src/biblio-base/biblio-data';
 import { OBA } from 'src/oba-base/globals';
-import { tools } from 'src/tools-base/0-tools-modules';
+import { checkEnable, tools } from 'src/tools-base/0-tools-modules';
 import { obanotes } from 'src/onanotes-base/0-obanotes-modules';
 import { citNoteBiblIO, citNoteReferenceBiblIOs, parseCitNoteCiteKey } from './citnotes-base';
 import { statusbar } from 'src/services-base/0-servises-modules';
@@ -31,9 +31,10 @@ export function onload() {
 
 
     OBA.addCommand({
-        id: "CitNotes-dev",
+        id: "citnotes-dev",
         name: "CitNotes dev",
         callback: async () => {
+            checkEnable("citnotes", true)
             console.clear();
             const note0 = getCurrNote();
             console.log("note0: ", note0);
@@ -53,11 +54,11 @@ export function onload() {
     // TODO\ Make something like this but from all 
     // localbibs + references
     OBA.addCommand({
-        id: "CitNotes-copy-selected-reference-link-from-list",
+        id: "citnotes-copy-selected-reference-link-from-list",
         name: "CitNotes copy selected reference link from list",
         callback: async () => {
+            checkEnable("citnotes", true)
             console.clear();
-
             // copy selection
             const sel0 = getSelectedText()
             await tools.copyToClipboard(sel0)
@@ -67,9 +68,10 @@ export function onload() {
     });
 
     // OBA.addCommand({
-    //     id: 'oba-CitNotes-copy-reference-selected-doi',
+    //     id: 'oba-citnotes-copy-reference-selected-doi',
     //     name: 'CitNotes copy references of selected doi',
     //     callback: async () => {
+    //         checkEnable("citnotes", true)
     //         console.clear();
     //         const doi0 = getSelectedText()
     //         if (!doi0) {
@@ -85,6 +87,7 @@ export function onload() {
         id: 'oba-citnotes-copy-reference-current-note',
         name: 'CitNotes copy references of current note',
         callback: async () => {
+            checkEnable("citnotes", true)
             console.clear();
             const note = getCurrNote()
             await this.copyCitNoteReferencesSection(note);
@@ -95,6 +98,7 @@ export function onload() {
         id: 'oba-citnotes-generate-references-resolver-map',
         name: 'CitNotes generate references resolver map',
         callback: async () => {
+            checkEnable("citnotes", true)
             console.clear();
             const citnote = getCurrNote()
             await generateCitNoteConfigRefResolverMap(citnote)
@@ -102,9 +106,10 @@ export function onload() {
     });
 
     OBA.addCommand({
-        id: "CitNotes-copy-citstr-from-list",
+        id: "citnotes-copy-citstr-from-list",
         name: "CitNotes search citation from list",
         callback: async () => {
+            checkEnable("citnotes", true)
             console.clear();
             const sel0 = getSelectedText() || ''
             const citnote = getCurrNote()
@@ -116,6 +121,7 @@ export function onload() {
         id: 'oba-citnotes-copy-non-local-reference-current-note',
         name: 'CitNotes copy non-local references of current note',
         callback: async () => {
+            checkEnable("citnotes", true)
             console.clear();
             const note = getCurrNote()
             await copyCitNoteNonLocalReferences(note);
@@ -126,6 +132,7 @@ export function onload() {
         id: "oba-citnotes-copy-link-selected-reference-number",
         name: "CitNotes copy link of selected reference number",
         callback: async () => {
+            checkEnable("citnotes", true)
             console.clear();
             // const str = getSelectedText().
                 // replace(/\D+/g, "")
@@ -140,6 +147,7 @@ export function onload() {
         id: "oba-citnotes-download-all-local-notes",
         name: "CitNotes download all local notes",
         callback: async () => {
+            checkEnable("citnotes", true)
             console.clear();
             await downloadAllLocalReferences()
         }

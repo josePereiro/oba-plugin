@@ -2,7 +2,7 @@ import { MarkdownView, Notice } from 'obsidian';
 import { SimilarityModal } from '../tools-base/modals-tools';
 import { obaconfig } from 'src/oba-base/0-oba-modules';
 import { OBA } from 'src/oba-base/globals';
-import { tools } from 'src/tools-base/0-tools-modules';
+import { checkEnable, tools } from 'src/tools-base/0-tools-modules';
 
 /*
     TODO/ Make a log system controlable by a flag
@@ -26,6 +26,7 @@ export function onload() {
         id: 'oba-dev-console-clear',
         name: 'Dev console.clear',
         callback: () => {
+            checkEnable("dev", {err: true, notice: true})
             console.clear()
         }
     })

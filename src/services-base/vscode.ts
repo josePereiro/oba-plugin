@@ -2,7 +2,7 @@ import { Notice } from 'obsidian';
 import { exec } from 'child_process';
 import { OBA } from 'src/oba-base/globals';
 import { obaconfig } from '../oba-base/0-oba-modules'
-import { tools } from 'src/tools-base/0-tools-modules';
+import { checkEnable, tools } from 'src/tools-base/0-tools-modules';
 import { getCurrNotePath, getCursorPosition } from 'src/tools-base/obsidian-tools';
 
 /*
@@ -15,6 +15,7 @@ export function onload() {
         id: "oba-vscode-open-workspace",
         name: "VSCode open workspace",
         callback: () => {
+            checkEnable("vscode", {err: true, notice: true})
             console.clear()
             call()
         },
@@ -24,6 +25,7 @@ export function onload() {
         id: "oba-vscode-goto-position",
         name: "VSCode goto position",
         callback: () => {
+            checkEnable("vscode", {err: true, notice: true})
             console.clear()
             const path = getCurrNotePath();
             const cursor = getCursorPosition();
