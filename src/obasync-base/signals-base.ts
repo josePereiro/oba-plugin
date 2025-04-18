@@ -5,7 +5,7 @@ import { hash64Chain } from "src/tools-base/utils-tools"
 import { Notice } from "obsidian"
 import objectHash from "object-hash"
 import { loadAllManifestIOs, modifyObaSyncManifest, remoteManifestIO } from "./manifests-base"
-import { _d2rPush, _r2dPull } from "./channels-base"
+import { _d2rAddCommit, _r2dPull } from "./channels-base"
 
 // MARK: base
 export interface ObaSyncSignal {
@@ -91,7 +91,10 @@ export function sendObaSyncSignal(
 // MARK: run
 async function _runHandlingCallback(
     callbackID: string,
-    context: ObaSyncCallbackContext
+    context: ObaSyncCallbackContext,
+    onOk: (() => any) = () => null,
+    onUnknown: (() => any) = () => null,
+    onFailed: (() => any) = () => null,
 ) {
     // reset status
     context['handlingStatus'] = 'unknown'
@@ -115,12 +118,15 @@ async function _runHandlingCallback(
             'handlingStatus': status
         } as ObaSyncRecord
         console.log(`Callback handled, callbackID:  ${callbackID},  status: ${status}`)
+        onOk()
     } else if (status == 'unknown') {
         console.warn(`Unknown status, callbackID:  ${callbackID}`)
+        onUnknown()
     } else {
         const msg = `Callback failed, callbackID:  ${callbackID},  status: ${status}`
         console.error(msg)
         new Notice(msg)
+        onFailed()
     }
 }
 
@@ -136,7 +142,10 @@ export async function resolveObaSyncSignals(
     userName0: string, 
     manKey: string,
     preD2vPull: (() => any) = () => null,
-    postD2vPull: (() => any) = () => null
+    postD2vPull: (() => any) = () => null,
+    onOk: (() => any) = () => null,
+    onUnknown: (() => any) = () => null,
+    onFailed: (() => any) = () => null,
 ) {
 
     // callbacks
@@ -194,9 +203,9 @@ export async function resolveObaSyncSignals(
             if (!man0Record) {
                 // run callbacks
                 callbackID = `obasync.signal.missing.in.record0:${signal1Type}`
-                await _runHandlingCallback(callbackID, context)
+                await _runHandlingCallback(callbackID, context, onOk, onUnknown, onFailed)
                 callbackID = `obasync.signal.missing.in.record0.or.newer:${signal1Type}`
-                await _runHandlingCallback(callbackID, context)
+                await _runHandlingCallback(callbackID, context, onOk, onUnknown, onFailed)
             }
 
             const timestamp1Str = signal1Content?.['timestamp']
@@ -207,46 +216,46 @@ export async function resolveObaSyncSignals(
 
                 // callback
                 callbackID = `obasync.signal.timetags.both.present:${signal1Type}`
-                await _runHandlingCallback(callbackID, context)
+                await _runHandlingCallback(callbackID, context, onOk, onUnknown, onFailed)
 
                 // callback
                 if (timestamp0 < timestamp1) {
                     // mine.newer
                     callbackID = `obasync.signal.timetag0.newer:${signal1Type}`
-                    await _runHandlingCallback(callbackID, context)
+                    await _runHandlingCallback(callbackID, context, onOk, onUnknown, onFailed)
                     callbackID = `obasync.signal.missing.in.record0.or.newer:${signal1Type}`
-                    await _runHandlingCallback(callbackID, context)
+                    await _runHandlingCallback(callbackID, context, onOk, onUnknown, onFailed)
                 }
                 // callback
                 if (timestamp0 == timestamp1) {
                     // both.equal
                     callbackID = `obasync.signal.timetags.both.equal:${signal1Type}`
-                    await _runHandlingCallback(callbackID, context)
+                    await _runHandlingCallback(callbackID, context, onOk, onUnknown, onFailed)
                 }
                 // callback
                 if (timestamp0 > timestamp1) {
                     // both.equal
                     callbackID = `obasync.signal.timetag0.older:${signal1Type}`
-                    await _runHandlingCallback(callbackID, context)
+                    await _runHandlingCallback(callbackID, context, onOk, onUnknown, onFailed)
                 }
             }
 
             // callback
             if (!timestamp0Str && timestamp1Str) {
                 callbackID = `obasync.signal.timetag0.missing:${signal1Type}`
-                await _runHandlingCallback(callbackID, context)
+                await _runHandlingCallback(callbackID, context, onOk, onUnknown, onFailed)
             }
 
                 // callback
                 if (timestamp0Str && !timestamp1Str) {
                     callbackID = `obasync.signal.timetag1.missing:${signal1Type}`
-                    await _runHandlingCallback(callbackID, context)
+                    await _runHandlingCallback(callbackID, context, onOk, onUnknown, onFailed)
                 }
 
             // callback
             if (!timestamp0Str && !timestamp1Str) {
                 callbackID = `obasync.signal.timetags.both.missing:${signal1Type}`
-                await _runHandlingCallback(callbackID, context)
+                await _runHandlingCallback(callbackID, context, onOk, onUnknown, onFailed)
             }
         } // for (const signal1HashKey in man1Signals)
     }

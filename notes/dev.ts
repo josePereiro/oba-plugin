@@ -1,4 +1,31 @@
 /*
+TODO/TAI:
+    - Some signals needs to be republished
+        - This is important to comunicate signal in the intersection of two subvaults
+        - This signals must be unmodified, so, the system reach a fix point
+        - The problem is that you need to create a scope resolution mechanism
+            - Which signals must be or not republish from one channel to another.
+            - This mechanism must be a per-signal mechanism.
+                - That is, the arguments of the signal matter, not only its type. 
+    - 
+
+
+DONE/ Manifest system
+- send a signal with the las action
+- each action has a timetag
+- a push-action will create a new timetag
+- a pull-action will contain the timetag of a push action
+- or in case of spontaneaous pull, a new timetag
+- a general action-manifest for each user
+    - contain a summary
+- a per note action-manifest for each use
+    - contain detailed actions for each note
+    - it might even contain a log of past actions
+
+- // TODO, at some point, I can split the depot manifest 
+// in different files, for instance, a file for each first letter of a key.
+// This to avoid loading/writing a big file
+
 TODO:
 -DONE/100% Create a general get/set/getset/write/load interface for handling JSON files
     - Similar to blobio

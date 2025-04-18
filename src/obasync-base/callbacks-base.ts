@@ -3,17 +3,26 @@ import { registerObaCallback, runObaCallbacks } from "src/services-base/callback
 import { getCallbackContext } from "./manifests-base";
 import { checkEnable } from "src/tools-base/oba-tools";
 import { OBA } from "src/oba-base/globals";
-import { ANYMOVE_DELAY, PUSH_DELAY } from "./obasync-base";
-import { getSyncChannelsConfig } from "./utils-base";
 import { getObaConfig } from "src/oba-base/obaconfig";
 import { resolveObaSyncSignals, ObaSyncSignal, sendObaSyncSignal } from "./signals-base";
-import { _d2rPush, _r2dPull } from "./channels-base";
+import { _d2rAddCommit, _d2rPush, _r2dPull } from "./channels-base";
 import { getCurrNotePath, getVaultDir } from "src/tools-base/obsidian-tools";
 import { statusbar } from "src/services-base/0-servises-modules";
+import { _downloadFileVersionFromContext, _publishFileVersion } from "./syncFileSignal-base";
+import { DelayManager, randstring } from "src/tools-base/utils-tools";
 import path from "path";
-import { copyFileSync, existsSync } from "fs";
-import { checkNotePublicStatus } from "./firewall-base";
 
+const ANYMOVE_DELAY: DelayManager = 
+    new DelayManager(1000, 1001, -1, -1) // no delay
+
+// DONE/TAI: create per note delay manager
+function _createPushDelayManager() {
+    return new DelayManager(3000, 1000, 5000, -1)
+}
+
+let PUSH_DELAYS: {[keys: string]: DelayManager} = {}
+const PUSHING_SET = new Set()
+    
 export function _serviceCallbacks() {
     
     if (!checkEnable("obasync", {err: false, notice: false})) { return; }
@@ -71,75 +80,49 @@ export function _serviceCallbacks() {
 
         console.clear()
 
-        // context data
-        const localFile = getCurrNotePath();
-        if (!localFile) { return; }
-        if (!existsSync(localFile)) { return; }
-        const localFileName = path.basename(localFile)
-
-        const channelsConfig = getObaConfig("obasync.channels", {})
+        // context
+        // It is important we can take the context before potentially waiting
+        const localFile = getCurrNotePath()
+        const localFileBaseName = path.basename(localFile)
         const userName0 = getObaConfig("obasync.me", null)
+        const channelsConfig = getObaConfig("obasync.channels", {})
+
+        // controlFlow
+        PUSH_DELAYS[localFile] = PUSH_DELAYS?.[localFile] || _createPushDelayManager()
+        const delayManager = PUSH_DELAYS[localFile]
+        const flag = await delayManager
+            .manageTime((elapsed: any) => {
+                // const conutdown = delayManager.delayTime - elapsed
+                // statusbar.setText(`pushing in: ${conutdown}`)
+                PUSHING_SET.add(localFileBaseName)
+                statusbar.setText(`pushing ${[...PUSHING_SET]}`)
+            })
+        if (flag == "notyet") { return }
+        statusbar.setText('pushing')
+
         for (const channelName in channelsConfig) {
-            const channelConfig = channelsConfig?.[channelName] || {}
+            await _publishFileVersion(localFile, channelName, userName0, channelsConfig)
+        }
 
-            const isPublic = await checkNotePublicStatus(
-                localFile,
-                channelName,
-            )
-            if (!isPublic) { 
-                console.log("private note!");
-                return; 
-            }
-            const pushDepot = channelConfig?.["push.depot"] || null
-
-            //  control flow
-            const flag = await PUSH_DELAY
-                .manageTime((elapsed: any) => {
-                    const conutdown = PUSH_DELAY.delayTime - elapsed
-                    statusbar.setText(`pushing in: ${conutdown}`)
-                })
-            if (flag == "notyet") { return }
-            statusbar.setText('pushing')
-
-            let signal0: ObaSyncSignal = { 
-                "type": `push`,
-                "fileName": localFileName,
-                "channelName": channelName
-            }
-
-            runObaCallbacks('obasync.before.push')
-            sendObaSyncSignal(
-                pushDepot, userName0, 'main', signal0, [localFileName],
-                () => {
-                    // preV2dPush
-                    
-                    //// r2dPull
-                    _r2dPull(pushDepot)
-                    
-                    //// copy
-                    const destFile = path.join(pushDepot, localFileName)
-                    copyFileSync(localFile, destFile)
-                }, 
-                () => {
-                    // postV2dPush
-                    //// d2rPush
-                    _d2rPush(pushDepot)
-                }
-            ) 
-            runObaCallbacks('obasync.after.push')
-
-            // new Notice("NOTE PUSHED!")
+        // new Notice("NOTE PUSHED!")
+        PUSHING_SET.delete(localFileBaseName)
+        if (PUSHING_SET.size == 0) {
             statusbar.clear()
-            statusbar.setText('NOTE PUSHED!', true)
+            statusbar.setText('Notes pushed!', true)
             await sleep(1000)
             statusbar.clear()
             statusbar.clear()
         }
+
     });
 
     // MARK: resolve signals
     registerObaCallback(
         `obasync.obsidian.anymove`, 
+        async () => {
+            // pull
+            // push
+        },
         async () => {
             const channelsConfig = getObaConfig("obasync.channels", {})
             const userName0 = getObaConfig("obasync.me", null)
@@ -156,7 +139,19 @@ export function _serviceCallbacks() {
                         },
                         () => {
                             // postD2vPull
+                            // Using a constant dummy for avoiding polluting the repo
+                            _d2rAddCommit(pushDepot, "123")
                             _d2rPush(pushDepot)
+                        },
+                        () => {
+                            // onOk
+                            _d2rAddCommit(pushDepot, randstring())
+                        },
+                        () => {
+                            // onUnknown
+                        },
+                        () => {
+                            // onFailed
                         }
                     ) 
                 }
@@ -164,40 +159,20 @@ export function _serviceCallbacks() {
         }
     )
 
-    // MARK: auto pull
+    // MARK: pull
     registerObaCallback(
         `obasync.signal.missing.in.record0.or.newer:push`, 
-        () => {
+        async () => {
+            console.clear()
+
             const context = getCallbackContext()
             if (!context) { return; }
-            const signal = context?.['signal1Content']
-            const pullDepot = context?.['pullDepot0']
-            console.log("push.signal: ", signal)
-            console.log("pullDepot: ", pullDepot)
-            const remoteFile = signal?.['fileName']
-            const channelName = signal?.['channelName']
-            const vaultDir = getVaultDir()
-            const channelsConfig = getObaConfig("obasync.channels", {})
-            const channelConfig = channelsConfig?.[channelName] || {}
-            const relpath = channelConfig?.["pull.dest.folder.relpath"] || ''
-            const destDir = path.join(vaultDir, relpath)
-            console.clear()
-            console.log("destDir: ", destDir)
-            const srcPath = path.join(pullDepot, remoteFile)
-            if (!existsSync(srcPath)) {
-                context["handlingStatus"] = 'ok'
-                new Notice(`srcPath missing! ${srcPath}!`)
-                return
-            }
-            const destPath = path.join(destDir, remoteFile)
-            console.log("destDir: ", destDir)
-            console.log("srcPath: ", srcPath)
-            console.log("destPath: ", destPath)
-            copyFileSync(srcPath, destPath)
-
-            new Notice(`pulled: ${remoteFile}!`)
-            context["handlingStatus"] = 'ok'
-            console.log("handle.push.context: ", context)
+            const channelsConfig = getObaConfig("obasync.channels", null)
+            if (!channelsConfig) { return; }
+            const userName0 = getObaConfig("obasync.me", null)
+            if (!userName0) { return; }
+            
+            await _downloadFileVersionFromContext(context, channelsConfig,)
         }
     )
 
@@ -210,7 +185,7 @@ export function _serviceCallbacks() {
             const sender = context?.["userName1"]
             const msg = context?.['signal1Content']?.['msg']
             // TODO: find a better notification system
-            new Notice(`${sender} says: ${msg}!`)
+            new Notice(`${sender} says: ${msg}!`, 0)
             context["handlingStatus"] = 'ok'
             console.log("handle.notice.context: ", context)
         }

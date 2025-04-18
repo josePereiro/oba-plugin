@@ -6,8 +6,9 @@ import { getCurrNotePath, getSelectedText } from "src/tools-base/obsidian-tools"
 import { Notice } from "obsidian"
 import { getObaConfig } from "src/oba-base/obaconfig"
 import { resolveObaSyncSignals, ObaSyncSignal, sendObaSyncSignal } from "./signals-base"
-import { _d2rPush, _r2dPull } from "./channels-base"
-import { checkNotePublicStatus } from "./firewall-base"
+import { _d2rAddCommit, _d2rPush, _r2dPull } from "./channels-base"
+import { getNoteObaSyncScope } from "./scope-base"
+import { randstring } from "src/tools-base/utils-tools"
 
 export function _serviceCommands() {
 
@@ -33,19 +34,14 @@ export function _serviceCommands() {
     })
 
     OBA.addCommand({
-        id: "oba-obasync-dev",
-        name: "ObaSync dev",
+        id: "oba-obasync-show-note-scope",
+        name: "ObaSync note file scope",
         callback: async () => {
             console.clear()
             const note = getCurrNotePath();
             const channelsConfig = getObaConfig("obasync.channels", {})
-            let isPublic = false;
-            for (const channelName in channelsConfig) {
-                isPublic = isPublic || await checkNotePublicStatus(
-                    note, channelName, channelsConfig
-                )
-            }
-            new Notice(`Public status: ${isPublic}`)
+            const scopes = await getNoteObaSyncScope(note, channelsConfig)
+            new Notice(`Note scope: ${scopes}`, 0)
         }
     })
 
@@ -60,12 +56,15 @@ export function _serviceCommands() {
             const note = getCurrNotePath();
             
             const channelsConfig = getObaConfig("obasync.channels", {})
+            const scopes = await getNoteObaSyncScope(note, channelsConfig)
             for (const channelName in channelsConfig) {
                 const channelConfig = channelsConfig?.[channelName] || {}
-                const isPublic = await checkNotePublicStatus(note, channelName)
-                if (!isPublic) { 
-                    console.log("private note!");
-                    continue; 
+
+                // check scope
+                const inScope = scopes.contains(channelName)
+                if (!inScope) { 
+                    console.log("Note not in scope!");
+                    continue;
                 }
                 
                 const sel = getSelectedText()
@@ -87,6 +86,7 @@ export function _serviceCommands() {
                     () => {
                         // postV2dPush
                         //// push
+                        _d2rAddCommit(pushDepot, randstring())
                         _d2rPush(pushDepot)
                     }
                 )
@@ -117,6 +117,7 @@ export function _serviceCommands() {
                         },
                         () => {
                             // postD2vPull
+                            _d2rAddCommit(pushDepot, randstring())
                             _d2rPush(pushDepot)
                         }
                     ) 

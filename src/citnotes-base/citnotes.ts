@@ -34,7 +34,7 @@ export function onload() {
         id: "citnotes-dev",
         name: "CitNotes dev",
         callback: async () => {
-            checkEnable("citnotes", true)
+            checkEnable("citnotes", { notice: true, err: true })
             console.clear();
             const note0 = getCurrNote();
             console.log("note0: ", note0);
@@ -57,7 +57,7 @@ export function onload() {
         id: "citnotes-copy-selected-reference-link-from-list",
         name: "CitNotes copy selected reference link from list",
         callback: async () => {
-            checkEnable("citnotes", true)
+            checkEnable("citnotes", { notice: true, err: true })
             console.clear();
             // copy selection
             const sel0 = getSelectedText()
@@ -71,7 +71,7 @@ export function onload() {
     //     id: 'oba-citnotes-copy-reference-selected-doi',
     //     name: 'CitNotes copy references of selected doi',
     //     callback: async () => {
-    //         checkEnable("citnotes", true)
+    //         checkEnable("citnotes", { notice: true, err: true })
     //         console.clear();
     //         const doi0 = getSelectedText()
     //         if (!doi0) {
@@ -87,7 +87,7 @@ export function onload() {
         id: 'oba-citnotes-copy-reference-current-note',
         name: 'CitNotes copy references of current note',
         callback: async () => {
-            checkEnable("citnotes", true)
+            checkEnable("citnotes", { notice: true, err: true })
             console.clear();
             const note = getCurrNote()
             await this.copyCitNoteReferencesSection(note);
@@ -98,7 +98,7 @@ export function onload() {
         id: 'oba-citnotes-generate-references-resolver-map',
         name: 'CitNotes generate references resolver map',
         callback: async () => {
-            checkEnable("citnotes", true)
+            checkEnable("citnotes", { notice: true, err: true })
             console.clear();
             const citnote = getCurrNote()
             await generateCitNoteConfigRefResolverMap(citnote)
@@ -109,7 +109,7 @@ export function onload() {
         id: "citnotes-copy-citstr-from-list",
         name: "CitNotes search citation from list",
         callback: async () => {
-            checkEnable("citnotes", true)
+            checkEnable("citnotes", { notice: true, err: true })
             console.clear();
             const sel0 = getSelectedText() || ''
             const citnote = getCurrNote()
@@ -121,7 +121,7 @@ export function onload() {
         id: 'oba-citnotes-copy-non-local-reference-current-note',
         name: 'CitNotes copy non-local references of current note',
         callback: async () => {
-            checkEnable("citnotes", true)
+            checkEnable("citnotes", { notice: true, err: true })
             console.clear();
             const note = getCurrNote()
             await copyCitNoteNonLocalReferences(note);
@@ -132,7 +132,7 @@ export function onload() {
         id: "oba-citnotes-copy-link-selected-reference-number",
         name: "CitNotes copy link of selected reference number",
         callback: async () => {
-            checkEnable("citnotes", true)
+            checkEnable("citnotes", { notice: true, err: true })
             console.clear();
             // const str = getSelectedText().
                 // replace(/\D+/g, "")
@@ -147,7 +147,7 @@ export function onload() {
         id: "oba-citnotes-download-all-local-notes",
         name: "CitNotes download all local notes",
         callback: async () => {
-            checkEnable("citnotes", true)
+            checkEnable("citnotes", { notice: true, err: true })
             console.clear();
             await downloadAllLocalReferences()
         }
@@ -186,22 +186,24 @@ async function copySelectedCitationFromList(
 ) {
     // select from list
     console.log("note0: ", note0);
-    const biblIOs = [] as BiblIOData[];
+    // const biblIOs = [] as BiblIOData[];
+    const references: string[] = []
     const refBiblIOs = await citNoteReferenceBiblIOs(note0);
     if (!refBiblIOs) {
         console.log("No references found. note0: ", note0);
     } else {
-        biblIOs.push(...refBiblIOs)
+        const references1 = getCitationStringToSearch(refBiblIOs, { suffix: ' {ref}'});
+        references.push(...references1)
     }
     const localBiblIOs = await localbibs.getMergedBiblIO()
     if (!localBiblIOs) {
         console.log("localBiblIOs not found");
     } else {
-        biblIOs.push(...localBiblIOs)
+        const references1 = getCitationStringToSearch(localBiblIOs, { suffix: ' {local}'});
+        references.push(...references1)
     }
     // TODO: add all from crossref cache?
 
-    const references = getCitationStringToSearch(biblIOs);
     if (!references || references.length === 0) {
         console.log(`No references found. citekey: ${note0}`);
         return;
@@ -460,13 +462,19 @@ function getCitationStringV1(biblIO: BiblIOData) {
         .trim();
 }
 
-function getCitationStringToSearch(biblIOs: BiblIOData[]) {
+function getCitationStringToSearch(
+    biblIOs: BiblIOData[],
+    {
+        prefix = '',
+        suffix = '',
+    }
+) {
     
     let refi = 1;
     const citStrs: string[] = [];
     for (const biblIO of biblIOs) {
-        let cit = `[${refi}] `
-        cit += getCitationStringV1(biblIO);
+        const body = getCitationStringV1(biblIO);
+        const cit = `${prefix}[${refi}] ${body}${suffix}`
         citStrs.push(cit)
         refi++;
     }
