@@ -9,6 +9,8 @@ import { resolveObaSyncSignals, ObaSyncSignal, sendObaSyncSignal } from "./signa
 import { _d2rAddCommit, _d2rPush, _r2dPull } from "./channels-base"
 import { getNoteObaSyncScope } from "./scope-base"
 import { randstring } from "src/tools-base/utils-tools"
+import { vscode } from "src/services-base/0-servises-modules"
+import path from "path"
 
 export function _serviceCommands() {
 
@@ -29,6 +31,22 @@ export function _serviceCommands() {
                     console.log('obsSyncDir: ', obsSyncDir)
                     await rm(obsSyncDir, { recursive: true, force: true })
                 }
+            }
+        }
+    })
+
+    OBA.addCommand({
+        id: "oba-obasync-open-push-repos",
+        name: "ObaSync open push repos",
+        callback: async () => {
+            checkEnable("obasync", {err: true, notice: true})
+            console.clear()
+            const channelsConfig = getObaConfig("obasync.channels", {})
+            for (const channelName in channelsConfig) {
+                const channelConfig = channelsConfig?.[channelName] || {}
+                const pushDepot = channelConfig?.["push.depot"] || null
+                const dummy = path.join(pushDepot, ".dummy")
+                vscode.goto(dummy, 0, 0)
             }
         }
     })
