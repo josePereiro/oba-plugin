@@ -97,7 +97,7 @@ export async function _downloadFileVersionFromContext(
     console.log("destPath: ", destPath)
     copyFileSync(srcPath, destPath)
 
-    new Notice(`Pulled ${remoteFile} from ${userName1}-${channelName}!`, 0)
+    new Notice(`Pulled ${remoteFile} from ${userName1}-${channelName}!`, 10000)
     context["handlingStatus"] = 'ok'
     console.log("handle.push.context: ", context)
 
