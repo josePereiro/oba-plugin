@@ -2,13 +2,14 @@ import { OBA } from "src/oba-base/globals";
 import { getObaConfig } from "src/oba-base/obaconfig";
 import { registerObaCallback, runObaCallbacks } from "src/services-base/callbacks";
 import { checkEnable } from "src/tools-base/oba-tools";
-import { dropRepeatedCall } from "src/tools-base/schedule-tools";
+import { dropRepeatedCall, TaskState } from "src/tools-base/schedule-tools";
 import { DelayManager, randstring } from "src/tools-base/utils-tools";
 import { commitObaSyncSignal, ObaSyncCallbackContext, ObaSyncIssuedSignal, processObaSyncSignals } from "./signals-base";
 import { getCurrNotePath, getVaultDir } from "src/tools-base/obsidian-tools";
 import { _addDummyAndCommit, _fetchCheckoutPull, _justPush } from "./channels-base";
 import { getNoteObaSyncScope } from "./scope-base";
 import { Notice } from "obsidian";
+import { ObaSyncScheduler } from "./obasync";
 
 const ANYMOVE_DELAY: DelayManager = 
     new DelayManager(1000, 1001, -1, -1) // no delay
@@ -71,14 +72,18 @@ export function _serviceCallbacks() {
         registerObaCallback(
             callbackID, 
             async () => {
-                return await dropRepeatedCall(
-                    `${callbackID}.pullAndProcessSignals`,
-                    async () => {
+                ObaSyncScheduler.spawn({
+                    id: `${callbackID}:pullAndProcessSignals`,
+                    taskFun: async (task: TaskState) => {
+                        console.clear()
                         await _pullAndProcessSignals(true)
                         // DEV
                         // await _pullAndProcessSignals(false)
+                        if (task["gas"] > 1) {
+                            task["gas"] = 1
+                        }
                     }
-                );
+                })
             }
         )
     }
@@ -91,13 +96,16 @@ export function _serviceCallbacks() {
             async () => {
                 const flag = await ACT_MONITOR_DELAY.manageTime()
                 if (flag != "go") { return; }
-                return await dropRepeatedCall(
-                    `obasync.obsidian.anymove:sendActivityMonitorSignal`,
-                    async () => {
-                        // console.clear()
+                ObaSyncScheduler.spawn({
+                    id: `obasync.obsidian.anymove:sendActivityMonitorSignal`,
+                    taskFun: async (task: TaskState) => {
+                        console.clear()
                         await _sendActivityMonitorSignal()
+                        if (task["gas"] > 1) {
+                            task["gas"] = 1
+                        }
                     }
-                );
+                })
             }
         )
     }
@@ -145,6 +153,9 @@ export async function _sendActivityMonitorSignal() {
                 }
             }
         })
+
+        // push
+        await _justPush(pushDepot0, 10)
     }
 }
 
@@ -172,8 +183,8 @@ async function _pullAndProcessSignals(
             await processObaSyncSignals({
                 vaultDepot0, pushDepot0, pullDepot0,
                 manType: 'main',
-                channelName,
-                userName0
+                userName0,
+                channelName
             })
         }
     }

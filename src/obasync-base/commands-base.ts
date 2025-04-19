@@ -1,24 +1,29 @@
 import { OBA } from "src/oba-base/globals"
 import { getObaConfig } from "src/oba-base/obaconfig"
 import { checkEnable } from "src/tools-base/oba-tools"
-import { dropRepeatedCall } from "src/tools-base/schedule-tools"
+import { dropRepeatedCall, TaskState } from "src/tools-base/schedule-tools"
 import { _addDummyAndCommit, _resetHard, _clearWD, _fetchCheckoutPull, _justPush } from "./channels-base"
 import { randstring } from "src/tools-base/utils-tools"
 import { _sendActivityMonitorSignal } from "./callbacks-base"
+import { ObaSyncScheduler } from "./obasync-base"
 
 export function _serviceCommands() {
     OBA.addCommand({
         id: "oba-obasync-send-activity-signal",
         name: "ObaSync send activity signal",
         callback: async () => {
-            return await dropRepeatedCall(
-                `obasync.obsidian.anymove:sendActivityMonitorSignal`,
-                async () => {
-                    // console.clear()
+            ObaSyncScheduler.spawn({
+                id: "oba-obasync-send-activity-signal",
+                taskFun: async (task: TaskState) => {
+                    console.clear()
                     console.log("_sendActivityMonitorSignal")
                     await _sendActivityMonitorSignal()
+                    // clamp gas to 1
+                    if (task["gas"] > 1) {
+                        task["gas"] = 1
+                    }
                 }
-            );
+            })
         }
     });
 
@@ -26,7 +31,16 @@ export function _serviceCommands() {
         id: "oba-obasync-push-depots",
         name: "ObaSync push depots",
         callback: async () => {
-            _pushDepots()
+            ObaSyncScheduler.spawn({
+                id: "oba-obasync-push-depots",
+                taskFun: async (task: TaskState) => {
+                    console.clear()
+                    await _pushDepots()
+                    if (task["gas"] > 1) {
+                        task["gas"] = 1
+                    }
+                }
+            })
         }
     });
     
@@ -35,9 +49,9 @@ export function _serviceCommands() {
         name: "ObaSync force sync",
         callback: async () => {
             checkEnable("obasync", {err: true, notice: true})
-            await dropRepeatedCall(
-                "oba-obasync-dev",
-                async () => {
+            ObaSyncScheduler.spawn({
+                id: "oba-obasync-force-sync",
+                taskFun: async (task: TaskState) => {
                     console.clear()
                     const channelsConfig = getObaConfig("obasync.channels", {})
                     for (const channelName in channelsConfig) {
@@ -62,8 +76,9 @@ export function _serviceCommands() {
                             await _fetchCheckoutPull(pullDepot)
                         }
                     }
+                    task["gas"] = 0
                 }
-            )
+            })
         }
     })
 }

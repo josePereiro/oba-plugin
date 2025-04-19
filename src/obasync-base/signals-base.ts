@@ -126,6 +126,7 @@ export async function commitObaSyncSignal({
 // MARK: run
 async function _runHandlingCallback(
     callbackID: string,
+    directCallback: ((...args: any[]) => any),
     context: ObaSyncCallbackContext,
     {
         onOk = () => null,
@@ -142,7 +143,8 @@ async function _runHandlingCallback(
     
     // Run callback
     await runObaCallbacks(callbackID, context)
-    
+    await directCallback(callbackID, context)
+
     // Validate run
     // const context = {userName0, userName1, signal1HashKey, signal1Content, man0Processed, handlingStatus: 'unknown'}
     const man0Processed = context["man0Processed"]
@@ -186,6 +188,7 @@ interface processObaSyncSignalsArgs {
     userName0: string, 
     channelName: string, 
     manType: string,
+    onCallback?: ((callbackID: string, context: ObaSyncCallbackContext) => any),
     onOk?: (() => any),
     onUnknown?: (() => any),
     onFailed?: (() => any),
@@ -198,6 +201,7 @@ export async function processObaSyncSignals({
     userName0, 
     channelName, 
     manType,
+    onCallback = (...args) => null,
     onOk = () => null,
     onUnknown = () => null,
     onFailed =() => null,
@@ -246,9 +250,9 @@ export async function processObaSyncSignals({
         if (!man0Record) {
             // run callbacks
             callbackID = `obasync.signal.missing.in.record0:${signal1Type}`
-            await _runHandlingCallback(callbackID, context, { onOk, onUnknown, onFailed })
+            await _runHandlingCallback(callbackID, onCallback, context, { onOk, onUnknown, onFailed })
             callbackID = `obasync.signal.missing.in.record0.or.newer:${signal1Type}`
-            await _runHandlingCallback(callbackID, context, { onOk, onUnknown, onFailed })
+            await _runHandlingCallback(callbackID, onCallback, context, { onOk, onUnknown, onFailed })
         }
 
         const timestamp1Str = signal1Content?.['timestamp']
@@ -259,46 +263,46 @@ export async function processObaSyncSignals({
 
             // callback
             callbackID = `obasync.signal.timetags.both.present:${signal1Type}`
-            await _runHandlingCallback(callbackID, context, { onOk, onUnknown, onFailed })
+            await _runHandlingCallback(callbackID, onCallback, context, { onOk, onUnknown, onFailed })
 
             // callback
             if (timestamp0 < timestamp1) {
                 // mine.newer
                 callbackID = `obasync.signal.timetag0.newer:${signal1Type}`
-                await _runHandlingCallback(callbackID, context, { onOk, onUnknown,  onFailed })
+                await _runHandlingCallback(callbackID, onCallback, context, { onOk, onUnknown,  onFailed })
                 callbackID = `obasync.signal.missing.in.record0.or.newer:${signal1Type}`
-                await _runHandlingCallback(callbackID, context, { onOk, onUnknown,  onFailed })
+                await _runHandlingCallback(callbackID, onCallback, context, { onOk, onUnknown,  onFailed })
             }
             // callback
             if (timestamp0 == timestamp1) {
                 // both.equal
                 callbackID = `obasync.signal.timetags.both.equal:${signal1Type}`
-                await _runHandlingCallback(callbackID, context, { onOk, onUnknown,  onFailed })
+                await _runHandlingCallback(callbackID, onCallback, context, { onOk, onUnknown,  onFailed })
             }
             // callback
             if (timestamp0 > timestamp1) {
                 // both.equal
                 callbackID = `obasync.signal.timetag0.older:${signal1Type}`
-                await _runHandlingCallback(callbackID, context, { onOk, onUnknown,  onFailed })
+                await _runHandlingCallback(callbackID, onCallback, context, { onOk, onUnknown,  onFailed })
             }
         }
 
         // callback
         if (!timestamp0Str && timestamp1Str) {
             callbackID = `obasync.signal.timetag0.missing:${signal1Type}`
-            await _runHandlingCallback(callbackID, context, { onOk, onUnknown, onFailed })
+            await _runHandlingCallback(callbackID, onCallback, context, { onOk, onUnknown, onFailed })
         }
 
             // callback
             if (timestamp0Str && !timestamp1Str) {
                 callbackID = `obasync.signal.timetag1.missing:${signal1Type}`
-                await _runHandlingCallback(callbackID, context, { onOk, onUnknown,  onFailed })
+                await _runHandlingCallback(callbackID, onCallback, context, { onOk, onUnknown,  onFailed })
             }
 
         // callback
         if (!timestamp0Str && !timestamp1Str) {
             callbackID = `obasync.signal.timetags.both.missing:${signal1Type}`
-            await _runHandlingCallback(callbackID, context, { onOk, onUnknown, onFailed })
+            await _runHandlingCallback(callbackID, onCallback, context, { onOk, onUnknown, onFailed })
         }
     } // for (const signal1HashKey in man1Issued)
 
