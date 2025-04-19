@@ -1,20 +1,20 @@
-import { Notice } from "obsidian";
-import { registerObaCallback, runObaCallbacks } from "src/services-base/callbacks";
-import { getCallbackContext } from "./manifests-base";
-import { checkEnable } from "src/tools-base/oba-tools";
 import { OBA } from "src/oba-base/globals";
 import { getObaConfig } from "src/oba-base/obaconfig";
-import { resolveObaSyncSignals, ObaSyncSignal, sendObaSyncSignal } from "./signals-base";
-import { _d2rAddCommit, _d2rPush, _r2dPull } from "./channels-base";
-import { getCurrNotePath, getVaultDir } from "src/tools-base/obsidian-tools";
-import { statusbar } from "src/services-base/0-servises-modules";
-import { _downloadFileVersionFromContext, _publishFileVersion } from "./syncFileSignal-base";
+import { registerObaCallback, runObaCallbacks } from "src/services-base/callbacks";
+import { checkEnable } from "src/tools-base/oba-tools";
+import { dropRepeatedCall } from "src/tools-base/schedule-tools";
 import { DelayManager, randstring } from "src/tools-base/utils-tools";
-import path from "path";
-import { singleCall } from "src/tools-base/singletron-tools";
+import { commitObaSyncSignal, ObaSyncCallbackContext, ObaSyncIssuedSignal, processObaSyncSignals } from "./signals-base";
+import { getCurrNotePath, getVaultDir } from "src/tools-base/obsidian-tools";
+import { _addDummyAndCommit, _fetchCheckoutPull, _justPush } from "./channels-base";
+import { getNoteObaSyncScope } from "./scope-base";
+import { Notice } from "obsidian";
 
 const ANYMOVE_DELAY: DelayManager = 
     new DelayManager(1000, 1001, -1, -1) // no delay
+
+const ACT_MONITOR_DELAY: DelayManager = 
+    new DelayManager(10000, 1001, -1, -1) // no delay
 
 // DONE/TAI: create per note delay manager
 function _createPushDelayManager() {
@@ -23,198 +23,160 @@ function _createPushDelayManager() {
 
 let PUSH_DELAYS: {[keys: string]: DelayManager} = {}
 const PUSHING_SET = new Set()
-    
+
 export function _serviceCallbacks() {
     
     if (!checkEnable("obasync", {err: false, notice: false})) { return; }
-    let callbackID: string;
 
     // MARK: anymove
-    OBA.registerEvent(
-        OBA.app.workspace.on('editor-change', (...args) => {
-            runObaCallbacks('__obasync.obsidian.anymove')
-        })
-    );
-    OBA.registerEvent(
-        OBA.app.workspace.on('file-open', (...args) => {
-            runObaCallbacks('__obasync.obsidian.anymove')
-        })
-    );
-    OBA.registerDomEvent(window.document, "wheel", () => {
-        runObaCallbacks('__obasync.obsidian.anymove')
-    });
-    OBA.registerDomEvent(window.document, "mousemove", () => {
-        runObaCallbacks('__obasync.obsidian.anymove')
-    });
-    OBA.registerDomEvent(window.document, "click", () => {
-        runObaCallbacks('__obasync.obsidian.anymove')
-    });
-    OBA.registerDomEvent(window.document, "keyup", async () => {
-        runObaCallbacks('__obasync.obsidian.anymove')
-    });
+    {
+        const callbackID = '__obasync.obsidian.anymove';
+        OBA.registerEvent(
+            OBA.app.workspace.on('editor-change', (...args) => {
+                runObaCallbacks(callbackID)
+            })
+        );
+        OBA.registerEvent(
+            OBA.app.workspace.on('file-open', () => {
+                runObaCallbacks(callbackID)
+            })
+        );
+        // OBA.registerDomEvent(window.document, "wheel", () => {
+        //     runObaCallbacks(callbackID)
+        // });
+        // OBA.registerDomEvent(window.document, "mousemove", () => {
+        //     runObaCallbacks(callbackID)
+        // });
+        OBA.registerDomEvent(window.document, "click", () => {
+            runObaCallbacks(callbackID)
+        });
+        // OBA.registerDomEvent(window.document, "keyup", async () => {
+        //     runObaCallbacks(callbackID)
+        // });
 
-    registerObaCallback(
-        `__obasync.obsidian.anymove`, 
-        async () => {
-            const now: Date = new Date()
-            const flag = await ANYMOVE_DELAY.manageTime()
-            if (flag == "go") { 
+        registerObaCallback(
+            callbackID, 
+            async () => {
+                const now: Date = new Date()
+                const flag = await ANYMOVE_DELAY.manageTime()
+                if (flag != "go") { return; }
                 await runObaCallbacks('obasync.obsidian.anymove')
             }
-        }
-    )
-
-    // MARK: auto push
-    OBA.registerEvent(
-        OBA.app.workspace.on('editor-change', async (editor, info) => {
-            _autoPush()
-        })
-    );
+        )
+    }
 
     // MARK: resolve signals
-    callbackID = `obasync.obsidian.anymove`
-    registerObaCallback(
-        callbackID, 
-        async () => {
-            return await singleCall(
-                `${callbackID}.pullResolvePush`,
-                async () => {
-                    _pullResolvePush()
-                }
-            );
-        }
-    )
+    {
+        const callbackID = `obasync.obsidian.anymove`
+        registerObaCallback(
+            callbackID, 
+            async () => {
+                return await dropRepeatedCall(
+                    `${callbackID}.pullAndProcessSignals`,
+                    async () => {
+                        // DEV
+                        await _pullAndProcessSignals(false)
+                    }
+                );
+            }
+        )
+    }
 
-    // MARK: pull
-    callbackID = `obasync.signal.missing.in.record0.or.newer:push`
-    registerObaCallback(
-        callbackID, 
-        async () => {
-            return await singleCall(
-                callbackID,
-                async () => {
-                    console.clear()
+    // MARK: activity mon
+    // {
+    //     const callbackID = `obasync.obsidian.anymove`
+    //     registerObaCallback(
+    //         callbackID, 
+    //         async () => {
+    //             const flag = await ACT_MONITOR_DELAY.manageTime()
+    //             if (flag != "go") { return; }
+    //             return await dropRepeatedCall(
+    //                 `obasync.obsidian.anymove:sendActivityMonitorSignal`,
+    //                 async () => {
+    //                     // console.clear()
+    //                     console.log("_sendActivityMonitorSignal")
+    //                     await _sendActivityMonitorSignal()
+    //                 }
+    //             );
+    //         }
+    //     )
+    // }
 
-                    const context = getCallbackContext()
-                    if (!context) { return; }
-                    const channelsConfig = getObaConfig("obasync.channels", null)
-                    if (!channelsConfig) { return; }
-                    const userName0 = getObaConfig("obasync.me", null)
-                    if (!userName0) { return; }
-                    
-                    await _downloadFileVersionFromContext(context, channelsConfig,)
-                }
-            );
-        }
-    )
-
-    // MARK: signals
-    callbackID = `obasync.signal.missing.in.record0.or.newer:notice`
-    registerObaCallback(
-        callbackID, 
-        async () => {
-            return await singleCall(
-                callbackID,
-                async () => {
-                    _handleNotice()
-                }
-            )
-        }
-    )
-}
-
-function _handleNotice() {
-    const context = getCallbackContext()
-    if (!context) { return; }
-    const sender = context?.["userName1"]
-    const msg = context?.['signal1Content']?.['msg']
-    // TODO: find a better notification system
-    new Notice(`${sender} says: ${msg}!`, 0)
-    context["handlingStatus"] = 'ok'
-    console.log("handle.notice.context: ", context)
-}
-
-async function _pullResolvePush() {
-
-    const channelsConfig = getObaConfig("obasync.channels", {})
-    const userName0 = getObaConfig("obasync.me", null)
-    for (const channelName in channelsConfig) {
-        const channelConfig = channelsConfig?.[channelName] || {}
-        const pushDepot = channelConfig?.["push.depot"] || null
-        const pullDepots = channelConfig?.["pull.depots"] || []
-        for (const pullDepot of pullDepots) {
-            await resolveObaSyncSignals(
-                pushDepot, pullDepot, userName0, 'main',
-                () => {
-                    // preD2vPull
-                    _r2dPull(pullDepot)
-                },
-                () => {
-                    // postD2vPull
-                    // Using a constant dummy for avoiding polluting the repo
-                    _d2rAddCommit(pushDepot, "123")
-                    _d2rPush(pushDepot)
-                },
-                () => {
-                    // onOk
-                    _d2rAddCommit(pushDepot, randstring())
-                    _d2rPush(pushDepot)
-                },
-                () => {
-                    // onUnknown
-                },
-                () => {
-                    // onFailed
-                }
-            ) 
-        }
+    {
+        const callbackID = `obasync.signal.missing.in.record0.or.newer:activity.monitor`
+        registerObaCallback(
+            callbackID, 
+            async (context: ObaSyncCallbackContext) => {
+                // TODO: interface 
+                const token = context?.["args"]?.["token"] || "Hi"
+                const userName1 = context?.["userName1"]
+                new Notice(`Activity from ${userName1}, token: ${token}`, 0)
+                context["handlingStatus"] = "ok"
+            }
+        )
     }
 }
 
-async function _autoPush() {
-    // context
-    // It is important we can take the context before potentially waiting
-    const localFile = getCurrNotePath()
+// MARK: 
+export async function _sendActivityMonitorSignal() {
 
-    // call context
-    const callID = `${localFile}.autoPush`
+    const userName0 = getObaConfig("obasync.me", null)
+    const vaultDepot0 = getVaultDir()
+    
+    const channelsConfig = getObaConfig("obasync.channels", {})
+    for (const channelName in channelsConfig) {
+        console.log("channelName: ", channelName)
+        const channelConfig = channelsConfig?.[channelName] || {}
+        const pushDepot0 = channelConfig?.["push.depot"] || null
+        console.log("pushDepot0: ", pushDepot0)
+        
+        await commitObaSyncSignal({
+            vaultDepot0,
+            pushDepot0,
+            userName0,
+            channelName,
+            manType: 'main',
+            signal0: { 
+                "type": 'activity.monitor', 
+                "args": {
+                    "token": randstring(),
+                    "sender": userName0,
+                }
+            }
+        })
 
-    return await singleCall(
-        callID,
-        async () => {
-            console.clear()
-            
-            // push context
-            const localFileBaseName = path.basename(localFile)
-            const userName0 = getObaConfig("obasync.me", null)
-            const channelsConfig = getObaConfig("obasync.channels", {})
+        // push
+        await _justPush(pushDepot0, 10)
+    }
+}
 
-            // controlFlow
-            PUSH_DELAYS[localFile] = PUSH_DELAYS?.[localFile] || _createPushDelayManager()
-            const delayManager = PUSH_DELAYS[localFile]
-            const flag = await delayManager
-                .manageTime((elapsed: any) => {
-                    // const conutdown = delayManager.delayTime - elapsed
-                    // statusbar.setText(`pushing in: ${conutdown}`)
-                    PUSHING_SET.add(localFileBaseName)
-                    statusbar.setText(`pushing ${[...PUSHING_SET]}`)
-                })
-            if (flag == "notyet") { return }
-            statusbar.setText('pushing')
 
-            for (const channelName in channelsConfig) {
-                await _publishFileVersion(localFile, channelName, userName0, channelsConfig)
+async function _pullAndProcessSignals(
+    pull = true,
+) {
+
+    const channelsConfig = getObaConfig("obasync.channels", {})
+    const userName0 = getObaConfig("obasync.me", null)
+    const vaultDepot0 = getVaultDir()
+    for (const channelName in channelsConfig) {
+        
+        const channelConfig = channelsConfig?.[channelName] || {}
+        const pushDepot0 = channelConfig?.["push.depot"] || null
+        const pullDepots = channelConfig?.["pull.depots"] || {}
+        for (const userName1 in pullDepots) {
+            const pullDepot0 = pullDepots[userName1]
+            // try pull pullDepot
+            if (pull) {
+                await _fetchCheckoutPull(pullDepot0, 10)
             }
 
-            // new Notice("NOTE PUSHED!")
-            PUSHING_SET.delete(localFileBaseName)
-            if (PUSHING_SET.size == 0) {
-                statusbar.clear()
-                statusbar.setText('Notes pushed!', true)
-                await sleep(1000)
-                statusbar.clear()
-                statusbar.clear()
-            }
+            // process
+            await processObaSyncSignals({
+                vaultDepot0, pushDepot0, pullDepot0,
+                manType: 'main',
+                channelName,
+                userName0
+            })
         }
-    )
+    }
 }

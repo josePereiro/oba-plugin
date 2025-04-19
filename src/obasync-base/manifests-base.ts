@@ -1,77 +1,72 @@
 import path from "path";
 import { getObsSyncDir, utcTimeTag } from "./utils-base";
 import { JsonIO } from "src/tools-base/jsonio-base";
-import { readDir } from "src/tools-base/files-tools";
-import { ObaSyncCallbackContext } from "./signals-base";
-import { getCallbackArgs } from "src/services-base/callbacks";
+import { ObaSyncIssuedSignal, ObaSyncProcessedSignal } from "./signals-base";
+import { existsSync } from "fs";
 
 /*
     Each channel will have a manifest with signals and report of actions. 
 */ 
 
-export function depotManifestFile(
+export interface ObaSyncManifestIder {
+    channelName: string
+    manType: string
+}
+
+export interface ObaSyncManifest {
+    "type"?: string,
+    "meta"?: {
+        "userName"?: string,
+        [keys: string]: any
+    },
+    "issued.signals"?: {[keys: string]: ObaSyncIssuedSignal},
+    "processed.signals"?: {[keys: string]: ObaSyncProcessedSignal},
+}
+
+export function manifestFilePath(
     depotDir: string, 
-    userName: string, 
-    manKey: string
+    manIder: ObaSyncManifestIder
 ) {
+    const {channelName, manType} = manIder
     const obasyncDir = getObsSyncDir(depotDir);
-    return path.join(obasyncDir, `${userName}-${manKey}-man.json`)
+    return path.join(obasyncDir, `${channelName}-${manType}-man.json`)
 }
 
-export function remoteManifestIO(
+export function manifestJsonIO(
     depotDir: string, 
-    userName: string, 
-    manKey: string
+    manIder: ObaSyncManifestIder
 ) {
-    const man = depotManifestFile(depotDir, userName, manKey);
-    const io = new JsonIO()
-    io.file(man)
-    return io
-}
-
-export async function loadManifestIOs(
-    depotDir: string,
-    manKey: string
-) {
-    const mans: {[keys: string]: JsonIO} = {} 
-    const suffix = `-${manKey}-man.json`
-    await readDir(
-        depotDir, 
-        {
-            walkdown: false,
-            onfile: (_path: string) => {
-                if (!_path.endsWith(suffix)) { return; }
-                const io = new JsonIO()
-                io.file(_path)
-                const user = io.loadd({}).getd("user", null).retVal()
-                if (!user) { return; } 
-                mans[user] = io
-            },
-        } 
-    ) 
-    return mans
+    const manFile = manifestFilePath(depotDir, manIder);
+    const manIO = new JsonIO()
+    manIO.file(manFile)
+    return manIO
 }
 
 export function modifyObaSyncManifest(
-    depotDir: string,
-    userName: string, 
-    manKey: string,
-    onmod: (manContent: any) => any
+    depotDir: string, 
+    userName: string,
+    manIder: ObaSyncManifestIder,
+    onmod: (manContent: ObaSyncManifest) => any
 ) {
-    const manIO = remoteManifestIO(depotDir, userName, manKey)
-    manIO.loadd({})
-    manIO.withDepot((manContent: any) => {
+    const manIO = manifestJsonIO(depotDir, manIder)
+    manIO.depot({})
+    let obortFlag = null
+    manIO.withDepot((manContent: ObaSyncManifest) => {
         // defaults
-        manContent["user"] = userName
-        manContent["modified.timestamp"] = utcTimeTag()
-        onmod(manContent)
+        manContent["type"] = manIder['manType']
+        manContent["meta"] = manContent?.["meta"] || {}
+        manContent["meta"]["userName"] = userName
+        manContent["meta"]["channelName"] = manIder['channelName']
+        manContent["meta"]["modified.timestamp"] = utcTimeTag()
+        // modify callback
+        obortFlag = onmod(manContent)
     })
+    if (obortFlag == 'abort') { return null; }
     manIO.write()
-    return manIO.retDepot()
+    return manIO
 }
 
-
-export function getCallbackContext(): ObaSyncCallbackContext {
-    return getCallbackArgs()?.[0]
-}
+// export function getCallbackContext(): ObaSyncCallbackContext {
+//     return getCallbackArgs()?.[0]
+// }
     

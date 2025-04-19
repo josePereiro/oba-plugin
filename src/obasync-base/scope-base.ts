@@ -8,7 +8,7 @@ import { getSyncChannelsConfig } from "./utils-base";
 export async function getNoteObaSyncScope(
     path: string,
     channelsConfig: any = getSyncChannelsConfig({})
-): Promise<string[] | null> {
+): Promise<string[]> {
 
     // nullish
     if (!path) { return null; }

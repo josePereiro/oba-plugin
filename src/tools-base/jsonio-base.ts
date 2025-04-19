@@ -23,6 +23,8 @@ export class JsonIO {
     // TODO/ also store in state an ErrVersionCallerOptions
     //      - to be propagated across all objects
 
+    // TODO/ add lock system
+
     constructor(state: any = {}) {
         this.state = state;
     }
@@ -52,8 +54,10 @@ export class JsonIO {
     }
     
     public loaddOnDemand(dflt: any = {}) {
-        const depot = loadJsonFileSync(this.state["file"], {strict: false})
-        this.state["depot"] = depot || dflt
+        const ramDepot = this.state?.["depot"] || null
+        if (ramDepot) { return this; }
+        const diskDepot = loadJsonFileSync(this.state["file"], {strict: false})
+        this.state["depot"] = diskDepot || dflt
         return this
     }
 
@@ -150,8 +154,8 @@ export class JsonIO {
         return this.state["val"]
     }
 
-    public retPath() {  
-        return this.state["path"]
+    public retFile() {  
+        return this.state["file"]
     }
 
     // TODO/ make flow control assertion

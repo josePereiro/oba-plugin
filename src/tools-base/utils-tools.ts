@@ -1,5 +1,7 @@
+import { exec } from "child_process";
 import { tools } from "./0-tools-modules";
 import * as _ from 'lodash'
+import { promisify } from "util";
 
 export function uriToFilename(url: string): string {
     // 
@@ -265,4 +267,23 @@ export class DelayManager {
         return 'go'
     }
     
+}
+
+
+const _execAsync = promisify(exec);
+
+export async function execAsync(
+    command: string,
+    callback: ((stdout?: any, stderr?: any, error?: any) => any) = () => null
+) {
+    let _stdout, _stderr, _error;
+    try {
+        const { stdout, stderr } = await _execAsync(command);
+        _stdout = stdout
+        _stderr = stderr
+    } catch (error) {
+        _error = error
+    } finally {
+        await callback(_stdout, _stderr, _error) 
+    }
 }

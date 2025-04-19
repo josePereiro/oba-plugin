@@ -8,7 +8,7 @@ import { openNoteAtLine } from 'src/tools-base/obsidian-tools';
 /*
     TODO: Add priority
 */ 
-export type TObaCallback = (() => void | Promise<void>)
+export type TObaCallback = ((...args: any[]) => void | Promise<void>)
 export let CALLBACKS_REGISTRY: { [key: string]: TObaCallback[] };
 export let LAST_CALLBACK: string;
 export let CALLBACK_ARGS: any[];
@@ -25,7 +25,7 @@ export function onload() {
     //  - "callback.oba-signal" : ["signalBackendCmd", "gitCommitCmd"]
     //      - You can just use bracket notation
     const callid = commands.getCommandCallbackId(1);
-    this.registerObaCallback(callid, 
+    registerObaCallback(callid, 
         // Order is relevant
         async () => await backends.signalBackend(),
         async () => await replacer.runReplacer(),
@@ -34,7 +34,7 @@ export function onload() {
         // async () => await citnotes.downloadAllLocalReferences(),
     )
 
-    this.registerObaCallback(
+    registerObaCallback(
         "callbacks.obauri.action", async () => {
             if (!checkEnable("obauri", {err: false, notice: true})) { return; }
             console.clear()
@@ -51,6 +51,7 @@ export function onload() {
 }
 
 export function registerObaCallback(key: string, ...fns: TObaCallback[]): void {
+    console.error(`registerObaCallback:${key}`)
     const calls = getCallbacks(key, true);
     fns.forEach((fn, _index) => {
         calls.push(fn); // Add the function to the array
@@ -66,12 +67,11 @@ export async function runObaCallbacks(
 ) {
     LAST_CALLBACK = key;
     CALLBACK_ARGS = args;
-    // console.clear();
-    // console.log(`runObaCallbacks:${key}`);
+    console.error(`runObaCallbacks:${key}`);
     const calls = getCallbacks(key, true);
     for (const call of calls) {
         try {
-            await call(); // Execute each function
+            await call(...args); // Execute each function
         } catch (err) {
             new Notice(`Failed callback "${key}" run: ${err.message}`);
             console.error(err);
@@ -83,9 +83,7 @@ export async function runObaCallbacks(
 
 export function getCallbacks(key: string, mk = false): TObaCallback[] {
     if (!mk) { return CALLBACKS_REGISTRY?.[key] }
-    const calls = CALLBACKS_REGISTRY?.[key] ?? [] as TObaCallback[];
-    CALLBACKS_REGISTRY[key] = calls;
-    return calls;
+    return CALLBACKS_REGISTRY[key] = CALLBACKS_REGISTRY?.[key] ?? [];
 }
 
 

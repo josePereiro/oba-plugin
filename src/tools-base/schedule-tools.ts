@@ -7,7 +7,7 @@ import { runObaCallbacks } from "src/services-base/callbacks";
 
 const SINGLETRON_REG: {[keys: string]: string} = {}
 
-export async function singleCall(
+export async function dropRepeatedCall(
     id: string,
     call: (() => any),
     dflt: any = null
@@ -19,6 +19,7 @@ export async function singleCall(
         return dflt; 
     }
     try {
+        SINGLETRON_REG[id] = 'running'
         await call()
     } finally {
         SINGLETRON_REG[id] = 'idle'
