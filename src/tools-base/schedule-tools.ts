@@ -79,7 +79,7 @@ export class SequentialAsyncScheduler {
             let idle = true
             const taskIds = shuffledKeys(this.tasksStack)
             for (const taskId of taskIds) {
-                console.log("taskId:", taskId)
+                // console.log("taskId:", taskId)
                 const task = this.tasksStack[taskId]
                 if (task["gas"] < 1) { continue; }
                 idle = false
