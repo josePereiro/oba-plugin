@@ -114,9 +114,8 @@ export async function _fetchCheckoutPull(
         `cd ${repoDir}`, 
         `GIT_HTTP_LOW_SPEED_LIMIT=0`,
         `GIT_HTTP_LOW_SPEED_TIME=${tout}`,
-        `git checkout origin -- .`,
-        `git clean -xdf`,
-        `git pull --rebase`,
+        `git clean -xdf 2>&1`,
+        `git reset --hard origin 2>&1`,
         `echo "done" 2>&1`,
         `echo "<<<<<<<<<<" 2>&1`,
     ].join(";")
@@ -129,7 +128,7 @@ export async function _fetchCheckoutPull(
     )
 }
 
-export async function _checkoutDot(
+export async function _resetHard(
     repoDir: string,
 ) {
     // TODO: use git service
@@ -139,7 +138,8 @@ export async function _checkoutDot(
         `echo "cd..." 2>&1`,
         `cd ${repoDir} 2>&1`, 
         `echo "checking out..." 2>&1`,
-        `git checkout . 2>&1`,
+        `git clean -xdf 2>&1`,
+        `git reset --hard origin 2>&1`,
         `echo "done" 2>&1`,
         `echo "<<<<<<<<<<" 2>&1`,
     ].join(";")

@@ -49,7 +49,7 @@ export function modifyObaSyncManifest(
     onmod: (manContent: ObaSyncManifest) => any
 ) {
     const manIO = manifestJsonIO(depotDir, manIder)
-    manIO.depot({})
+    manIO.loaddOnDemand({})
     let obortFlag = null
     manIO.withDepot((manContent: ObaSyncManifest) => {
         // defaults

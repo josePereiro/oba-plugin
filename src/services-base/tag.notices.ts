@@ -54,6 +54,9 @@ export function tagNoticesConfig() {
     TODO/ create interface for notices
 */ 
 export async function execNotices(file: string, event0: string) {
+    
+    if (!file) { return }
+
     const noticeConfig = tagNoticesConfig();
     // console.log("noticeConfig: ", noticeConfig);
     if (!noticeConfig) return

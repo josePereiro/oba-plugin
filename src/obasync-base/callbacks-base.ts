@@ -74,8 +74,9 @@ export function _serviceCallbacks() {
                 return await dropRepeatedCall(
                     `${callbackID}.pullAndProcessSignals`,
                     async () => {
+                        await _pullAndProcessSignals(true)
                         // DEV
-                        await _pullAndProcessSignals(false)
+                        // await _pullAndProcessSignals(false)
                     }
                 );
             }
@@ -83,24 +84,23 @@ export function _serviceCallbacks() {
     }
 
     // MARK: activity mon
-    // {
-    //     const callbackID = `obasync.obsidian.anymove`
-    //     registerObaCallback(
-    //         callbackID, 
-    //         async () => {
-    //             const flag = await ACT_MONITOR_DELAY.manageTime()
-    //             if (flag != "go") { return; }
-    //             return await dropRepeatedCall(
-    //                 `obasync.obsidian.anymove:sendActivityMonitorSignal`,
-    //                 async () => {
-    //                     // console.clear()
-    //                     console.log("_sendActivityMonitorSignal")
-    //                     await _sendActivityMonitorSignal()
-    //                 }
-    //             );
-    //         }
-    //     )
-    // }
+    {
+        const callbackID = `obasync.obsidian.anymove`
+        registerObaCallback(
+            callbackID, 
+            async () => {
+                const flag = await ACT_MONITOR_DELAY.manageTime()
+                if (flag != "go") { return; }
+                return await dropRepeatedCall(
+                    `obasync.obsidian.anymove:sendActivityMonitorSignal`,
+                    async () => {
+                        // console.clear()
+                        await _sendActivityMonitorSignal()
+                    }
+                );
+            }
+        )
+    }
 
     {
         const callbackID = `obasync.signal.missing.in.record0.or.newer:activity.monitor`
@@ -108,9 +108,10 @@ export function _serviceCallbacks() {
             callbackID, 
             async (context: ObaSyncCallbackContext) => {
                 // TODO: interface 
-                const token = context?.["args"]?.["token"] || "Hi"
-                const userName1 = context?.["userName1"]
-                new Notice(`Activity from ${userName1}, token: ${token}`, 0)
+                const signal = context?.["signal1Content"] || {}
+                const token = signal?.["args"]?.["token"] || "Missing Token"
+                const sender = signal?.["args"]?.["sender"] || "JonhDoe"
+                new Notice(`Activity from ${sender}, token: ${token}`, 0)
                 context["handlingStatus"] = "ok"
             }
         )
@@ -144,9 +145,6 @@ export async function _sendActivityMonitorSignal() {
                 }
             }
         })
-
-        // push
-        await _justPush(pushDepot0, 10)
     }
 }
 

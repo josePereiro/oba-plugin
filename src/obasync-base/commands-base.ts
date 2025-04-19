@@ -2,7 +2,7 @@ import { OBA } from "src/oba-base/globals"
 import { getObaConfig } from "src/oba-base/obaconfig"
 import { checkEnable } from "src/tools-base/oba-tools"
 import { dropRepeatedCall } from "src/tools-base/schedule-tools"
-import { _addDummyAndCommit, _checkoutDot, _clearWD, _fetchCheckoutPull, _justPush } from "./channels-base"
+import { _addDummyAndCommit, _resetHard, _clearWD, _fetchCheckoutPull, _justPush } from "./channels-base"
 import { randstring } from "src/tools-base/utils-tools"
 import { _sendActivityMonitorSignal } from "./callbacks-base"
 
@@ -19,6 +19,14 @@ export function _serviceCommands() {
                     await _sendActivityMonitorSignal()
                 }
             );
+        }
+    });
+
+    OBA.addCommand({
+        id: "oba-obasync-push-depots",
+        name: "ObaSync push depots",
+        callback: async () => {
+            _pushDepots()
         }
     });
     
@@ -42,7 +50,7 @@ export function _serviceCommands() {
                         const pushDepot = channelConfig?.["push.depot"] || null
                         console.log("pushDepot: ", pushDepot)
                         await _clearWD(pushDepot)
-                        await _checkoutDot(pushDepot)
+                        await _resetHard(pushDepot)
                         await _addDummyAndCommit(pushDepot, "test!", randstring())
                         await _justPush(pushDepot)
                         
@@ -50,7 +58,7 @@ export function _serviceCommands() {
                         for (const pullDepot of pullDepots) {
                             console.log("pullDepot: ", pullDepot)
                             await _clearWD(pullDepot)
-                            await _checkoutDot(pullDepot)
+                            await _resetHard(pullDepot)
                             await _fetchCheckoutPull(pullDepot)
                         }
                     }
@@ -58,4 +66,20 @@ export function _serviceCommands() {
             )
         }
     })
+}
+
+export async function _pushDepots() {
+    return await dropRepeatedCall(
+        `oba-obasync-push-depots`,
+        async () => {
+            console.clear()
+            const channelsConfig = getObaConfig("obasync.channels", {})
+            for (const channelName in channelsConfig) {
+                console.log("channelName: ", channelName)
+                const channelConfig = channelsConfig?.[channelName] || {}
+                const pushDepot0 = channelConfig?.["push.depot"] || null
+                await _justPush(pushDepot0, 10)
+            }
+        }
+    );
 }

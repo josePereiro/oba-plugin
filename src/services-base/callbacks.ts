@@ -4,6 +4,7 @@ import { checkEnable, tools } from 'src/tools-base/0-tools-modules';
 import { crossref, localbibs } from 'src/biblio-base/0-biblio-modules';
 import { citnotes } from 'src/citnotes-base/0-citnotes-modules';
 import { openNoteAtLine } from 'src/tools-base/obsidian-tools';
+import { _pushDepots } from 'src/obasync-base/commands-base';
 
 /*
     TODO: Add priority
@@ -30,6 +31,7 @@ export function onload() {
         async () => await backends.signalBackend(),
         async () => await replacer.runReplacer(),
         async () => await git.gitCommitCmd(),
+        async () => await _pushDepots(),
         // async () => await localbibs.parseOnDemandLocalBibAll(),
         // async () => await citnotes.downloadAllLocalReferences(),
     )
