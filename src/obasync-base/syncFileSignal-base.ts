@@ -49,7 +49,7 @@ export async function _publishFileVersion(
             // preV2dPush
             
             //// r2dPull
-            _r2dPull(pushDepot)
+            // _r2dPull(pushDepot)
             
             //// copy
             const destFile = path.join(pushDepot, localFileName)

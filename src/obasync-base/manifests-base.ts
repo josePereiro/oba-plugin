@@ -29,7 +29,7 @@ export function remoteManifestIO(
     return io
 }
 
-export async function loadAllManifestIOs(
+export async function loadManifestIOs(
     depotDir: string,
     manKey: string
 ) {

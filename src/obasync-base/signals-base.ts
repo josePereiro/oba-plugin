@@ -4,7 +4,7 @@ import { getObsSyncDir, utcTimeTag } from "./utils-base"
 import { hash64Chain } from "src/tools-base/utils-tools"
 import { Notice } from "obsidian"
 import objectHash from "object-hash"
-import { loadAllManifestIOs, modifyObaSyncManifest, remoteManifestIO } from "./manifests-base"
+import { loadManifestIOs, modifyObaSyncManifest, remoteManifestIO } from "./manifests-base"
 import { _d2rAddCommit, _r2dPull } from "./channels-base"
 
 // MARK: base
@@ -118,15 +118,15 @@ async function _runHandlingCallback(
             'handlingStatus': status
         } as ObaSyncRecord
         console.log(`Callback handled, callbackID:  ${callbackID},  status: ${status}`)
-        onOk()
+        await onOk()
     } else if (status == 'unknown') {
         console.warn(`Unknown status, callbackID:  ${callbackID}`)
-        onUnknown()
+        await onUnknown()
     } else {
         const msg = `Callback failed, callbackID:  ${callbackID},  status: ${status}`
         console.error(msg)
         new Notice(msg)
-        onFailed()
+        await onFailed()
     }
 }
 
@@ -149,13 +149,13 @@ export async function resolveObaSyncSignals(
 ) {
 
     // callbacks
-    preD2vPull()
-    runObaCallbacks(`obasync.pre.depot.to.vault.pull`)
+    await preD2vPull()
+    await runObaCallbacks(`obasync.pre.depot.to.vault.pull`)
     
     console.clear()
 
     const obsSyncDir1 = getObsSyncDir(pullDepot0)
-    const manIOs = await loadAllManifestIOs(obsSyncDir1, manKey) 
+    const manIOs = await loadManifestIOs(obsSyncDir1, manKey) 
     // get my manifest
     const man0IO = remoteManifestIO(pushDepot0, userName0, manKey)
     console.log("manIO: ", man0IO)
@@ -274,6 +274,6 @@ export async function resolveObaSyncSignals(
         man0IO.write()
     }
 
-    postD2vPull()
-    runObaCallbacks(`obasync.post.depot.to.vault.pull`)
+    await postD2vPull()
+    await runObaCallbacks(`obasync.post.depot.to.vault.pull`)
 }
