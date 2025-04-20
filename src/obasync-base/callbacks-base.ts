@@ -233,7 +233,7 @@ export async function _sendActivityMonitorSignal() {
         })
 
         // push
-        await _justPush(pushDepot0, 10)
+        await _justPush(pushDepot0, { tout: 10})
     }
 }
 

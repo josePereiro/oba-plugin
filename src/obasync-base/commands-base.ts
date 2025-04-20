@@ -55,7 +55,8 @@ export async function _pushDepots() {
                 console.log("channelName: ", channelName)
                 const channelConfig = channelsConfig?.[channelName] || {}
                 const pushDepot0 = channelConfig?.["push.depot"] || null
-                await _justPush(pushDepot0, 10)
+                await _addDummyAndCommit(pushDepot0, "manual.pushing", "123")
+                await _justPush(pushDepot0, { tout: 60})
             }
         }
     );
