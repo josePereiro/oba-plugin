@@ -58,6 +58,7 @@ export default class ObAPlugin extends Plugin {
 	onunload() {
 		console.log('ObAPlugin:onunload');
 		statusbar.onunload();
+		obasync.onunload();
 	}
 }
 

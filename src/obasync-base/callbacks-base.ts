@@ -10,6 +10,8 @@ import { _addDummyAndCommit, _fetchCheckoutPull, _justPush } from "./channels-ba
 import { getNoteObaSyncScope } from "./scope-base";
 import { Notice } from "obsidian";
 import { ObaSyncScheduler } from "./obasync";
+import { _downloadFileVersionFromContext, _publishFileVersion } from "./syncFileSignal-base";
+import { cloneDeep } from "lodash";
 
 const ANYMOVE_DELAY: DelayManager = 
     new DelayManager(1000, 1001, -1, -1) // no delay
@@ -89,42 +91,118 @@ export function _serviceCallbacks() {
     }
 
     // MARK: activity mon
+    // {
+    //     const callbackID = `obasync.obsidian.anymove`
+    //     registerObaCallback(
+    //         callbackID, 
+    //         async () => {
+    //             const flag = await ACT_MONITOR_DELAY.manageTime()
+    //             if (flag != "go") { return; }
+    //             ObaSyncScheduler.spawn({
+    //                 id: `obasync.obsidian.anymove:sendActivityMonitorSignal`,
+    //                 taskFun: async (task: TaskState) => {
+    //                     console.clear()
+    //                     await _sendActivityMonitorSignal()
+    //                     if (task["gas"] > 1) {
+    //                         task["gas"] = 1
+    //                     }
+    //                 }
+    //             })
+    //         }
+    //     )
+    // }
+
+    // publish.files
     {
-        const callbackID = `obasync.obsidian.anymove`
-        registerObaCallback(
-            callbackID, 
-            async () => {
-                const flag = await ACT_MONITOR_DELAY.manageTime()
-                if (flag != "go") { return; }
+        OBA.registerEvent(
+            OBA.app.workspace.on('editor-change', (...args) => {
+                const localFile = getCurrNotePath()
+                if (!localFile) { return; }
+                const userName0 = getObaConfig("obasync.me", null)
+                if (!userName0) { return; }
                 ObaSyncScheduler.spawn({
-                    id: `obasync.obsidian.anymove:sendActivityMonitorSignal`,
+                    id: `publishFileVersion:${localFile}`,
                     taskFun: async (task: TaskState) => {
-                        console.clear()
-                        await _sendActivityMonitorSignal()
-                        if (task["gas"] > 1) {
+                        const channelsConfig = getObaConfig("obasync.channels", {})
+                        const scope = await getNoteObaSyncScope(localFile, channelsConfig) || []
+                        for (const channelName of scope) {
+                            await _publishFileVersion(
+                                localFile,
+                                channelName,
+                                userName0,
+                                channelsConfig,
+                            )                
+                        }
+                        if(task["gas"] > 1) {
                             task["gas"] = 1
                         }
-                    }
+                    }, 
                 })
+            })
+        );
+
+        
+    }
+
+    // download.files
+    {
+        const callbackID = `obasync.signal.missing.in.record0.or.newer:modified.file`
+        registerObaCallback(
+            callbackID, 
+            async (context0: ObaSyncCallbackContext) => {
+                const context = cloneDeep(context0) // independent copy
+                const channelname = context["channelName"]
+                const signal1HashKey = context["signal1HashKey"]
+                const channelsConfig = getObaConfig("obasync.channels", {})
+                // spawn
+                ObaSyncScheduler.spawn({
+                    id: `${callbackID}:${channelname}:${signal1HashKey}`,
+                    taskFun: async (task: TaskState) => {
+                        await _downloadFileVersionFromContext(
+                            context, channelsConfig,
+                        )
+                        task["gas"] = 0
+                    }, 
+                })
+                context0["handlingStatus"] = 'ok'
             }
         )
     }
 
-    {
-        const callbackID = `obasync.signal.missing.in.record0.or.newer:activity.monitor`
-        registerObaCallback(
-            callbackID, 
-            async (context: ObaSyncCallbackContext) => {
-                // TODO: interface 
-                const signal = context?.["signal1Content"] || {}
-                const token = signal?.["args"]?.["token"] || "Missing Token"
-                const sender = signal?.["args"]?.["sender"] || "JonhDoe"
-                new Notice(`Activity from ${sender}, token: ${token}`, 0)
-                context["handlingStatus"] = "ok"
-            }
-        )
-    }
+    // // activity.monitor
+    // {
+    //     const callbackID = `obasync.signal.missing.in.record0.or.newer:activity.monitor`
+    //     registerObaCallback(
+    //         callbackID, 
+    //         async (context0: ObaSyncCallbackContext) => {
+    //             const context = cloneDeep(context0) // independent copy
+    //             const signal1HashKey = context["signal1HashKey"]
+    //             const channelsConfig = getObaConfig("obasync.channels", {})
+    //             // spawn
+    //             ObaSyncScheduler.spawn({
+    //                 id: `${callbackID}:${signal1HashKey}`,
+    //                 taskFun: (task: TaskState) => {
+    //                     _handleActivityMonitorSignal(context)
+    //                     task["gas"] = 0
+    //                 }, 
+    //             })
+    //             context0["handlingStatus"] = 'ok'
+    //             // TODO: interface 
+                
+    //         }
+    //     )
+    // }
 }
+
+function _handleActivityMonitorSignal(context: ObaSyncCallbackContext) {
+    const signal = context?.["signal1Content"] || {}
+    const token = signal?.["args"]?.["token"] || "Missing Token"
+    const sender = signal?.["args"]?.["sender"] || "JonhDoe"
+    new Notice(`Activity from ${sender}, token: ${token}`, 0)
+    context["handlingStatus"] = "ok"
+}
+
+
 
 // MARK: 
 export async function _sendActivityMonitorSignal() {

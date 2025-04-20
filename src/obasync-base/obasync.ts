@@ -16,3 +16,7 @@ export function onload() {
     ObaSyncScheduler.run()
 
 }
+
+export function onunload() {
+    ObaSyncScheduler.stop()
+}
