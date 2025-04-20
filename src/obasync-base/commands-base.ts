@@ -43,44 +43,6 @@ export function _serviceCommands() {
             })
         }
     });
-    
-    OBA.addCommand({
-        id: "oba-obasync-force-sync",
-        name: "ObaSync force sync",
-        callback: async () => {
-            checkEnable("obasync", {err: true, notice: true})
-            ObaSyncScheduler.spawn({
-                id: "oba-obasync-force-sync",
-                taskFun: async (task: TaskState) => {
-                    console.clear()
-                    const channelsConfig = getObaConfig("obasync.channels", {})
-                    for (const channelName in channelsConfig) {
-                        console.log()
-                        console.log("------------")
-                        console.log("channelName: ", channelName)
-                        console.log()
-
-                        const channelConfig = channelsConfig?.[channelName] || {}
-                        const pushDepot = channelConfig?.["push.depot"] || null
-                        console.log("pushDepot: ", pushDepot)
-                        await _clearWD(pushDepot)
-                        await _resetHard(pushDepot)
-                        await _addDummyAndCommit(pushDepot, "test!", randstring())
-                        await _justPush(pushDepot)
-                        
-                        const pullDepots = channelConfig?.["pull.depots"] || []
-                        for (const pullDepot of pullDepots) {
-                            console.log("pullDepot: ", pullDepot)
-                            await _clearWD(pullDepot)
-                            await _resetHard(pullDepot)
-                            await _fetchCheckoutPull(pullDepot)
-                        }
-                    }
-                    task["gas"] = 0
-                }
-            })
-        }
-    })
 }
 
 export async function _pushDepots() {

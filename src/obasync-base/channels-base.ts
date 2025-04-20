@@ -35,7 +35,9 @@ export async function _addDummyAndCommit(
 
 export async function _justPush(
     repoDir: string,
-    tout = 10 // secs
+    {
+        tout = 10 // secs
+    } = {}
 ) {
     let command;
     // TODO: use git service
@@ -75,7 +77,10 @@ export async function _justPush(
 
 export async function _fetchCheckoutPull(
     repoDir: string, 
-    tout = 10 // secs
+    {
+        tout = 10, // secs}
+        resetCommit = 'HEAD~5'
+    } = {}
 ) {
 
     let command;
@@ -100,7 +105,7 @@ export async function _fetchCheckoutPull(
         `GIT_HTTP_LOW_SPEED_LIMIT=0`,
         `GIT_HTTP_LOW_SPEED_TIME=${tout}`,
         `git fetch --all`,
-        `echo "pulling..." 2>&1`,
+        `echo "reseting..." 2>&1`,
     ].join(";")
     await execAsync(
         command, 
@@ -109,13 +114,14 @@ export async function _fetchCheckoutPull(
             if (stdout) { console.log(stdout) }
         }
     )
-
+    
     command = [
         `cd ${repoDir}`, 
         `GIT_HTTP_LOW_SPEED_LIMIT=0`,
         `GIT_HTTP_LOW_SPEED_TIME=${tout}`,
+        `git reset --hard ${resetCommit} 2>&1`,
+        `echo "cleaning..." 2>&1`,
         `git clean -xdf 2>&1`,
-        `git reset --hard origin 2>&1`,
         `echo "done" 2>&1`,
         `echo "<<<<<<<<<<" 2>&1`,
     ].join(";")
@@ -130,6 +136,9 @@ export async function _fetchCheckoutPull(
 
 export async function _resetHard(
     repoDir: string,
+    {
+        resetCommit = 'origin'
+    } = {}
 ) {
     // TODO: use git service
     // const command = `cd ${repoDir}; echo "${dummyStr}" > ".dummy"; git add .; git commit -m"${cmMsg}";`;
@@ -139,7 +148,7 @@ export async function _resetHard(
         `cd ${repoDir} 2>&1`, 
         `echo "checking out..." 2>&1`,
         `git clean -xdf 2>&1`,
-        `git reset --hard origin 2>&1`,
+        `git reset --hard ${resetCommit} 2>&1`,
         `echo "done" 2>&1`,
         `echo "<<<<<<<<<<" 2>&1`,
     ].join(";")

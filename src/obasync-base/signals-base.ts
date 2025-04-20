@@ -105,7 +105,7 @@ export async function commitObaSyncSignal({
         }
     )
     // ii. setup push depot
-    await _addDummyAndCommit(pushDepot0, "pre.copy", "123")
+    await _addDummyAndCommit(pushDepot0, "pre.commit.signal", "123")
 
     // iii. callback
     const flag = await callback()
@@ -119,7 +119,7 @@ export async function commitObaSyncSignal({
     copyFileSync(srcManFile, destManFile)
 
     // v. git add/commit
-    await _addDummyAndCommit(pushDepot0, "post.copy", "123")
+    await _addDummyAndCommit(pushDepot0, "post.commit.signal", "123")
 
 }
 
@@ -208,7 +208,7 @@ export async function processObaSyncSignals({
 }: processObaSyncSignalsArgs) {
 
     // pull pullDepot0
-    await _resetHard(pullDepot0)
+    await _resetHard(pullDepot0, { resetCommit: "origin" })
 
     // load manifests
     const man0IO = manifestJsonIO(vaultDepot0, { channelName, manType })
@@ -320,8 +320,6 @@ export async function processObaSyncSignals({
 
     // sync to pushDepot
     // setup push depot
-    // TODO/ add lock system
-    await _resetHard(pushDepot0)
 
     // copy vault manifest to push depot
     const srcManFile = manifestFilePath(vaultDepot0, { channelName, manType })
@@ -329,5 +327,5 @@ export async function processObaSyncSignals({
     copyFileSync(srcManFile, destManFile)
 
     // git add/commit
-    await _addDummyAndCommit(pushDepot0, "signal.resolved", "123")
+    await _addDummyAndCommit(pushDepot0, "processed.signals", "123")
 }
