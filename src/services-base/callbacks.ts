@@ -31,7 +31,6 @@ export function onload() {
         async () => await backends.signalBackend(),
         async () => await replacer.runReplacer(),
         async () => await git.gitCommitCmd(),
-        async () => await _pushDepots(),
         // async () => await localbibs.parseOnDemandLocalBibAll(),
         // async () => await citnotes.downloadAllLocalReferences(),
     )
@@ -48,7 +47,7 @@ export function onload() {
         }
     )
 
-    console.log("registry:\n", CALLBACKS_REGISTRY)
+    // console.log("registry:\n", CALLBACKS_REGISTRY)
 
 }
 

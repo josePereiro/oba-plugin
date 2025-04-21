@@ -39,7 +39,8 @@ export class SequentialAsyncScheduler {
 
     constructor(
         private tasksStack: {[keys: string]: TaskState} = {},
-        private running = false
+        private running = false,
+        private wt = 100,
     ) {}
 
     public spawn({
@@ -51,8 +52,9 @@ export class SequentialAsyncScheduler {
         id: string,
         taskFun: ((t:TaskState) => any),
         args?: any,
-        deltaGas?: number
+        deltaGas?: number,
     }) {
+        this.run()
         this.tasksStack[id] = {
             "taskFun": taskFun, 
             "args": args,
@@ -72,7 +74,8 @@ export class SequentialAsyncScheduler {
         return this
     }
 
-    public async run(wt = 500) {
+    public async run(wt: number | null = null) {
+        if (wt) {this.wt = wt}
         if (this.running) { return this; }
         this.running = true
         while (this.running) {
@@ -86,7 +89,7 @@ export class SequentialAsyncScheduler {
                 task["gas"] = task["gas"] - 1
                 await task["taskFun"](task)
             }
-            if (idle) { await sleep(wt); }
+            if (idle) { await sleep(this.wt); }
         }
         return this
     }

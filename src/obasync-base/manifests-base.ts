@@ -1,8 +1,10 @@
 import path from "path";
 import { getObsSyncDir, utcTimeTag } from "./utils-base";
 import { JsonIO } from "src/tools-base/jsonio-base";
-import { ObaSyncIssuedSignal, ObaSyncProcessedSignal } from "./signals-base";
+import { ObaSyncSignal } from "./signals-base";
 import { existsSync } from "fs";
+import { isEqual } from "lodash";
+import { Notice } from "obsidian";
 
 /*
     Each channel will have a manifest with signals and report of actions. 
@@ -13,14 +15,19 @@ export interface ObaSyncManifestIder {
     manType: string
 }
 
+/*
+    //TODO/ Add pusher check
+    - on each push, the manifest is checked
+        - check ${channelName}-${userName} between local oba and repo manifest
+*/ 
 export interface ObaSyncManifest {
     "type"?: string,
     "meta"?: {
         "userName"?: string,
+        "pusher"?: ObaSyncManifestIder, // TODO/ add a check
         [keys: string]: any
     },
-    "issued.signals"?: {[keys: string]: ObaSyncIssuedSignal},
-    "processed.signals"?: {[keys: string]: ObaSyncProcessedSignal},
+    "signals"?: {[keys: string]: ObaSyncSignal},
 }
 
 export function manifestFilePath(
@@ -43,12 +50,11 @@ export function manifestJsonIO(
 }
 
 export function modifyObaSyncManifest(
-    depotDir: string, 
+    manIO: JsonIO, 
     userName: string,
     manIder: ObaSyncManifestIder,
     onmod: (manContent: ObaSyncManifest) => any
 ) {
-    const manIO = manifestJsonIO(depotDir, manIder)
     manIO.loaddOnDemand({})
     let obortFlag = null
     manIO.withDepot((manContent: ObaSyncManifest) => {
@@ -57,6 +63,7 @@ export function modifyObaSyncManifest(
         manContent["meta"] = manContent?.["meta"] || {}
         manContent["meta"]["userName"] = userName
         manContent["meta"]["channelName"] = manIder['channelName']
+        manContent["meta"]["pusher"] = manIder
         manContent["meta"]["modified.timestamp"] = utcTimeTag()
         // modify callback
         obortFlag = onmod(manContent)
@@ -64,6 +71,22 @@ export function modifyObaSyncManifest(
     if (obortFlag == 'abort') { return null; }
     manIO.write()
     return manIO
+}
+
+export function checkPusher(
+    pusher0: ObaSyncManifestIder,
+    manIO1: JsonIO
+) {
+    const man1: ObaSyncManifest = manIO1.loaddOnDemand({}).retDepot()
+    const pusher1: ObaSyncManifestIder | null = man1?.["meta"]?.["pusher"] || null
+    if (!pusher1) { return true; }
+    if (pusher1 && !isEqual(pusher0, pusher1)) {
+        const msg = `Invalid pusher, pusher0 ${JSON.stringify(pusher0)}, pusher1 ${JSON.stringify(pusher1)}`
+        console.error(msg)
+        new Notice(msg, 10000)
+        return false
+    }
+    return true
 }
 
 // export function getCallbackContext(): ObaSyncCallbackContext {

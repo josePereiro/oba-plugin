@@ -1,40 +1,34 @@
-import { runObaCallbacks } from "src/services-base/callbacks"
-import { getObsSyncDir, utcTimeTag } from "./utils-base"
-import { hash64Chain, randstring } from "src/tools-base/utils-tools"
-import { Notice } from "obsidian"
-import objectHash from "object-hash"
-import { manifestFilePath, manifestJsonIO, modifyObaSyncManifest, ObaSyncManifest } from "./manifests-base"
-import { _addDummyAndCommit, _resetHard, _clearWD, _fetchCheckoutPull, _justPush } from "./channels-base"
 import { copyFileSync } from "fs"
+import { Notice } from "obsidian"
+import { registerObaCallback, runObaCallbacks } from "src/services-base/callbacks"
+import { TaskState } from "src/tools-base/schedule-tools"
+import { hash64Chain } from "src/tools-base/utils-tools"
+import { _addDummyAndCommit, _justPush } from "./channels-base"
+import { checkPusher, manifestJsonIO, modifyObaSyncManifest, ObaSyncManifest, ObaSyncManifestIder } from "./manifests-base"
+import { ObaSyncScheduler } from "./obasync"
+import { utcTimeTag } from "./utils-base"
 
 // MARK: base
-export interface ObaSyncIssuedSignal {
-    "type"?: string,
-    "timestamp"?: string,
-    "args"?: {[keys: string]: any}
-}
-
-type HandlingStatus = "ok" | "unknown" | "error" | null
-export interface ObaSyncProcessedSignal {
+export type HandlingStatus = "processed.ok" | "issued" | "unknown" | "error" | null
+export interface ObaSyncSignal {
     "type"?: string,
     "timestamp"?: string,
     "userName0"?: string,
     "callback"?: string
     "handlingStatus"?: HandlingStatus
+    "hashKey"?: string,
     "args"?: {[keys: string]: any} 
 }
 
 export interface ObaSyncCallbackContext {
-    "channelName": string,
     "userName0": string,
     "userName1": string,
-    "vaultDepot0": string,
-    "pullDepot0": string,
-    "pushDepot0": string,
+    "vaultDepot": string,
+    "pullDepot": string,
+    "pushDepot": string,
+    "manIder": ObaSyncManifestIder,
     "signal1HashKey": string,
-    "signal1Content": ObaSyncIssuedSignal | null,
-    "man0Processed": {[keys: string]: ObaSyncProcessedSignal} | null,
-    "handlingStatus": HandlingStatus,
+    "signal1": ObaSyncSignal | null,
     "args"?: {[keys: string]: any} | null
 }
 
@@ -43,26 +37,34 @@ function _signalHashKey(val0: string, ...vals: string[]) {
     return hash
 }
 
-interface _setIssuedSignalArgs {
-    userName0: string, 
+interface _setSignalArgs {
+    issuerName: string, 
     channelName: string, 
+    signalTemplate: ObaSyncSignal, 
+    hashDig: string[], // ignored if hashKey is passed
     manContent: ObaSyncManifest, 
-    signal: ObaSyncIssuedSignal, 
-    hashDig: string[]
+    hashKey: string | null, 
 }
 
-function _setIssuedSignal({ 
-    userName0, 
+function _setSignal({ 
+    issuerName, 
     channelName, 
+    signalTemplate, 
+    hashDig,
+    hashKey = null,
     manContent, 
-    signal, 
-    hashDig
-}:_setIssuedSignalArgs ) { 
-    manContent['issued.signals'] = manContent?.['issued.signals'] || {}
-    signal['type'] = signal?.['type'] || 'obasync.unknown.signal.type'
-    signal['timestamp'] = utcTimeTag()
-    const hashKey = _signalHashKey(userName0, channelName, signal['type'], ...hashDig)
-    manContent['issued.signals'][hashKey] = signal
+}:_setSignalArgs ): ObaSyncSignal { 
+
+    manContent['signals'] = manContent?.['signals'] || {}
+    signalTemplate['type'] = signalTemplate?.['type'] || 'obasync.unknown.signal.type'
+    signalTemplate['timestamp'] = signalTemplate?.['timestamp'] || utcTimeTag()
+    hashKey = signalTemplate['hashKey'] = hashKey || _signalHashKey(
+        issuerName, channelName, signalTemplate['type'], 
+        ...hashDig
+    )
+    manContent['signals'][hashKey] = signalTemplate
+    return signalTemplate
+
 }
 
 // MARK: commit 
@@ -70,107 +72,74 @@ function _setIssuedSignal({
     This is an offline method
 */ 
 interface commitObaSyncSignalArgs {
-    vaultDepot0: string,
-    pushDepot0: string,
-    userName0: string, 
+    vaultDepot: string,
+    pushDepot: string,
+    issuerName: string,
     channelName: string,
     manType: string,
-    signal0: ObaSyncIssuedSignal,
-    hashDig?: string[], 
-    callback?: (() => any)
+    signalTemplate: ObaSyncSignal,
+    hashKey: string | null, 
+    hashDig: string[],
+    callback?: (() => any),
 }
 
 export async function commitObaSyncSignal({
-    vaultDepot0,
-    pushDepot0,
-    userName0,
+    vaultDepot,
+    pushDepot,
+    issuerName,
     channelName,
     manType,
-    signal0,
+    signalTemplate,
     hashDig = [],
+    hashKey = null,
     callback = () => null,
-}: commitObaSyncSignalArgs ) {
+}: commitObaSyncSignalArgs) {
 
-    // i. mod vault manifest
+    // mod vault manifest
+    await _addDummyAndCommit(pushDepot, "pre.commit.signal", "123")
+
+    // mod vault manifest
+    const vManIder: ObaSyncManifestIder = { manType, channelName }
+    const vManIO = manifestJsonIO(vaultDepot, vManIder)
+
+    let signal = signalTemplate;
     modifyObaSyncManifest(
-        vaultDepot0,
-        userName0,
+        vManIO,
+        issuerName,
         {channelName, manType}, 
         (manContent: any) => {
-            // akn
-            _setIssuedSignal({userName0, channelName, manContent, signal: {"type": "obasync.akw.sended"}, hashDig: []})
-            // custom
-            _setIssuedSignal({userName0, channelName, manContent, signal: signal0, hashDig}) 
-            console.log("Signal.sended: ", signal0)
+            // new
+            signal = _setSignal({
+                issuerName, channelName, manContent, 
+                signalTemplate, hashDig, hashKey
+            }) 
         }
     )
+    
     // ii. setup push depot
-    await _addDummyAndCommit(pushDepot0, "pre.commit.signal", "123")
+    // check pusher
+    const rManIO = manifestJsonIO(pushDepot, { manType, channelName })
+    if (!checkPusher(vManIder, rManIO)) { return; }
 
     // iii. callback
     const flag = await callback()
     if (flag == 'abort') { return; }
 
     // iv. copy vault manifest to push depot
-    const srcManFile = manifestFilePath(vaultDepot0, {channelName, manType})
-    console.log("srcManFile: ", srcManFile)
-    const destManFile = manifestFilePath(pushDepot0, {channelName, manType})
-    console.log("destManFile: ", destManFile)
+    console.log(`Copying manifests`)
+    const srcManFile = vManIO.retFile()
+    const destManFile = rManIO.retFile()
     copyFileSync(srcManFile, destManFile)
+    console.log(`Copied ${srcManFile} -> ${destManFile}`)
+    console.log(`man0: `, vManIO.loadd({}).retDepot())
+    console.log(`man1: `, rManIO.loadd({}).retDepot())
 
     // v. git add/commit
-    await _addDummyAndCommit(pushDepot0, "post.commit.signal", "123")
+    await _addDummyAndCommit(pushDepot, "post.commit.signal", "123")
+    await _justPush(pushDepot, { tout: 10 })
 
-}
-
-// MARK: run
-async function _runHandlingCallback(
-    callbackID: string,
-    directCallback: ((...args: any[]) => any),
-    context: ObaSyncCallbackContext,
-    {
-        onOk = () => null,
-        onUnknown = () => null,
-        onFailed = () => null
-    } : {
-        onOk: (() => any),
-        onUnknown: (() => any),
-        onFailed: (() => any),
-    }
-) {
-    // reset status
-    context['handlingStatus'] = 'unknown' as HandlingStatus
-    
-    // Run callback
-    await runObaCallbacks(callbackID, context)
-    await directCallback(callbackID, context)
-
-    // Validate run
-    // const context = {userName0, userName1, signal1HashKey, signal1Content, man0Processed, handlingStatus: 'unknown'}
-    const man0Processed = context["man0Processed"]
-    const hashKey = context["signal1HashKey"]
-    const signal1: ObaSyncIssuedSignal = context["signal1Content"]
-    const userName1 = context["userName1"]
-    const status = context['handlingStatus']
-
-    if (status == 'ok') {
-        man0Processed[hashKey] = {
-            ...signal1,
-            'userName0': userName1,
-            'callback': 'obasync.signal.missing.in.record0',
-            'handlingStatus': status
-        } as ObaSyncProcessedSignal
-        console.log(`Callback handled, callbackID:  ${callbackID},  status: ${status}`)
-        await onOk()
-    } else if (status == 'unknown') {
-        console.warn(`Unknown status, callbackID:  ${callbackID}`)
-        await onUnknown()
-    } else {
-        const msg = `Callback failed, callbackID:  ${callbackID},  status: ${status}`
-        console.error(msg)
-        new Notice(msg)
-        await onFailed()
-    }
+    console.log('Commited signal: ', signal)
+    new Notice(`Signal commited:\n type ${signal["type"]}\n hashKey ${signal["hashKey"]}`, 10000)
 }
 
 // MARK: process
@@ -181,151 +150,306 @@ async function _runHandlingCallback(
     This is an offline method
 */ 
 
-interface processObaSyncSignalsArgs {
-    vaultDepot0: string,
-    pushDepot0: string,
-    pullDepot0: string,
+interface runSignalEventsArgs {
+    vaultDepot: string,
+    pushDepot: string,
+    pullDepot: string,
     userName0: string, 
     channelName: string, 
-    manType: string,
-    onCallback?: ((callbackID: string, context: ObaSyncCallbackContext) => any),
-    onOk?: (() => any),
-    onUnknown?: (() => any),
-    onFailed?: (() => any),
+    manType: string
 }
 
-export async function processObaSyncSignals({
-    vaultDepot0,
-    pushDepot0,
-    pullDepot0,
+export interface SignalEventCallbackArgs {
+    context: ObaSyncCallbackContext, 
+    eventID: ObaSyncEventID
+}
+
+
+export type ObaSyncEventID =
+    `obasync.signal0.missing` |
+    `obasync.signals.both.timetags.present` | 
+    `obasync.signal0.timetag.newer` | 
+    `obasync.signal0.timetag.missing.or.newer` | 
+    `obasync.signals.both.timetags.equal` | 
+    `obasync.signal0.timetag.older` | 
+    `obasync.signal0.timetag.missing.or.older` |
+    `obasync.signal0.timetag.missing` | 
+    `obasync.signal1.timetag.missing` | 
+    `obasync.signals.both.timetags.missing`
+
+
+/*
+    Check manifests and run event callbacks
+*/ 
+export async function runSignalEvents({
+    vaultDepot,
+    pushDepot,
+    pullDepot,
     userName0, 
     channelName, 
-    manType,
-    onCallback = (...args) => null,
-    onOk = () => null,
-    onUnknown = () => null,
-    onFailed =() => null,
-}: processObaSyncSignalsArgs) {
+    manType
+}: runSignalEventsArgs) {
 
-    // pull pullDepot0
-    await _resetHard(pullDepot0, { resetCommit: "origin" })
+    // // pull pullDepot
+    // await _fetchCheckoutPull(pullDepot, { resetCommit: "origin" })
 
     // load manifests
-    const man0IO = manifestJsonIO(vaultDepot0, { channelName, manType })
+    const manIder = { channelName, manType }
+    console.log("manIder: ", manIder)
+    const man0IO = manifestJsonIO(vaultDepot, manIder)
     const man0: ObaSyncManifest = man0IO.loaddOnDemand({}).retDepot()
-    const man0Processed = man0['processed.signals'] = man0?.['processed.signals'] || {}
-    const man0IOContentHash0 = objectHash(man0, {respectType: false, algorithm: 'sha1'})
-    console.log("man0IOContentHash0: ", man0IOContentHash0)
+    const man0Signals = man0['signals'] = man0?.['signals'] || {}
+    console.log("man0Signals: ", man0Signals)
+    // TODO/TAI thisnk using "modified.time" or a field in the man itself
+    // const man0IOContentHash0 = objectHash(man0, {respectType: false, algorithm: 'sha1'})
+    // console.log("man0IOContentHash0: ", man0IOContentHash0)
 
-    const man1IO = manifestJsonIO(pullDepot0, { channelName, manType })
+    const man1IO = manifestJsonIO(pullDepot, manIder)
     const man1: ObaSyncManifest = man1IO.loaddOnDemand({}).retDepot()
     const userName1 = man1?.['meta']?.["userName"] || "JohnDoe"
-    const man1Issued = man1['issued.signals'] = man1?.['issued.signals'] || {}
-    console.log("man1Issued: ", man1Issued)
+    const man1Signals = man1['signals'] = man1?.['signals'] || {}
+    console.log("man1Signals: ", man1Signals)
     
     // handle issued signals
     let callbackID;
+    let eventID: ObaSyncEventID;
 
-    for (const signal1HashKey in man1Issued) {
+    for (const signal1HashKey in man1Signals) {
         console.log("signal1HashKey: ", signal1HashKey)
 
         // signal content
-        const signal1Content: ObaSyncIssuedSignal = man1Issued[signal1HashKey]
-        const signal1Type = signal1Content['type']
+        const signal1: ObaSyncSignal = man1Signals[signal1HashKey]
+        const signal1Type = signal1['type']
 
         // get record
-        let man0Record = man0Processed?.[signal1HashKey]
+        let signal0 = man0Signals?.[signal1HashKey]
 
         // call context
         const context: ObaSyncCallbackContext = {
-            channelName, 
-            userName0, userName1, 
-            signal1HashKey, signal1Content, 
-            man0Processed, 
-            vaultDepot0, pullDepot0, pushDepot0,
-            handlingStatus: 'unknown'
+            manIder, userName0, userName1, 
+            signal1HashKey, signal1, 
+            vaultDepot, pullDepot, pushDepot
         }
 
         // callback
-        if (!man0Record) {
+        if (!signal0) {
             // run callbacks
-            callbackID = `obasync.signal.missing.in.record0:${signal1Type}`
-            await _runHandlingCallback(callbackID, onCallback, context, { onOk, onUnknown, onFailed })
-            callbackID = `obasync.signal.missing.in.record0.or.newer:${signal1Type}`
-            await _runHandlingCallback(callbackID, onCallback, context, { onOk, onUnknown, onFailed })
+            eventID = `obasync.signal0.missing`
+            callbackID = `${eventID}:${signal1Type}`
+            await runObaCallbacks(callbackID, {context, eventID})
+            eventID = `obasync.signal0.timetag.missing.or.newer`
+            callbackID = `${eventID}:${signal1Type}`
+            await runObaCallbacks(callbackID, {context, eventID})
+            eventID = `obasync.signal0.timetag.missing.or.older`
+            callbackID = `${eventID}:${signal1Type}`
+            await runObaCallbacks(callbackID, {context, eventID})
         }
 
-        const timestamp1Str = signal1Content?.['timestamp']
-        const timestamp0Str = man0Record?.['timestamp']
+        const timestamp1Str = signal1?.['timestamp']
+        const timestamp0Str = signal0?.['timestamp']
         if (timestamp0Str && timestamp1Str) {
             const timestamp1 = new Date(timestamp1Str)
             const timestamp0 = new Date(timestamp0Str)
 
             // callback
-            callbackID = `obasync.signal.timetags.both.present:${signal1Type}`
-            await _runHandlingCallback(callbackID, onCallback, context, { onOk, onUnknown, onFailed })
+            eventID = `obasync.signals.both.timetags.present`
+            callbackID = `${eventID}:${signal1Type}`
+            await runObaCallbacks(callbackID, {context, eventID})
 
             // callback
             if (timestamp0 < timestamp1) {
                 // mine.newer
-                callbackID = `obasync.signal.timetag0.newer:${signal1Type}`
-                await _runHandlingCallback(callbackID, onCallback, context, { onOk, onUnknown,  onFailed })
-                callbackID = `obasync.signal.missing.in.record0.or.newer:${signal1Type}`
-                await _runHandlingCallback(callbackID, onCallback, context, { onOk, onUnknown,  onFailed })
+                eventID = `obasync.signal0.timetag.older`
+                callbackID = `${eventID}:${signal1Type}`
+                await runObaCallbacks(callbackID, {context, eventID})
+                eventID = `obasync.signal0.timetag.missing.or.older`
+                callbackID = `${eventID}:${signal1Type}`
+                await runObaCallbacks(callbackID, {context, eventID})
             }
             // callback
             if (timestamp0 == timestamp1) {
                 // both.equal
-                callbackID = `obasync.signal.timetags.both.equal:${signal1Type}`
-                await _runHandlingCallback(callbackID, onCallback, context, { onOk, onUnknown,  onFailed })
+                eventID = `obasync.signals.both.timetags.equal`
+                callbackID = `${eventID}:${signal1Type}`
+                await runObaCallbacks(callbackID, {context, eventID})
             }
             // callback
             if (timestamp0 > timestamp1) {
                 // both.equal
-                callbackID = `obasync.signal.timetag0.older:${signal1Type}`
-                await _runHandlingCallback(callbackID, onCallback, context, { onOk, onUnknown,  onFailed })
+                eventID = `obasync.signal0.timetag.newer`
+                callbackID = `${eventID}:${signal1Type}`
+                await runObaCallbacks(callbackID, {context, eventID})
+                eventID = `obasync.signal0.timetag.missing.or.newer`
+                callbackID = `${eventID}:${signal1Type}`
+                await runObaCallbacks(callbackID, {context, eventID})
             }
         }
 
         // callback
         if (!timestamp0Str && timestamp1Str) {
-            callbackID = `obasync.signal.timetag0.missing:${signal1Type}`
-            await _runHandlingCallback(callbackID, onCallback, context, { onOk, onUnknown, onFailed })
+            eventID = `obasync.signal0.timetag.missing`
+            callbackID = `${eventID}:${signal1Type}`
+            await runObaCallbacks(callbackID, {context, eventID})
         }
 
             // callback
             if (timestamp0Str && !timestamp1Str) {
-                callbackID = `obasync.signal.timetag1.missing:${signal1Type}`
-                await _runHandlingCallback(callbackID, onCallback, context, { onOk, onUnknown,  onFailed })
+                eventID = `obasync.signal1.timetag.missing`
+                callbackID = `${eventID}:${signal1Type}`
+                await runObaCallbacks(callbackID, {context, eventID})
             }
 
         // callback
         if (!timestamp0Str && !timestamp1Str) {
-            callbackID = `obasync.signal.timetags.both.missing:${signal1Type}`
-            await _runHandlingCallback(callbackID, onCallback, context, { onOk, onUnknown, onFailed })
+            eventID = `obasync.signals.both.timetags.missing`
+            callbackID = `${eventID}:${signal1Type}`
+            await runObaCallbacks(callbackID, {context, eventID})
         }
     } // for (const signal1HashKey in man1Issued)
 
-    // check modified
-    const man0IOContentHash1 = objectHash(man0, { respectType: false, algorithm: 'sha1' })
-    console.log("man0IOContentHash1: ", man0IOContentHash1)
-    const modified = man0IOContentHash0 != man0IOContentHash1
-    if (!modified) {
-        console.log("man0 unchanged!")
-        return
-    } 
-    
-    // write vault
-    man0IO.write()
-
-    // sync to pushDepot
-    // setup push depot
-
-    // copy vault manifest to push depot
-    const srcManFile = manifestFilePath(vaultDepot0, { channelName, manType })
-    const destManFile = manifestFilePath(pushDepot0, { channelName, manType })
-    copyFileSync(srcManFile, destManFile)
-
-    // git add/commit
-    await _addDummyAndCommit(pushDepot0, "processed.signals", "123")
 }
+
+// MARK: register
+export interface SignalHandlerArgs {
+    context: ObaSyncCallbackContext, 
+    eventID: ObaSyncEventID, 
+    task: TaskState
+}
+
+type SignalHandlerType = (arg: SignalHandlerArgs) => 
+    (HandlingStatus | Promise<HandlingStatus>)
+
+export interface registerSignalEventHandlerArgs {
+    handler: SignalHandlerType,
+    eventID: ObaSyncEventID, 
+    signalType: string, 
+    deltaGas?: number,
+    taskIDDigFun?: (context: ObaSyncCallbackContext) => string[]
+}
+
+
+export function registerSignalEventHandler({
+    handler,
+    eventID,
+    signalType, 
+    deltaGas = 1,
+    taskIDDigFun = (() => [])
+}: registerSignalEventHandlerArgs) {
+    const callbackID = `${eventID}:${signalType}`
+    
+    registerObaCallback(callbackID, 
+        async (args: SignalEventCallbackArgs) => {
+            const context0 = args["context"]
+            const eventID0 = args["eventID"]
+            if (eventID != eventID0) {
+                console.error(`Nonmatching eventIDs, ${eventID} != ${eventID0}`)
+                return;
+            }
+
+            const taskIDDig = taskIDDigFun(context0)
+            const taskID = hash64Chain(callbackID, ...taskIDDig)
+            ObaSyncScheduler.spawn({
+                id: taskID, 
+                deltaGas,
+                taskFun: async (task: TaskState) => {
+                    const status = await handler({context: context0, eventID, task})
+
+                    if (status == "processed.ok") {
+
+                        // extract
+                        const vaultDepot = context0["vaultDepot"]
+                        const pushDepot = context0["pushDepot"]
+                        const manIder = context0["manIder"]
+                        const manType = manIder["manType"]
+                        const channelName = manIder["channelName"]
+                        const userName1 = context0["userName1"]
+                        const signal1 = context0["signal1"]
+                        const signal1Type = signal1["type"]
+                        const hashKey1 = context0["signal1HashKey"]
+
+                        new Notice(`Signal status 'ok': ${eventID}:${signalType}`, 10000)
+                        console.log(`Signal status 'ok': ${eventID}:${signalType}`)
+                        // record signal in vault manifest
+
+                        await commitObaSyncSignal({
+                            vaultDepot,
+                            pushDepot,
+                            issuerName: userName1,
+                            channelName,
+                            manType,
+                            signalTemplate: signal1,
+                            hashKey: hashKey1,
+                            hashDig: []
+                        })
+                        
+                    }
+                    if (status == "issued") {
+                    }
+                    if (status == "unknown") {
+                        console.warn(`Signal status 'error': ${eventID}:${signalType}`)
+                    }
+                    if (status == "error") {
+                        console.error(`Signal status 'error': ${eventID}:${signalType}`)
+                    }
+                }
+            })
+        }
+    )
+}
+
+function sendObaSyncSignal(
+
+) {
+
+}
+
+
+// // MARK: run
+// async function _runHandlingCallback(
+//     callbackID: string,
+//     directCallback: ((...args: any[]) => any),
+//     context: ObaSyncCallbackContext,
+//     {
+//         onOk = () => null,
+//         onUnknown = () => null,
+//         onFailed = () => null
+//     } : {
+//         onOk: (() => any),
+//         onUnknown: (() => any),
+//         onFailed: (() => any),
+//     }
+// ) {
+//     // reset status
+//     context['handlingStatus'] = 'unknown' as HandlingStatus
+    
+//     // Run callback
+//     await runObaCallbacks(callbackID, {context, eventID})
+//     await directCallback(callbackID, context)
+
+//     // Validate run
+//     // const context = {userName0, userName1, signal1HashKey, signal1, man0Signals, handlingStatus: 'unknown'}
+//     const man0Signals = context["man0Signals"]
+//     const hashKey = context["signal1HashKey"]
+//     const signal1: ObaSyncSignal = context["signal1"]
+//     const userName1 = context["userName1"]
+//     const status = context['handlingStatus']
+
+//     if (status == "processed.ok") {
+//         man0Signals[hashKey] = {
+//             ...signal1,
+//             'userName0': userName1,
+//             'callback': 'obasync.signal.missing.in.record0',
+//             'handlingStatus': status
+//         } as ObaSyncProcessedSignal
+//         console.log(`Callback handled, callbackID:  ${callbackID},  status: ${status}`)
+//         await onOk()
+//     } else if (status == 'unknown') {
+//         console.warn(`Unknown status, callbackID:  ${callbackID}`)
+//         await onUnknown()
+//     } else {
+//         const msg = `Callback failed, callbackID:  ${callbackID},  status: ${status}`
+//         console.error(msg)
+//         new Notice(msg)
+//         await onFailed()
+//     }
+// }
