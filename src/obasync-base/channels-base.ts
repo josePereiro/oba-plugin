@@ -6,6 +6,25 @@ import { ObaSyncScheduler } from "./obasync";
 
 
 /*
+…or create a new repository on the command line
+echo "# Bare-Repo-Template" >> README.md
+git init
+git add README.md
+git commit -m "first commit"
+git branch -M main
+git remote add origin https://github.com/josePereiro/Bare-Repo-Template.git
+git push -u origin main
+*/ 
+
+/*
+…or push an existing repository from the command line
+git remote add origin https://github.com/josePereiro/Bare-Repo-Template.git
+git branch -M main
+git push -u origin main
+*/ 
+
+
+/*
     //TODO/ Force repo name convention
         - push-... and pull-...
         - This avoid a same folder to be used for push and pull
@@ -153,7 +172,7 @@ export async function _fetchCheckoutPull(
     repoDir: string, 
     {
         tout = 10, // secs}
-        resetCommit = 'HEAD~5',
+        resetCommit = 'HEAD~1',
     } = {}
 ) {
 
@@ -206,7 +225,7 @@ export async function _fetchCheckoutPull(
         `cd ${repoDir}`, 
         `GIT_HTTP_LOW_SPEED_LIMIT=0`,
         `GIT_HTTP_LOW_SPEED_TIME=${tout}`,
-        `git merge origin 2>&1`,
+        `git merge 2>&1`,
         `git status 2>&1`,
         `echo "----------" 2>&1`,
         `echo "done" 2>&1`,

@@ -2,7 +2,7 @@ import { copyFileSync } from "fs"
 import { Notice } from "obsidian"
 import { registerObaCallback, runObaCallbacks } from "src/services-base/callbacks"
 import { TaskState } from "src/tools-base/schedule-tools"
-import { hash64Chain } from "src/tools-base/utils-tools"
+import { hash64Chain, randstring } from "src/tools-base/utils-tools"
 import { _addDummyAndCommit, _justPush } from "./channels-base"
 import { checkPusher, manifestJsonIO, modifyObaSyncManifest, ObaSyncManifest, ObaSyncManifestIder } from "./manifests-base"
 import { ObaSyncScheduler } from "./obasync"
@@ -95,7 +95,11 @@ export async function commitObaSyncSignal({
     callback = () => null,
 }: commitObaSyncSignalArgs) {
 
+    // checkpoint vault
+    await _addDummyAndCommit(vaultDepot, "obasync.pre.commit.signal", "123")
+    
     // mod vault manifest
+    await _addDummyAndCommit(vaultDepot, "pre.commit.signal", randstring())
     await _addDummyAndCommit(pushDepot, "pre.commit.signal", "123")
 
     // mod vault manifest
@@ -190,8 +194,8 @@ export async function runSignalEvents({
     manType
 }: runSignalEventsArgs) {
 
-    // // pull pullDepot
-    // await _fetchCheckoutPull(pullDepot, { resetCommit: "origin" })
+    // checkpoint vault
+    await _addDummyAndCommit(vaultDepot, "obasync.pre.run.signal.event", "123")
 
     // load manifests
     const manIder = { channelName, manType }

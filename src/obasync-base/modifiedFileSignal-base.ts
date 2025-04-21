@@ -1,16 +1,14 @@
-import { copyFileSync, existsSync } from "fs";
+import { copyFileSync, existsSync, statSync } from "fs";
 import { Notice } from "obsidian";
 import path from "path";
 import { getVaultDir } from "src/tools-base/obsidian-tools";
 import { getNoteObaSyncScope } from "./scope-base";
 import { commitObaSyncSignal, HandlingStatus, ObaSyncCallbackContext } from "./signals-base";
+import { ObaSyncScheduler } from "./obasync";
+import { TaskState } from "src/tools-base/schedule-tools";
+import { getObaConfig } from "src/oba-base/obaconfig";
 
-type FileEditType = 
-    "pulled" | 
-    "rellaying" | 
-    "released"
-
-export const PulledFileReg = {} as {[keys: string]: FileEditType}
+const PulledMTimeReg = {} as {[keys: string]: number}
 
 // MARK: commit
 export async function _commitModifiedFileSignal(
@@ -18,6 +16,9 @@ export async function _commitModifiedFileSignal(
     channelName: string,
     userName0: string,
     channelsConfig: any,
+    {
+        checkPulledMTime = true
+    }
 ): Promise<HandlingStatus> {
 
     // context data
@@ -30,12 +31,25 @@ export async function _commitModifiedFileSignal(
         return "error"; 
     }
 
-    // check pulled
-    // Avoid recommiting if the file was pulled
-    PulledFileReg[localFile] = PulledFileReg?.[localFile] || "released"
-    if (PulledFileReg[localFile] == "pulled") {
-        PulledFileReg[localFile] = "released"
-        return;
+    // check last pulled
+    if (checkPulledMTime) {
+        const pulledKey = `${channelName}:${localFile}`
+        const currMTime = statSync(localFile).mtimeMs
+        const regMTime = PulledMTimeReg?.[pulledKey] || -1
+        if (currMTime == regMTime) {
+            new Notice(`Ignored: currMTime == regMTime, ${pulledKey}`)
+            console.log(`Ignored: currMTime == regMTime, ${pulledKey}`)
+            return;
+        }
+        if (currMTime < regMTime) {
+            console.error(`Ignored: currMTime < regMTime, ${pulledKey}`)
+            new Notice(`Ignored: currMTime < regMTime, ${pulledKey}`)
+            return;
+        }
+        if (currMTime > regMTime) {
+            console.error(`Go: currMTime > regMTime, ${pulledKey}`)
+            new Notice(`Go: currMTime > regMTime, ${pulledKey}`)
+        }
     }
     
     const scopes = await getNoteObaSyncScope(localFile, channelsConfig) || []
@@ -70,13 +84,49 @@ export async function _commitModifiedFileSignal(
         hashDig: [localFileName], 
         callback: () => {
             // copy file
-            const destPath = path.join(pushDepot, localFileName)
-            copyFileSync(localFile, destPath)
-            console.log(`Copied ${localFile} -> ${destPath}`)
+            const pushRepoPath = path.join(pushDepot, localFileName)
+            copyFileSync(localFile, pushRepoPath)
+            console.log(`Copied ${localFile} -> ${pushRepoPath}`)
         },
     })
     
     return "processed.ok"
+}
+
+// MARK: spawn
+export async function _spawnModifiedFileSignal(
+    localFile: string, 
+    {
+        checkPulledMTime = true
+    }
+) {
+    console.log("_spawnModifiedFileSignal")
+
+    ObaSyncScheduler.spawn({
+        id: `publishFileVersion:${localFile}`,
+        deltaGas: 1,
+        taskFun: async (task: TaskState) => {
+            const userName0 = getObaConfig("obasync.me", null)
+            if (!userName0) { return; }
+            const channelsConfig = getObaConfig("obasync.channels", {})
+            console.log("channelsConfig: ", channelsConfig)
+            const scope = await getNoteObaSyncScope(localFile, channelsConfig) || []
+            console.log("scope: ", scope)
+            for (const channelName of scope) {
+                await _commitModifiedFileSignal(
+                    localFile,
+                    channelName,
+                    userName0,
+                    channelsConfig,
+                    { checkPulledMTime }
+                )                
+            }
+            // clamp gas
+            if (task["gas"] > 1) {
+                task["gas"] = 1
+            }
+        }, 
+    })
 }
 
 // MARK: handle
@@ -102,36 +152,37 @@ export async function _handleDownloadFile(
     const destDir = path.join(vaultDir, relpath)
     // console.clear()
     console.log("destDir: ", destDir)
-    const srcPath = path.join(pullDepot, remoteFile)
-    if (!existsSync(srcPath)) {
-        new Notice(`srcPath missing! ${srcPath}!`)
+    const pullRepoFile = path.join(pullDepot, remoteFile)
+    if (!existsSync(pullRepoFile)) {
+        new Notice(`pullRepoFile missing! ${pullRepoFile}!`)
         return "error"
     }
-    const destPath = path.join(destDir, remoteFile)
+    const vaultFile = path.join(destDir, remoteFile)
     console.log("destDir: ", destDir)
-    console.log("srcPath: ", srcPath)
-    console.log("destPath: ", destPath)
-    copyFileSync(srcPath, destPath)
-    console.log(`Copied ${srcPath} -> ${destPath}`)
-
+    console.log("pullRepoFile: ", pullRepoFile)
+    console.log("vaultFile: ", vaultFile)
+    // TODO/TAI/ I can make the Register channel dependent too
+    
+    copyFileSync(pullRepoFile, vaultFile)
+    const pulledKey = `${channelName}:${vaultFile}`
+    PulledMTimeReg[pulledKey] = statSync(vaultFile).mtimeMs
+    console.log(`Copied ${pullRepoFile} -> ${vaultFile}`)
+    
     new Notice(`Pulled ${remoteFile} from ${userName1}-${channelName}!`, 10000)
     console.log("handle.push.context: ", context)
 
-    // // republish
-    // //TODO/ TAI: no implicit connections between subvaults...
-    // // This is important for multi scoped notes
-    // // I need to say to other scopes the note have being changed
-    // const scopes = await getNoteObaSyncScope(destPath, channelsConfig)
-    // for (const channelName1 of scopes) {
-    //     if (channelName == channelName1) { continue; }
-    //     // here destPath is the local File
-    //     // TODO/ handle returned status
-    //     PulledFileReg[destPath] = "rellaying"
-    //     await _commitModifiedFileSignal(destPath, channelName1, userName0, channelsConfig)
-    // }
-
-    // set counter
-    PulledFileReg[destPath] = "pulled"
+    // echo
+    //TODO/ TAI: no implicit connections between subvaults...
+    // This is important for multi scoped notes
+    // I need to say to other scopes the note have being changed
+    const scopes = await getNoteObaSyncScope(vaultFile, channelsConfig)
+    console.log(`echo.scopes: ${scopes}`)
+    for (const channelName1 of scopes) {
+        console.log(`echo.channelName: ${channelName1}`)
+        // here vaultFile is the local File
+        // TODO/ handle returned status
+        await _commitModifiedFileSignal(vaultFile, channelName1, userName0, channelsConfig, { checkPulledMTime: true })
+    }
 
     return "processed.ok"
 }

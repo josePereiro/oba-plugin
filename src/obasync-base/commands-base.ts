@@ -1,7 +1,10 @@
+import { Notice } from "obsidian"
 import { OBA } from "src/oba-base/globals"
 import { getObaConfig } from "src/oba-base/obaconfig"
+import { getCurrNotePath } from "src/tools-base/obsidian-tools"
 import { dropRepeatedCall, TaskState } from "src/tools-base/schedule-tools"
-import { _pullAndRunSignalEvents, _sendActivityMonitorSignal, _spawnModifiedFileSignal } from "./callbacks-base"
+import { _sendActivityMonitorSignal, runSignalEventsAll } from "./callbacks-base"
+import { _spawnModifiedFileSignal } from "./modifiedFileSignal-base"
 import { ObaSyncScheduler } from "./obasync"
 
 export function _serviceCommands() {
@@ -11,15 +14,17 @@ export function _serviceCommands() {
         name: "ObaSync _spawnModifiedFileSignal",
         callback: async () => {
             console.clear()
-            await _spawnModifiedFileSignal()
+            const localFile = getCurrNotePath()
+            if (!localFile) { return; }
+            await _spawnModifiedFileSignal(localFile, { checkPulledMTime: false })
         }
     });
     OBA.addCommand({
-        id: "oba-obasync-_pullAndRunSignalEvents",
-        name: "ObaSync _pullAndRunSignalEvents",
+        id: "oba-obasync-_pullAndRunSignalEventsCallback",
+        name: "ObaSync _pullAndRunSignalEventsCallback",
         callback: async () => {
             console.clear()
-            await _pullAndRunSignalEvents()
+            await runSignalEventsAll(true)
         }
     });
 
