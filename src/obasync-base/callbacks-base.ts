@@ -1,11 +1,12 @@
-import { Notice } from "obsidian";
+import { OBA } from "src/oba-base/globals";
 import { getObaConfig } from "src/oba-base/obaconfig";
 import { checkEnable } from "src/tools-base/oba-tools";
+import { getCurrNotePath } from "src/tools-base/obsidian-tools";
 import { TaskState } from "src/tools-base/schedule-tools";
 import { DelayManager } from "src/tools-base/utils-tools";
-import { _addDummyAndCommitAndPush } from "./channels-base";
-import { _handleDownloadFile } from "./modifiedFileSignal-base";
+import { _handleDownloadFile, publishModifiedFileSignal } from "./modifiedFileSignal-base";
 import { ObaSyncScheduler } from "./obasync";
+import { getNoteObaSyncScope } from "./scope-base";
 import { _publishSignalControlArgs, HandlingStatus, ObaSyncCallbackContext, registerSignalEventHandler, resolveVaultSignalEvents, SignalHandlerArgs } from "./signals-base";
 
 const ANYMOVE_DELAY: DelayManager = 
@@ -85,73 +86,107 @@ export function _serviceCallbacks() {
     //     registerObaCallback(
     //         callbackID, 
     //         async () => {
-    //             await _pullAndRunSignalEventsCallback(true)
+    //             await _resolveVaultAtAnyMove()
     //         }
     //     )
     // }
 
-    INTERVAL1_ID = window.setInterval(
-        async () => {
-            // run signals
-            ObaSyncScheduler.spawn({
-                id: `pullAndProcessSignals.base`,
-                deltaGas: 1,
-                taskFun: async (task: TaskState) => {
+    // INTERVAL1_ID = window.setInterval(
+    //     async () => {
+    //         // run signals
+    //         ObaSyncScheduler.spawn({
+    //             id: `pullAndProcessSignals.base`,
+    //             deltaGas: 1,
+    //             taskFun: async (task: TaskState) => {
                     
-                    // pull/run
-                    // console.clear()
-                    new Notice(`Auto pulling`, 1000)
-                    await resolveVaultSignalEvents({
-                        commitVaultDepo: true,
-                        pullVaultRepo: true,
-                        notify: true,
-                    })
-                    task["gas"] = 0
+    //                 // pull/run
+    //                 // console.clear()
+    //                 new Notice(`Auto pulling`, 1000)
+    //                 await resolveVaultSignalEvents({
+    //                     commitVaultDepo: true,
+    //                     pullVaultRepo: true,
+    //                     notify: true,
+    //                 })
+    //                 task["gas"] = 0
 
-                    // push
-                    new Notice(`Auto pushing`, 1000)
-                    const channelsConfig = getObaConfig("obasync.channels", {})
-                    for (const channelName in channelsConfig) {
-                        const channelConfig = channelsConfig[channelName]
-                        const pushDepot = channelConfig?.["push.depot"] || null
-                        if (!pushDepot) { continue; }
-                        await _addDummyAndCommitAndPush(
-                            pushDepot, "auto.commit.push", "123", 
-                            { tout: 10 }
-                        )
-                        task["gas"] = 0
-                    }
-                }
-            })
+    //                 // push
+    //                 new Notice(`Auto pushing`, 1000)
+    //                 const channelsConfig = getObaConfig("obasync.channels", {})
+    //                 for (const channelName in channelsConfig) {
+    //                     const channelConfig = channelsConfig[channelName]
+    //                     const pushDepot = channelConfig?.["push.depot"] || null
+    //                     if (!pushDepot) { continue; }
+    //                     await _addDummyAndCommitAndPush(
+    //                         pushDepot, "auto.commit.push", "123", 
+    //                         { tout: 10 }
+    //                     )
+    //                     task["gas"] = 0
+    //                 }
+    //             }
+    //         })
 
-            // push channels
-            ObaSyncScheduler.spawn({
-                id: `autoPush`,
-                deltaGas: 1,
-                taskFun: async (task: TaskState) => {
+    //         // push channels
+    //         ObaSyncScheduler.spawn({
+    //             id: `autoPush`,
+    //             deltaGas: 1,
+    //             taskFun: async (task: TaskState) => {
                     
-                }
-            })
-        }, 
-        getObaConfig("obasync.auto.sync.period", 3 * 1000 * 60)
-    );
+    //             }
+    //         })
+    //     }, 
+    //     getObaConfig("obasync.auto.sync.period", 3 * 1000 * 60)
+    // );
 
     // publish.files
-    // OBA.registerEvent(
-    //     OBA.app.workspace.on('editor-change', async (...args) => {
-    //         console.clear()
-    //         const localFile = getCurrNotePath()
-    //         if (!localFile) { return; }
+    OBA.registerEvent(
+        OBA.app.workspace.on('editor-change', async (...args) => {
+            console.clear()
+            const vaultFile = getCurrNotePath()
+            if (!vaultFile) { return; }
 
-    //         // delay
-    //         const delayManager = SPAWN_MOD_FILE_DELAY?.[localFile] 
-    //             || new DelayManager(5000, 100, 5000, -1) // no delay
-    //         const flag = await delayManager.manageTime()
-    //         if (flag != 'go') { return; }
+            // delay
+            const delayManager = SPAWN_MOD_FILE_DELAY?.[vaultFile] 
+                || new DelayManager(5000, 100, 5000, -1) // no delay
+            const flag = await delayManager.manageTime()
+            if (flag != 'go') { return; }
 
-    //         await _spawnModifiedFileSignal(localFile, { checkPulledMTime: true })
-    //     })
-    // );
+            // spawn
+            ObaSyncScheduler.spawn({
+                id: `publishFileVersion:${vaultFile}:push`,
+                deltaGas: 1,
+                taskFun: async (task: TaskState) => {
+                    const committerName = getObaConfig("obasync.me", null)
+                    if (!committerName) { return; }
+                    const channelsConfig = getObaConfig("obasync.channels", {})
+                    console.log("channelsConfig: ", channelsConfig)
+                    const scope = await getNoteObaSyncScope(vaultFile, channelsConfig) || []
+                    console.log("scope: ", scope)
+                    for (const channelName of scope) {
+                        // TODO/ Think how to include man type in configuration
+                        // or think how to discover them from disk...
+                        const manIder = {channelName, manType: 'main'} 
+                        await publishModifiedFileSignal({
+                            vaultFile,
+                            manIder,
+                            committerName,
+                            channelsConfig,
+                            checkPulledMTime: false,
+                            controlArgs: {
+                                commitVaultRepo: true,
+                                commitPushRepo: true,
+                                pushPushRepo: false,
+                                notify: false
+                            }
+                        })
+                    }
+                    // clamp gas
+                    task["gas"] > 0
+                }, 
+            })
+
+
+        })
+    );
 
     // download.files
     _registerModifiedFilesHandler({
@@ -231,9 +266,7 @@ function _registerModifiedFilesHandler(
 const PULL_AND_RUN_DELAY: DelayManager = 
     new DelayManager(10000, 500, 10000, -1) // no delay
 
-export async function _pullAndRunSignalEventsCallback(
-    pull = true,
-) {
+export async function _resolveVaultAtAnyMove() {
 
     await PULL_AND_RUN_DELAY.manageTime({
         prewait: () => {
@@ -245,10 +278,9 @@ export async function _pullAndRunSignalEventsCallback(
                     if(task["gas"] > 1) { task["gas"] = 1 }
                     await resolveVaultSignalEvents({
                         commitVaultDepo: true,
-                        pullVaultRepo: true,
-                        notify: true,
+                        pullVaultRepo: false,
+                        notify: false,
                     })
-                    new Notice("pullAndProcessSignals.first", 2000)
                 }
             })
         }, 
@@ -262,15 +294,14 @@ export async function _pullAndRunSignalEventsCallback(
                     if(task["gas"] > 0) { return; }
                     await resolveVaultSignalEvents({
                         commitVaultDepo: true,
-                        pullVaultRepo: true,
-                        notify: true,
+                        pullVaultRepo: false,
+                        notify: false,
                     })
-                    new Notice("pullAndProcessSignals.last", 2000)
                 }
             })
         }, 
         onwait: () => {
-            console.log("tick")
+            // console.log("tick")
         }, 
     })
     

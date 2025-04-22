@@ -1,24 +1,22 @@
 import { copyFileSync, existsSync, statSync } from "fs";
 import { Notice } from "obsidian";
 import path from "path";
-import { getObaConfig } from "src/oba-base/obaconfig";
 import { getVaultDir } from "src/tools-base/obsidian-tools";
-import { TaskState } from "src/tools-base/schedule-tools";
-import { ObaSyncManifestIder } from "./manifests-base";
-import { ObaSyncScheduler } from "./obasync";
+import { ObaSyncManifest, ObaSyncManifestIder } from "./manifests-base";
 import { getNoteObaSyncScope } from "./scope-base";
-import { _publishedSignalNotification, _publishSignalArgs, _publishSignalControlArgs, HandlingStatus, ObaSyncCallbackContext, ObaSyncSignal, publishSignal } from "./signals-base";
+import { _publishSignalControlArgs, HandlingStatus, ObaSyncCallbackContext, ObaSyncSignal, publishSignal } from "./signals-base";
 
 const PulledMTimeReg = {} as {[keys: string]: number}
 
 // MARK: commit
-export async function _commitModifiedFileSignal({
+export async function publishModifiedFileSignal({
     vaultFile,
     manIder,
     committerName,
     channelsConfig,
     controlArgs,
     checkPulledMTime,
+    signalTemplate = null,
 } : {
     vaultFile: string,
     manIder: ObaSyncManifestIder,
@@ -26,10 +24,11 @@ export async function _commitModifiedFileSignal({
     channelsConfig: any,
     controlArgs: _publishSignalControlArgs,
     checkPulledMTime: boolean
+    signalTemplate?: ObaSyncSignal | null,
 }): Promise<HandlingStatus> {
 
     console.log("--------------------------")
-    console.log("_commitModifiedFileSignal")
+    console.log("publishModifiedFileSignal")
 
     // context data
     if (!vaultFile) { 
@@ -77,17 +76,20 @@ export async function _commitModifiedFileSignal({
     const pushDepot = channelConfig?.["push.depot"] || null
     const vaultDepot = getVaultDir()
 
+    signalTemplate = signalTemplate 
+        || { 
+            "type": 'modified.file', 
+            "args": {
+                "targetFileName": localFileName,
+            }
+        }
+
     const signal = await publishSignal({
         vaultDepot,
         pushDepot,
         committerName,
         manIder,
-        signalTemplate: { 
-            "type": 'modified.file', 
-            "args": {
-                "targetFileName": localFileName,
-            }
-        },
+        signalTemplate,
         hashDig: [localFileName], 
         callback: () => {
             // copy file
@@ -103,50 +105,6 @@ export async function _commitModifiedFileSignal({
     }
     
     return "handler.ok"
-}
-
-// MARK: spawn
-export async function _spawnModifiedFileSignal({
-    vaultFile, 
-    checkPulledMTime,
-    controlArgs,
-}: {
-    vaultFile: string, 
-    checkPulledMTime: boolean,
-    controlArgs: _publishSignalControlArgs,
-}) {
-    console.log("--------------------------")
-    console.log("_spawnModifiedFileSignal")
-
-    ObaSyncScheduler.spawn({
-        id: `publishFileVersion:${vaultFile}`,
-        deltaGas: 1,
-        taskFun: async (task: TaskState) => {
-            const committerName = getObaConfig("obasync.me", null)
-            if (!committerName) { return; }
-            const channelsConfig = getObaConfig("obasync.channels", {})
-            console.log("channelsConfig: ", channelsConfig)
-            const scope = await getNoteObaSyncScope(vaultFile, channelsConfig) || []
-            console.log("scope: ", scope)
-            for (const channelName of scope) {
-                // TODO/ Think how to include man type in configuration
-                // or think how to discover them from disk...
-                const manIder = {channelName, manType: 'main'} 
-                await _commitModifiedFileSignal({
-                    vaultFile,
-                    manIder,
-                    committerName,
-                    channelsConfig,
-                    checkPulledMTime,
-                    controlArgs,
-                })
-            }
-            // clamp gas
-            if (task["gas"] > 1) {
-                task["gas"] = 1
-            }
-        }, 
-    })
 }
 
 // MARK: handle
@@ -209,12 +167,12 @@ export async function _handleDownloadFile({
         console.log(`echo.channelName: ${channelName1}`)
         // TODO/ handle returned status
         const manIder = {channelName: channelName1, manType} 
-        // await _commitModifiedFileSignal(vaultFile, manIder, vaultUserName, channelsConfig, { checkPulledMTime: true })
-        await _commitModifiedFileSignal({
+        await publishModifiedFileSignal({
             vaultFile,
             manIder,
             committerName: vaultUserName,
             channelsConfig,
+            signalTemplate: pulledSignal,
             checkPulledMTime: true,
             controlArgs,
         })

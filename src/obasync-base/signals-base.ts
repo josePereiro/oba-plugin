@@ -19,14 +19,16 @@ export interface ObaSyncSignal {
     "creator.hashKey"?: string,
     "creator.name"?: string,
     "creator.channelName"?: string,
-
+    
     "committer.name"?: string,
     "committer.timestamp"?: string,
-
+    "committer.channelName"?: string,
+    
     "handler.name"?: string
     "handler.callback"?: string
     "handler.timestamp"?: string,
     "handler.handlingStatus"?: HandlingStatus
+    "handler.channelName"?: string,
     
     "args"?: {[keys: string]: any} 
 }
@@ -71,22 +73,6 @@ export interface _publishSignalArgs extends _publishSignalControlArgs {
     callback?: (() => any)
 }
 
-export function _publishedSignalNotification(
-    signal: ObaSyncSignal
-) {
-    const msg = [
-        `Signal committed`,
-        ` - type: ${signal["type"]}`,
-        ` - creator.name: ${signal["creator.name"]}`,
-        ` - committer.name: ${signal["committer.name"]}`,
-        ` - creator.channelName: ${signal["creator.channelName"]}`,
-        ` - creator.hashKey: ${signal["creator.hashKey"]}`,
-        ` - creator.timestamp: ${signal["creator.timestamp"]}`,
-    ].join("\n")
-    console.log(msg)
-    console.log('Committed signal: ', signal)
-    new Notice(msg, 1 * 60 * 1000)
-}
 
 export async function publishSignal({
     vaultDepot,
@@ -149,6 +135,8 @@ export async function publishSignal({
             signalTemplate['committer.name'] = committerName
             // 'committer.timestamp'?: string,
             signalTemplate['committer.timestamp'] = utcTimeTag()
+            // 'committer.channelName'?: string,
+            signalTemplate['committer.channelName'] = manIder["channelName"]
 
             // add to signals
             manContent['signals'] = manContent?.['signals'] || {}
@@ -185,7 +173,19 @@ export async function publishSignal({
     }
     
     if (notify) { 
-        _publishedSignalNotification(signal)
+        const msg = [
+            `Signal committed`,
+            ` - type: ${signal["type"]}`,
+            ` - committer.name: ${signal["committer.name"]}`,
+            ` - committer.channelName: ${signal["committer.channelName"]}`,
+            ` - creator.hashKey: ${signal["creator.hashKey"]}`,
+            ` - creator.name: ${signal["creator.name"]}`,
+            ` - creator.channelName: ${signal["creator.channelName"]}`,
+            ` - creator.timestamp: ${signal["creator.timestamp"]}`,
+        ].join("\n")
+        console.log(msg)
+        console.log('Committed signal: ', signal)
+        new Notice(msg, 1 * 60 * 1000)
     }
 
     return signal
@@ -450,27 +450,10 @@ export function registerSignalEventHandler({
                     if (status == "handler.ok") {
 
                         // extract
-                        // TODO/ add "issuedBy" into signal
-                        // TODO/ add "issuedBy.first" into signal
                         const vaultDepot = context0["vaultDepot"]
                         const pushDepot = context0["pushDepot"]
                         const manIder = context0["manIder"]
                         const pulledSignal = context0["pulledSignal"]
-
-                        const msg = [
-                            `Signal processed succesfully`,
-                            ` - type: ${pulledSignal["type"]}`,
-                            ` - creator.hashKey: ${pulledSignal["creator.hashKey"]}`,
-                            ` - creator.name: ${pulledSignal["creator.name"]}`,
-                            ` - committer.name: ${pulledSignal["committer.name"]}`,
-                            ` - creator.channelName: ${pulledSignal["creator.channelName"]}`,
-                            ` - creator.hashKey: ${pulledSignal["creator.hashKey"]}`,
-                            ` - creator.timestamp: ${pulledSignal["creator.timestamp"]}`,
-                            ` - eventID: ${eventID}`,
-                        ].join("\n")
-                        new Notice(msg, 1 * 60 * 1000)
-                        console.log(msg, 0)
-
                         
                         const signalTemplate: ObaSyncSignal = {
                             ...pulledSignal,
@@ -483,10 +466,11 @@ export function registerSignalEventHandler({
                             "handler.timestamp": utcTimeTag(),
                             // 'handler.handlingStatus'?: HandlingStatus
                             'handler.handlingStatus': status,
+                            // 'handler.channelName'?: string
+                            'handler.channelName': manIder["channelName"],
                         }
 
                         // record signal in vault manifest
-                        // TODO/ maybe let the _publishSignal to be optional
                         await publishSignal({
                             vaultDepot,
                             pushDepot,
@@ -499,6 +483,21 @@ export function registerSignalEventHandler({
                             pushPushRepo: true,
                             notify: true
                         })
+
+                        // notice
+                        const msg = [
+                            `Signal processed succesfully`,
+                            ` - type: ${pulledSignal["type"]}`,
+                            ` - handler.name: ${pulledSignal["handler.name"]}`,
+                            ` - handler.channelName: ${pulledSignal["handler.channelName"]}`,
+                            ` - creator.hashKey: ${pulledSignal["creator.hashKey"]}`,
+                            ` - creator.name: ${pulledSignal["creator.name"]}`,
+                            ` - creator.channelName: ${pulledSignal["creator.channelName"]}`,
+                            ` - creator.timestamp: ${pulledSignal["creator.timestamp"]}`,
+                            ` - eventID: ${eventID}`,
+                        ].join("\n")
+                        new Notice(msg, 1 * 60 * 1000)
+                        console.log(msg)
                         
                     }
                     if (status == "unhandled") {
