@@ -1,14 +1,16 @@
-import path from "path";
-import { getObsSyncDir, utcTimeTag } from "./utils-base";
-import { JsonIO } from "src/tools-base/jsonio-base";
-import { ObaSyncSignal } from "./signals-base";
-import { existsSync } from "fs";
 import { isEqual } from "lodash";
 import { Notice } from "obsidian";
+import path from "path";
+import { JsonIO } from "src/tools-base/jsonio-base";
+import { ObaSyncSignal } from "./signals-base";
+import { getObsSyncDir, utcTimeTag } from "./utils-base";
 
 /*
     Each channel will have a manifest with signals and report of actions. 
 */ 
+
+// Manifests from other versions will be ignored!
+export const MAN_VERSION = "v1"
 
 export interface ObaSyncManifestIder {
     channelName: string
@@ -36,7 +38,7 @@ export function manifestFilePath(
 ) {
     const {channelName, manType} = manIder
     const obasyncDir = getObsSyncDir(depotDir);
-    return path.join(obasyncDir, `${channelName}-${manType}-man.json`)
+    return path.join(obasyncDir, `${channelName}-${manType}-${MAN_VERSION}-man.json`)
 }
 
 export function manifestJsonIO(
@@ -88,8 +90,3 @@ export function checkPusher(
     }
     return true
 }
-
-// export function getCallbackContext(): ObaSyncCallbackContext {
-//     return getCallbackArgs()?.[0]
-// }
-    

@@ -1,16 +1,13 @@
 import { Notice } from "obsidian";
-import { OBA } from "src/oba-base/globals";
 import { getObaConfig } from "src/oba-base/obaconfig";
-import { registerObaCallback, runObaCallbacks } from "src/services-base/callbacks";
 import { checkEnable } from "src/tools-base/oba-tools";
-import { getCurrNotePath, getVaultDir } from "src/tools-base/obsidian-tools";
+import { getVaultDir } from "src/tools-base/obsidian-tools";
 import { TaskState } from "src/tools-base/schedule-tools";
-import { DelayManager, randstring } from "src/tools-base/utils-tools";
-import { _addDummyAndCommit, _addDummyAndCommitAndPush, _fetchCheckoutPull, _justPush, _spawnFetchCheckoutPull } from "./channels-base";
-import { _commitModifiedFileSignal, _handleDownloadFile } from "./modifiedFileSignal-base";
+import { DelayManager } from "src/tools-base/utils-tools";
+import { _addDummyAndCommitAndPush, _fetchCheckoutPull } from "./channels-base";
+import { _handleDownloadFile } from "./modifiedFileSignal-base";
 import { ObaSyncScheduler } from "./obasync";
-import { getNoteObaSyncScope } from "./scope-base";
-import { commitObaSyncSignal, HandlingStatus, ObaSyncCallbackContext, registerSignalEventHandler, runSignalEvents, SignalHandlerArgs } from "./signals-base";
+import { HandlingStatus, ObaSyncCallbackContext, registerSignalEventHandler, runSignalEvents, SignalHandlerArgs } from "./signals-base";
 
 const ANYMOVE_DELAY: DelayManager = 
     new DelayManager(1000, 1001, -1, -1) // no delay
@@ -177,11 +174,16 @@ export function _serviceCallbacks() {
 
 // DONE/TAI: create per note delay manager
 let SPAWN_MOD_FILE_DELAY: {[keys: string]: DelayManager} = {}
-// const PUSHING_SET = new Set()
+
+// deltaGas?: number,
+// taskIDDigFun?: (context: ObaSyncCallbackContext) => string[]
 
 function _registerModifiedFilesHandler() {
+    const handlerName = getObaConfig("obasync.me", null)
+    if (!handlerName) { return; }
     registerSignalEventHandler({
-        eventID: "obasync.signal0.timetag.missing.or.older",  // new signal available
+        eventID: "obasync.vault.signal.ctimetag.missing.or.older",  // new signal available,
+        handlerName,
         signalType: "modified.file", 
         deltaGas: 1,
         taskIDDigFun: (
@@ -190,8 +192,8 @@ function _registerModifiedFilesHandler() {
             // For doing unique the taskID
             const channelName = context["manIder"]["channelName"]
             const manType = context["manIder"]["manType"]
-            const hashKey = context["signal1HashKey"]
-            return [channelName, manType, hashKey]  as string[]
+            const pulledSignalKey = context["pulledSignalKey"]
+            return [channelName, manType, pulledSignalKey] as string[]
         },
         handler: async (arg: SignalHandlerArgs ): Promise<HandlingStatus> => {
             const context = arg["context"]
@@ -205,53 +207,6 @@ function _registerModifiedFilesHandler() {
         }
     })
 }
-
-function _handleActivityMonitorSignal(
-    context: ObaSyncCallbackContext
-): HandlingStatus {
-    const signal = context?.["signal1"] || {}
-    const token = signal?.["args"]?.["token"] || "Missing Token"
-    const sender = signal?.["args"]?.["sender"] || "JonhDoe"
-    new Notice(`Activity from ${sender}, token: ${token}`, 0)
-    return "processed.ok"
-}
-
-// MARK: monitor
-export async function _sendActivityMonitorSignal(
-): Promise<HandlingStatus> {
-    return; // DEV
-
-    const userName0 = getObaConfig("obasync.me", null)
-    const vaultDepot = getVaultDir()
-    
-    const channelsConfig = getObaConfig("obasync.channels", {})
-    for (const channelName in channelsConfig) {
-        console.log("channelName: ", channelName)
-        const channelConfig = channelsConfig[channelName]
-        const pushDepot = channelConfig?.["push.depot"] || null
-        if (!pushDepot) { return "error" }
-        console.log("pushDepot: ", pushDepot)
-        
-        await commitObaSyncSignal({
-            vaultDepot,
-            pushDepot,
-            issuerName: userName0,
-            channelName,
-            manType: 'main',
-            signalTemplate: { 
-                "type": 'activity.monitor', 
-                "args": {
-                    "token": randstring(),
-                    "sender": userName0,
-                }
-            },
-            hashKey: null,
-            hashDig: []
-        })
-    }
-    return "processed.ok"
-}
-
 
 const PULL_AND_RUN_DELAY: DelayManager = 
     new DelayManager(10000, 500, 10000, -1) // no delay
@@ -299,7 +254,7 @@ export async function runSignalEventsAll(
 ) {
     console.log("runSignalEventsAll")
     const channelsConfig = getObaConfig("obasync.channels", {})
-    const userName0 = getObaConfig("obasync.me", null)
+    const vaultUserName = getObaConfig("obasync.me", null)
     const vaultDepot = getVaultDir()
     for (const channelName in channelsConfig) {
         console.log("==============================")
@@ -325,7 +280,7 @@ export async function runSignalEventsAll(
             await runSignalEvents({
                 vaultDepot, pushDepot, pullDepot,
                 manType: 'main',
-                userName0,
+                vaultUserName,
                 channelName
             })
 

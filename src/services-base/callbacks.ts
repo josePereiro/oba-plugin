@@ -1,10 +1,7 @@
 import { Notice } from 'obsidian';
-import { backends, commands, git, replacer } from './0-servises-modules';
-import { checkEnable, tools } from 'src/tools-base/0-tools-modules';
-import { crossref, localbibs } from 'src/biblio-base/0-biblio-modules';
-import { citnotes } from 'src/citnotes-base/0-citnotes-modules';
+import { checkEnable } from 'src/tools-base/0-tools-modules';
 import { openNoteAtLine } from 'src/tools-base/obsidian-tools';
-import { _pushDepots } from 'src/obasync-base/commands-base';
+import { backends, commands, git, replacer } from './0-servises-modules';
 
 /*
     TODO: Add priority
