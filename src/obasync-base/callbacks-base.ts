@@ -6,7 +6,7 @@ import { DelayManager } from "src/tools-base/utils-tools";
 import { _addDummyAndCommitAndPush } from "./channels-base";
 import { _handleDownloadFile } from "./modifiedFileSignal-base";
 import { ObaSyncScheduler } from "./obasync";
-import { _publishSignalControlArgs, HandlingStatus, ObaSyncCallbackContext, registerSignalEventHandler, SignalHandlerArgs } from "./signals-base";
+import { _publishSignalControlArgs, HandlingStatus, ObaSyncCallbackContext, registerSignalEventHandler, resolveVaultSignalEvents, SignalHandlerArgs } from "./signals-base";
 
 const ANYMOVE_DELAY: DelayManager = 
     new DelayManager(1000, 1001, -1, -1) // no delay
