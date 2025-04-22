@@ -6,7 +6,7 @@ import { ObaSyncScheduler } from "./obasync";
 
 
 /*
-…or create a new repository on the command line
+…or create a new repository on the commandv line
 echo "# Bare-Repo-Template" >> README.md
 git init
 git add README.md
@@ -17,7 +17,7 @@ git push -u origin main
 */ 
 
 /*
-…or push an existing repository from the command line
+…or push an existing repository from the commandv line
 git remote add origin https://github.com/josePereiro/Bare-Repo-Template.git
 git branch -M main
 git push -u origin main
@@ -38,37 +38,36 @@ export async function _addDummyAndCommit(
     dummyStr: string = "123"
 ) {
     // TODO: use git service
-    // const command = `cd ${repoDir}; echo "${dummyStr}" > ".dummy"; git add .; git commit -m"${cmMsg}";`;
-    const command = [
-        `echo ">>>>>>>>>>" 2>&1`,
-        `echo "_addDummyAndCommit" 2>&1`,
-        `cd ${repoDir} 2>&1`, 
-        `echo "cd ${repoDir}" 2>&1`,
-        `echo "----------" 2>&1`,
-        `git remote -v 2>&1`,
-        `git status 2>&1`,
-        `echo "----------" 2>&1`,
-        `echo "touching dummy..." 2>&1`,
-        `echo "${dummyStr}" > ".dummy" 2>&1`,
-        `git status 2>&1`,
-        `echo "----------" 2>&1`,
-        `echo "adding..." 2>&1`,
-        `git add . 2>&1`,
-        `git status 2>&1`,
-        `echo "----------" 2>&1`,
-        `echo "commiting..." 2>&1`,
-        `git commit -m"${cmMsg}" 2>&1`,
-        `git status 2>&1`,
-        `echo "----------" 2>&1`,
-        `echo "done" 2>&1`,
-        `echo "<<<<<<<<<<" 2>&1`,
-    ].join(";")
+    const commandv = [
+        `# >>>>>>>>>>`,
+        `# _addDummyAndCommit`,
+        `cd ${repoDir}`, 
+        `# ----------`,
+        `git remote -v`,
+        `git status`,
+        `# ----------`,
+        `# touching dummy...`,
+        `echo "${dummyStr}" > ".dummy"`,
+        `git status`,
+        `# ----------`,
+        `# adding...`,
+        `git add .`,
+        `git status`,
+        `# ----------`,
+        `# commiting...`,
+        `git commit -m"${cmMsg}"`,
+        `git status`,
+        `# ----------`,
+        `# done`,
+        `# <<<<<<<<<<`,
+    ]
     await execAsync(
-        command, 
+        commandv, 
         (stdout: any, stderr: any, error: any) => {
             if (error) { console.error(error) }
             if (stdout) { console.log(stdout) }
-        }
+        },
+        true
     )
 }
 
@@ -89,44 +88,44 @@ export async function _justPush(
         tout = 10 // secs
     } = {}
 ) {
-    let command;
+    let commandv;
     // TODO: use git service
     // Add git exec config
-    // const command = `cd ${repoDir}; git push --all`;
-    command = [
-        `echo ">>>>>>>>>>" 2>&1`,
-        `echo "_justPush" 2>&1`,
-        `cd "${repoDir}" 2>&1`, 
-        `echo "cd ${repoDir}" 2>&1`,
-        `git remote -v 2>&1`,
-        `git status 2>&1`,
-        `echo "----------" 2>&1`,
-        `echo "pushing..." 2>&1`,
-    ].join(";")
+    commandv = [
+        `# >>>>>>>>>>`,
+        `# _justPush`,
+        `cd "${repoDir}"`, 
+        `git remote -v`,
+        `git status`,
+        `# ----------`,
+        `# pushing...`,
+    ]
     await execAsync(
-        command, 
+        commandv, 
         (stdout: any, stderr: any, error: any) => {
             if (error) { console.error(error) }
             if (stdout) { console.log(stdout) }
-        }
+        },
+        true
     )
 
-    command = [
-        `cd ${repoDir} 2>&1`, 
+    commandv = [
+        `cd ${repoDir}`, 
         `GIT_HTTP_LOW_SPEED_LIMIT=0`,
         `GIT_HTTP_LOW_SPEED_TIME=${tout}`,
-        `git push --all 2>&1`,
-        `git status 2>&1`,
-        `echo "----------" 2>&1`,
-        `echo "done" 2>&1`,
-        `echo "<<<<<<<<<<" 2>&1`,
-    ].join(";")
+        `git push --all`,
+        `git status`,
+        `# ----------`,
+        `# done`,
+        `# <<<<<<<<<<`,
+    ]
     await execAsync(
-        command, 
+        commandv, 
         (stdout: any, stderr: any, error: any) => {
             if (error) { console.error(error) }
             if (stdout) { console.log(stdout) }
-        }
+        },
+        true
     )
 
 }
@@ -176,67 +175,69 @@ export async function _fetchCheckoutPull(
     } = {}
 ) {
 
-    let command;
+    let commandv;
     // TODO: use git service
-    command = [
-        `echo ">>>>>>>>>>" 2>&1`,
-        `echo "_fetchCheckoutPull" 2>&1`,
-        `cd "${repoDir}" 2>&1`, 
-        `echo "cd ${repoDir}" 2>&1`,
-        `git remote -v 2>&1`,
-        `git status 2>&1`,
-        `echo "----------" 2>&1`,
-        `echo "fetching..." 2>&1`,
-    ].join(";")
+    commandv = [
+        `# >>>>>>>>>>`,
+        `# _fetchCheckoutPull`,
+        `cd "${repoDir}"`, 
+        `git remote -v`,
+        `git status`,
+        `# ----------`,
+        `# fetching...`,
+    ]
     await execAsync(
-        command, 
+        commandv, 
         (stdout: any, stderr: any, error: any) => {
             if (error) { console.error(error) }
             if (stdout) { console.log(stdout) }
-        }
+        },
+        true
     )
 
-    command = [
+    commandv = [
         `cd ${repoDir}`, 
         `GIT_HTTP_LOW_SPEED_LIMIT=0`,
         `GIT_HTTP_LOW_SPEED_TIME=${tout}`,
         `git fetch --all`,
-        `git status 2>&1`,
-        `echo "----------" 2>&1`,
-        `echo "reseting..." 2>&1`,
-        `git reset --hard ${resetCommit} 2>&1`,
-        `git status 2>&1`,
-        `echo "----------" 2>&1`,
-        `echo "cleaning..." 2>&1`,
-        `git clean -xdf 2>&1`,
-        `git status 2>&1`,
-        `echo "----------" 2>&1`,
-        `echo "merging..." 2>&1`,
-    ].join(";")
+        `git status`,
+        `# ----------`,
+        `reseting...`,
+        `git reset --hard ${resetCommit}`,
+        `git status`,
+        `# ----------`,
+        `# cleaning...`,
+        `git clean -xdf`,
+        `git status`,
+        `# ----------`,
+        `# merging...`,
+    ]
     await execAsync(
-        command, 
+        commandv, 
         (stdout: any, stderr: any, error: any) => {
             if (error) { console.error(error) }
             if (stdout) { console.log(stdout) }
-        }
+        },
+        true
     )
     
-    command = [
+    commandv = [
         `cd ${repoDir}`, 
         `GIT_HTTP_LOW_SPEED_LIMIT=0`,
         `GIT_HTTP_LOW_SPEED_TIME=${tout}`,
-        `git merge 2>&1`,
-        `git status 2>&1`,
-        `echo "----------" 2>&1`,
-        `echo "done" 2>&1`,
-        `echo "<<<<<<<<<<" 2>&1`,
-    ].join(";")
+        `git merge`,
+        `git status`,
+        `# ----------`,
+        `# done`,
+        `# <<<<<<<<<<`,
+    ]
     await execAsync(
-        command, 
+        commandv, 
         (stdout: any, stderr: any, error: any) => {
             if (error) { console.error(error) }
             if (stdout) { console.log(stdout) }
-        }
+        },
+        true
     )
 }
 
@@ -258,27 +259,26 @@ export async function _resetHard(
     { resetCommit = 'origin' } = {}
 ) {
     // TODO: use git service
-    // const command = `cd ${repoDir}; echo "${dummyStr}" > ".dummy"; git add .; git commit -m"${cmMsg}";`;
-    const command = [
-        `echo ">>>>>>>>>>" 2>&1`,
-        `echo "_resetHard" 2>&1`,
-        `cd "${repoDir}" 2>&1`, 
-        `echo "cd ${repoDir}" 2>&1`,
-        `git remote -v 2>&1`,
-        `git status 2>&1`,
-        `echo "----------" 2>&1`,
-        `echo "checking out..." 2>&1`,
-        `git clean -xdf 2>&1`,
-        `git reset --hard ${resetCommit} 2>&1`,
-        `echo "done" 2>&1`,
-        `echo "<<<<<<<<<<" 2>&1`,
-    ].join(";")
+    const commandv = [
+        `# >>>>>>>>>>`,
+        `# _resetHard`,
+        `cd "${repoDir}"`, 
+        `git remote -v`,
+        `git status`,
+        `# ----------`,
+        `# checking out...`,
+        `git clean -xdf`,
+        `git reset --hard ${resetCommit}`,
+        `# done`,
+        `# <<<<<<<<<<`,
+    ]
     await execAsync(
-        command, 
+        commandv, 
         (stdout: any, stderr: any, error: any) => {
             if (error) { console.error(error) }
             if (stdout) { console.log(stdout) }
-        }
+        },
+        true
     )
 }
 

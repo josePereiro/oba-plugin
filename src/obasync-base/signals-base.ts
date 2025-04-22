@@ -142,8 +142,16 @@ export async function commitObaSyncSignal({
     await _addDummyAndCommit(pushDepot, "post.commit.signal", "123")
     await _justPush(pushDepot, { tout: 10 })
 
-    console.log('Commited signal: ', signal)
-    new Notice(`Signal commited:\n type ${signal["type"]}\n hashKey ${signal["hashKey"]}`, 10000)
+    const msg = [
+        `Signal committed`,
+        ` - issuerName: ${issuerName}`,
+        ` - channelName: ${channelName}`,
+        ` - signalType: ${signal["type"]}`,
+        ` - signalHash: ${signal["hashKey"]}`,
+    ].join("\n")
+    console.log(msg)
+    console.log('Committed signal: ', signal)
+    new Notice(msg, 1 * 60 * 1000)
 }
 
 // MARK: process
@@ -361,20 +369,31 @@ export function registerSignalEventHandler({
                     if (status == "processed.ok") {
 
                         // extract
+                        // TODO/ add "issuedBy" into signal
+                        // TODO/ add "issuedBy.first" into signal
                         const vaultDepot = context0["vaultDepot"]
                         const pushDepot = context0["pushDepot"]
                         const manIder = context0["manIder"]
                         const manType = manIder["manType"]
                         const channelName = manIder["channelName"]
+                        const userName0 = context0["userName0"]
                         const userName1 = context0["userName1"]
                         const signal1 = context0["signal1"]
-                        const signal1Type = signal1["type"]
-                        const hashKey1 = context0["signal1HashKey"]
+                        const signal1HashKey = context0["signal1HashKey"]
 
-                        new Notice(`Signal status 'ok': ${eventID}:${signalType}`, 10000)
-                        console.log(`Signal status 'ok': ${eventID}:${signalType}`)
+                        const msg = [
+                            `Signal processed succesfully`,
+                            ` - issuedBy: ${userName1}`,
+                            ` - pullerName: ${userName0}`,
+                            ` - channelName: ${channelName}`,
+                            ` - signalType: ${signalType}`,
+                            ` - signalHash: ${signal1HashKey}`,
+                            ` - eventID: ${eventID}`,
+                        ].join("\n")
+                        new Notice(msg, 1 * 60 * 1000)
+                        console.log(msg, 0)
+                        
                         // record signal in vault manifest
-
                         await commitObaSyncSignal({
                             vaultDepot,
                             pushDepot,
@@ -382,7 +401,7 @@ export function registerSignalEventHandler({
                             channelName,
                             manType,
                             signalTemplate: signal1,
-                            hashKey: hashKey1,
+                            hashKey: signal1HashKey,
                             hashDig: []
                         })
                         

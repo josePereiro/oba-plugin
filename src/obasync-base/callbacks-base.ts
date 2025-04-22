@@ -103,7 +103,7 @@ export function _serviceCallbacks() {
                 taskFun: async (task: TaskState) => {
                     // console.clear()
                     await runSignalEventsAll(true)
-                    new Notice(`Auto pulling`, 5000)
+                    new Notice(`Auto pulling`, 1000)
                     task["gas"] = 0
                 }
             })
@@ -113,7 +113,7 @@ export function _serviceCallbacks() {
                 id: `autoPush`,
                 deltaGas: 1,
                 taskFun: async (task: TaskState) => {
-                    new Notice(`Auto pushing`, 5000)
+                    new Notice(`Auto pushing`, 1000)
                     const channelsConfig = getObaConfig("obasync.channels", {})
                     for (const channelName in channelsConfig) {
                         const channelConfig = channelsConfig[channelName]

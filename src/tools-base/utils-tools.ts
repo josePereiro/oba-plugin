@@ -287,9 +287,22 @@ export class DelayManager {
 const _execAsync = promisify(exec);
 
 export async function execAsync(
-    command: string,
-    callback: ((stdout?: any, stderr?: any, error?: any) => any) = () => null
+    commandv: string[],
+    callback: ((stdout?: any, stderr?: any, error?: any) => any) = () => null,
+    echo = true
 ) {
+    // process commands
+    const commandv1: string[] = []
+    for (const line of commandv) {
+        if(echo) {
+            const echo_arg = line.replace(/"/g, "'")
+            commandv1.push(`echo "\$ ${echo_arg}"`);
+        }
+        commandv1.push(line)
+    }
+
+    // exec
+    const command = commandv1.join(" 2>&1;\n")
     let _stdout, _stderr, _error;
     try {
         const { stdout, stderr } = await _execAsync(command);

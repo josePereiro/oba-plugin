@@ -3,6 +3,10 @@ import { _serviceCallbacks, INTERVAL1_ID } from "./callbacks-base";
 import { SequentialAsyncScheduler, TaskState } from "src/tools-base/schedule-tools";
 
 /*
+    /TODO/ add actions when clicking a notice
+*/ 
+
+/*
     Main module to handle syncronization with other vaults
 */
 
