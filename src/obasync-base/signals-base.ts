@@ -2,11 +2,13 @@ import { copyFileSync } from "fs"
 import { Notice } from "obsidian"
 import { registerObaCallback, runObaCallbacks } from "src/services-base/callbacks"
 import { TaskState } from "src/tools-base/schedule-tools"
-import { hash64Chain, randstring } from "src/tools-base/utils-tools"
-import { _addDummyAndCommit, _justPush } from "./channels-base"
+import { hash64Chain } from "src/tools-base/utils-tools"
+import { _addDummyAndCommit, _fetchCheckoutPull, _justPush } from "./channels-base"
 import { checkPusher, manifestJsonIO, modifyObaSyncManifest, ObaSyncManifest, ObaSyncManifestIder } from "./manifests-base"
 import { ObaSyncScheduler } from "./obasync"
 import { utcTimeTag } from "./utils-base"
+import { getObaConfig } from "src/oba-base/obaconfig"
+import { getVaultDir } from "src/tools-base/obsidian-tools"
 
 // MARK: base
 export type HandlingStatus = "handler.ok" | "unhandled" | "unknown" | "error" | null
@@ -51,14 +53,22 @@ function _signalHashKey(val0: string, ...vals: string[]) {
     This is an offline method
 */ 
 
-export interface _publishSignalArgs {
+
+export interface _publishSignalControlArgs {
+    commitPushRepo: boolean,
+    commitVaultRepo: boolean,
+    pushPushRepo: boolean,
+    notify: boolean
+}
+
+export interface _publishSignalArgs extends _publishSignalControlArgs {
     vaultDepot: string,
     pushDepot: string,
     committerName: string,
     manIder: ObaSyncManifestIder,
     signalTemplate: ObaSyncSignal,
     hashDig: string[],
-    callback?: (() => any),
+    callback?: (() => any)
 }
 
 export function _publishedSignalNotification(
@@ -78,15 +88,27 @@ export function _publishedSignalNotification(
     new Notice(msg, 1 * 60 * 1000)
 }
 
-export async function _publishSignal_offline_uncommitted({
+export async function publishSignal({
     vaultDepot,
     pushDepot,
     committerName,
     manIder,
     signalTemplate,
     hashDig,
+    commitPushRepo,
+    commitVaultRepo,
+    pushPushRepo,
+    notify,
     callback = () => null,
 }: _publishSignalArgs ) {
+
+    // checkpoint vault
+    if (commitVaultRepo) {
+        await _addDummyAndCommit(vaultDepot, "pre.publish.signal", "123")
+    }
+    if (commitPushRepo) {
+        await _addDummyAndCommit(pushDepot, "pre.publish.signal", "123")
+    }
 
     // mod vault manifest
     const vManIO = manifestJsonIO(vaultDepot, manIder)
@@ -153,35 +175,20 @@ export async function _publishSignal_offline_uncommitted({
     console.log(`vaultMan: `, vManIO.loadd({}).retDepot())
     console.log(`pulledMan: `, rManIO.loadd({}).retDepot())
 
-    return signal
-}
-
-export async function _publishSignal_offline_committed(args: _publishSignalArgs) {
-
-    // checkpoint vault
-    await _addDummyAndCommit(args["vaultDepot"], "pre.publish.signal", "123")
-    await _addDummyAndCommit(args["pushDepot"], "pre.publish.signal", "123")
-
-    // publish
-    const signal = await _publishSignal_offline_uncommitted(args)
-    if (!signal) { return null; }
-
     // git add/commit
-    await _addDummyAndCommit(args["pushDepot"], "post.publish.signal", "123")
+    if (commitPushRepo) {
+        await _addDummyAndCommit(pushDepot, "post.publish.signal", "123")
+    }
+
+    if (pushPushRepo) {
+        await _justPush(pushDepot, { tout: 10 })
+    }
     
-    return signal 
-}
+    if (notify) { 
+        _publishedSignalNotification(signal)
+    }
 
-export async function _publishSignal_online_committed(args: _publishSignalArgs) {
-
-    // publish/commit
-    const signal = await _publishSignal_offline_committed(args)
-    if (!signal) { return null; }
-
-    // push
-    await _justPush(args["pushDepot"], { tout: 10 })
-    
-    return signal 
+    return signal
 }
 
 // MARK: resolve
@@ -192,7 +199,13 @@ export async function _publishSignal_online_committed(args: _publishSignalArgs) 
     This is an offline method
 */ 
 
-interface runSignalEventsArgs {
+export interface _resolveSignalControlArgs {
+    commitVaultDepo: boolean,
+    pullVaultRepo: boolean,
+    notify: boolean
+}
+
+interface resolveSignalEventsArgs extends _resolveSignalControlArgs {
     vaultDepot: string,
     pushDepot: string,
     pullDepot: string,
@@ -223,17 +236,25 @@ export type ObaSyncEventID =
 /*
     Check manifests and run event callbacks
 */ 
-export async function runSignalEvents({
+export async function resolveSignalEvents({
     vaultDepot,
     pushDepot,
     pullDepot,
     vaultUserName, 
     channelName, 
-    manType
-}: runSignalEventsArgs) {
+    manType,
+    commitVaultDepo,
+    pullVaultRepo,
+    notify // TODO
+}: resolveSignalEventsArgs) {
 
     // checkpoint vault
-    await _addDummyAndCommit(vaultDepot, "obasync.pre.run.signal.event", "123")
+    if (commitVaultDepo) {
+        await _addDummyAndCommit(vaultDepot, "obasync.pre.resolve.signal.event", "123")
+    }
+    if (pullVaultRepo) {
+        await _fetchCheckoutPull(pullDepot, { tout: 10 }) 
+    }
 
     // load manifests
     const manIder = { channelName, manType }
@@ -348,6 +369,39 @@ export async function runSignalEvents({
 
 }
 
+export async function resolveVaultSignalEvents(
+    controlArgs: _resolveSignalControlArgs
+) {
+    console.log("resolveVaultSignalEvents")
+    const channelsConfig = getObaConfig("obasync.channels", {})
+    const vaultUserName = getObaConfig("obasync.me", null)
+    const vaultDepot = getVaultDir()
+    for (const channelName in channelsConfig) {
+        console.log("==============================")
+        console.log("resolveVaultSignalEvents:channelName: ", channelName)
+        const channelConfig = channelsConfig?.[channelName] || {}
+        console.log("resolveVaultSignalEvents:channelConfig: ", channelConfig)
+        const pushDepot = channelConfig?.["push.depot"] || null
+        console.log("resolveVaultSignalEvents:pushDepot: ", pushDepot)
+        const pullDepots = channelConfig?.["pull.depots"] || []
+        console.log("resolveVaultSignalEvents:pullDepots: ", pullDepots)
+        for (const pullDepot of pullDepots) {
+            console.log("------------------------------")
+            console.log("resolveVaultSignalEvents:pullDepot: ", pullDepot)
+            // process
+            console.log("------------------------------")
+            console.log("resolveVaultSignalEvents:resolveSignalEvents")
+            await resolveSignalEvents({
+                vaultDepot, pushDepot, pullDepot,
+                manType: 'main', //TODO/ interfece with Oba.json
+                vaultUserName,
+                channelName,
+                ...controlArgs
+            })
+        }
+    }
+}
+
 // MARK: register
 export interface SignalHandlerArgs {
     context: ObaSyncCallbackContext, 
@@ -433,14 +487,17 @@ export function registerSignalEventHandler({
 
                         // record signal in vault manifest
                         // TODO/ maybe let the _publishSignal to be optional
-                        // await _publishSignal_offline_committed({
-                        await _publishSignal_online_committed({
+                        await publishSignal({
                             vaultDepot,
                             pushDepot,
                             committerName: handlerName,
                             manIder,
                             signalTemplate,
-                            hashDig: []
+                            hashDig: [],
+                            commitPushRepo: true,
+                            commitVaultRepo: true,
+                            pushPushRepo: true,
+                            notify: true
                         })
                         
                     }

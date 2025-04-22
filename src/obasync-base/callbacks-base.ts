@@ -1,13 +1,12 @@
 import { Notice } from "obsidian";
 import { getObaConfig } from "src/oba-base/obaconfig";
 import { checkEnable } from "src/tools-base/oba-tools";
-import { getVaultDir } from "src/tools-base/obsidian-tools";
 import { TaskState } from "src/tools-base/schedule-tools";
 import { DelayManager } from "src/tools-base/utils-tools";
-import { _addDummyAndCommitAndPush, _fetchCheckoutPull } from "./channels-base";
+import { _addDummyAndCommitAndPush } from "./channels-base";
 import { _handleDownloadFile } from "./modifiedFileSignal-base";
 import { ObaSyncScheduler } from "./obasync";
-import { _publishSignal_offline_committed, _publishSignal_online_committed, _publishSignalArgs, HandlingStatus, ObaSyncCallbackContext, ObaSyncSignal, registerSignalEventHandler, runSignalEvents, SignalHandlerArgs } from "./signals-base";
+import { _publishSignalControlArgs, HandlingStatus, ObaSyncCallbackContext, registerSignalEventHandler, SignalHandlerArgs } from "./signals-base";
 
 const ANYMOVE_DELAY: DelayManager = 
     new DelayManager(1000, 1001, -1, -1) // no delay
@@ -98,18 +97,18 @@ export function _serviceCallbacks() {
                 id: `pullAndProcessSignals.base`,
                 deltaGas: 1,
                 taskFun: async (task: TaskState) => {
+                    
+                    // pull/run
                     // console.clear()
-                    await runSignalEventsAll(true)
                     new Notice(`Auto pulling`, 1000)
+                    await resolveVaultSignalEvents({
+                        commitVaultDepo: true,
+                        pullVaultRepo: true,
+                        notify: true,
+                    })
                     task["gas"] = 0
-                }
-            })
 
-            // push channels
-            ObaSyncScheduler.spawn({
-                id: `autoPush`,
-                deltaGas: 1,
-                taskFun: async (task: TaskState) => {
+                    // push
                     new Notice(`Auto pushing`, 1000)
                     const channelsConfig = getObaConfig("obasync.channels", {})
                     for (const channelName in channelsConfig) {
@@ -122,6 +121,15 @@ export function _serviceCallbacks() {
                         )
                         task["gas"] = 0
                     }
+                }
+            })
+
+            // push channels
+            ObaSyncScheduler.spawn({
+                id: `autoPush`,
+                deltaGas: 1,
+                taskFun: async (task: TaskState) => {
+                    
                 }
             })
         }, 
@@ -147,7 +155,10 @@ export function _serviceCallbacks() {
 
     // download.files
     _registerModifiedFilesHandler({
-        _publishSignalFun: _publishSignal_online_committed
+        commitPushRepo: true,
+        commitVaultRepo: true,
+        pushPushRepo: true,
+        notify: true
     })
 
     // // MARK: activity mon
@@ -180,11 +191,10 @@ let SPAWN_MOD_FILE_DELAY: {[keys: string]: DelayManager} = {}
 // deltaGas?: number,
 // taskIDDigFun?: (context: ObaSyncCallbackContext) => string[]
 
-function _registerModifiedFilesHandler({
-    _publishSignalFun
-}:{
-    _publishSignalFun: (args: _publishSignalArgs) => Promise<ObaSyncSignal>,
-}) {
+
+function _registerModifiedFilesHandler(
+    controlArgs: _publishSignalControlArgs
+) {
     const handlerName = getObaConfig("obasync.me", null)
     if (!handlerName) { return; }
     registerSignalEventHandler({
@@ -212,7 +222,7 @@ function _registerModifiedFilesHandler({
             return await _handleDownloadFile({
                 context,
                 channelsConfig,
-                _publishSignalFun
+                controlArgs
             })
         }
     })
@@ -233,7 +243,11 @@ export async function _pullAndRunSignalEventsCallback(
                 taskFun: async (task: TaskState) => {
                     // console.clear()
                     if(task["gas"] > 1) { task["gas"] = 1 }
-                    await runSignalEventsAll(pull)
+                    await resolveVaultSignalEvents({
+                        commitVaultDepo: true,
+                        pullVaultRepo: true,
+                        notify: true,
+                    })
                     new Notice("pullAndProcessSignals.first", 2000)
                 }
             })
@@ -246,7 +260,11 @@ export async function _pullAndRunSignalEventsCallback(
                     // console.clear()
                     if(task["gas"] > 100) { task["gas"] = 100}
                     if(task["gas"] > 0) { return; }
-                    await runSignalEventsAll(pull)
+                    await resolveVaultSignalEvents({
+                        commitVaultDepo: true,
+                        pullVaultRepo: true,
+                        notify: true,
+                    })
                     new Notice("pullAndProcessSignals.last", 2000)
                 }
             })
@@ -259,41 +277,3 @@ export async function _pullAndRunSignalEventsCallback(
 
 }
 
-export async function runSignalEventsAll(
-    pull = true,
-) {
-    console.log("runSignalEventsAll")
-    const channelsConfig = getObaConfig("obasync.channels", {})
-    const vaultUserName = getObaConfig("obasync.me", null)
-    const vaultDepot = getVaultDir()
-    for (const channelName in channelsConfig) {
-        console.log("==============================")
-        console.log("runSignalEventsAll:channelName: ", channelName)
-        const channelConfig = channelsConfig?.[channelName] || {}
-        console.log("runSignalEventsAll:channelConfig: ", channelConfig)
-        const pushDepot = channelConfig?.["push.depot"] || null
-        console.log("runSignalEventsAll:pushDepot: ", pushDepot)
-        const pullDepots = channelConfig?.["pull.depots"] || []
-        console.log("runSignalEventsAll:pullDepots: ", pullDepots)
-        for (const pullDepot of pullDepots) {
-            console.log("------------------------------")
-            console.log("runSignalEventsAll:pullDepot: ", pullDepot)
-            // pull
-            if (pull) {
-                console.log("------------------------------")
-                console.log("runSignalEventsAll:_fetchCheckoutPull")
-                await _fetchCheckoutPull(pullDepot, { tout: 10 }) 
-            }
-            // process
-            console.log("------------------------------")
-            console.log("runSignalEventsAll:runSignalEvents")
-            await runSignalEvents({
-                vaultDepot, pushDepot, pullDepot,
-                manType: 'main',
-                vaultUserName,
-                channelName
-            })
-
-        }
-    }
-}

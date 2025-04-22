@@ -7,7 +7,7 @@ import { TaskState } from "src/tools-base/schedule-tools";
 import { ObaSyncManifestIder } from "./manifests-base";
 import { ObaSyncScheduler } from "./obasync";
 import { getNoteObaSyncScope } from "./scope-base";
-import { _publishedSignalNotification, _publishSignalArgs, HandlingStatus, ObaSyncCallbackContext, ObaSyncSignal } from "./signals-base";
+import { _publishedSignalNotification, _publishSignalArgs, _publishSignalControlArgs, HandlingStatus, ObaSyncCallbackContext, ObaSyncSignal, publishSignal } from "./signals-base";
 
 const PulledMTimeReg = {} as {[keys: string]: number}
 
@@ -17,14 +17,14 @@ export async function _commitModifiedFileSignal({
     manIder,
     committerName,
     channelsConfig,
-    _publishSignalFun,
+    controlArgs,
     checkPulledMTime,
 } : {
     vaultFile: string,
     manIder: ObaSyncManifestIder,
     committerName: string,
     channelsConfig: any,
-    _publishSignalFun: (args: _publishSignalArgs) => Promise<ObaSyncSignal>,
+    controlArgs: _publishSignalControlArgs,
     checkPulledMTime: boolean
 }): Promise<HandlingStatus> {
 
@@ -77,7 +77,7 @@ export async function _commitModifiedFileSignal({
     const pushDepot = channelConfig?.["push.depot"] || null
     const vaultDepot = getVaultDir()
 
-    const signal = await _publishSignalFun({
+    const signal = await publishSignal({
         vaultDepot,
         pushDepot,
         committerName,
@@ -95,14 +95,12 @@ export async function _commitModifiedFileSignal({
             copyFileSync(vaultFile, pushRepoPath)
             console.log(`Copied ${vaultFile} -> ${pushRepoPath}`)
         },
+        ...controlArgs
     })
     if (!signal) { 
         console.error("!signal == true");
         return "error"; 
     }
-
-    // signal
-    _publishedSignalNotification(signal)
     
     return "handler.ok"
 }
@@ -110,12 +108,12 @@ export async function _commitModifiedFileSignal({
 // MARK: spawn
 export async function _spawnModifiedFileSignal({
     vaultFile, 
-    _publishSignalFun,
     checkPulledMTime,
+    controlArgs,
 }: {
     vaultFile: string, 
     checkPulledMTime: boolean,
-    _publishSignalFun: (args: _publishSignalArgs) => Promise<ObaSyncSignal>
+    controlArgs: _publishSignalControlArgs,
 }) {
     console.log("--------------------------")
     console.log("_spawnModifiedFileSignal")
@@ -138,9 +136,9 @@ export async function _spawnModifiedFileSignal({
                     vaultFile,
                     manIder,
                     committerName,
-                    _publishSignalFun,
                     channelsConfig,
                     checkPulledMTime,
+                    controlArgs,
                 })
             }
             // clamp gas
@@ -157,11 +155,11 @@ export async function _spawnModifiedFileSignal({
 export async function _handleDownloadFile({
     context,
     channelsConfig,
-    _publishSignalFun
+    controlArgs
 }: {
     context: ObaSyncCallbackContext,
     channelsConfig: any,
-    _publishSignalFun: (args: _publishSignalArgs) => Promise<ObaSyncSignal>,
+    controlArgs: _publishSignalControlArgs
 }): Promise<HandlingStatus> {
 
     console.log("--------------------------")
@@ -216,9 +214,9 @@ export async function _handleDownloadFile({
             vaultFile,
             manIder,
             committerName: vaultUserName,
-            _publishSignalFun,
             channelsConfig,
             checkPulledMTime: true,
+            controlArgs,
         })
     }
 

@@ -1,9 +1,8 @@
 import { OBA } from "src/oba-base/globals"
 import { getCurrNotePath } from "src/tools-base/obsidian-tools"
 import { DelayManager } from "src/tools-base/utils-tools"
-import { runSignalEventsAll } from "./callbacks-base"
 import { _spawnModifiedFileSignal } from "./modifiedFileSignal-base"
-import { _publishSignal_online_committed } from "./signals-base"
+import { resolveVaultSignalEvents } from "./signals-base"
 
 
 const COMMAND_SPAWN_MOD_FILE_TIME = new DelayManager(1000, 100, 1000, -1)
@@ -24,8 +23,13 @@ export function _serviceCommands() {
             await sleep(1000)
             await _spawnModifiedFileSignal({
                 vaultFile, 
-                _publishSignalFun: _publishSignal_online_committed,
-                checkPulledMTime: false
+                checkPulledMTime: false,
+                controlArgs: {
+                    commitPushRepo: true,
+                    commitVaultRepo: true, 
+                    pushPushRepo: true,
+                    notify: true
+                },
             })
         }
     });
@@ -35,7 +39,11 @@ export function _serviceCommands() {
         name: "ObaSync _pullAndRunSignalEventsCallback",
         callback: async () => {
             console.clear()
-            await runSignalEventsAll(true)
+            await resolveVaultSignalEvents({
+                commitVaultDepo: true,
+                pullVaultRepo: true,
+                notify: true,
+            })
         }
     });
 }

@@ -10,12 +10,11 @@ import { SequentialAsyncScheduler, TaskState } from "src/tools-base/schedule-too
     Main module to handle syncronization with other vaults
 */
 
-export let ObaSyncScheduler: SequentialAsyncScheduler;
+export const ObaSyncScheduler = new SequentialAsyncScheduler();
 
 export function onload() {
     console.log("ObaSync:onload");
     // Order matter?
-    ObaSyncScheduler = new SequentialAsyncScheduler()
     _serviceCommands()
     _serviceCallbacks()
     ObaSyncScheduler.run()
