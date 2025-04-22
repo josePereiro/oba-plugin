@@ -7,39 +7,45 @@ import { TaskState } from "src/tools-base/schedule-tools";
 import { ObaSyncManifestIder } from "./manifests-base";
 import { ObaSyncScheduler } from "./obasync";
 import { getNoteObaSyncScope } from "./scope-base";
-import { commitObaSyncSignal, HandlingStatus, ObaSyncCallbackContext } from "./signals-base";
+import { _publishedSignalNotification, _publishSignalArgs, HandlingStatus, ObaSyncCallbackContext, ObaSyncSignal } from "./signals-base";
 
 const PulledMTimeReg = {} as {[keys: string]: number}
 
 // MARK: commit
-export async function _commitModifiedFileSignal(
-    localFile: string,
+export async function _commitModifiedFileSignal({
+    vaultFile,
+    manIder,
+    committerName,
+    channelsConfig,
+    _publishSignalFun,
+    checkPulledMTime,
+} : {
+    vaultFile: string,
     manIder: ObaSyncManifestIder,
     committerName: string,
     channelsConfig: any,
-    {
-        checkPulledMTime = true
-    }
-): Promise<HandlingStatus> {
+    _publishSignalFun: (args: _publishSignalArgs) => Promise<ObaSyncSignal>,
+    checkPulledMTime: boolean
+}): Promise<HandlingStatus> {
 
     console.log("--------------------------")
     console.log("_commitModifiedFileSignal")
 
     // context data
-    if (!localFile) { 
-        console.error("Null localFile!");
+    if (!vaultFile) { 
+        console.error("Null vaultFile!");
         return "error"; 
     }
-    if (!existsSync(localFile)) { 
-        console.error("Missing localFile!");
+    if (!existsSync(vaultFile)) { 
+        console.error("Missing vaultFile!");
         return "error"; 
     }
 
     // check last pulled
     const { channelName } = manIder
     if (checkPulledMTime) {
-        const pulledKey = `${channelName}:${localFile}`
-        const currMTime = statSync(localFile).mtimeMs
+        const pulledKey = `${channelName}:${vaultFile}`
+        const currMTime = statSync(vaultFile).mtimeMs
         const regMTime = PulledMTimeReg?.[pulledKey] || -1
         if (currMTime == regMTime) {
             new Notice(`Ignored: currMTime == regMTime, ${pulledKey}`)
@@ -57,7 +63,7 @@ export async function _commitModifiedFileSignal(
         }
     }
     
-    const scopes = await getNoteObaSyncScope(localFile, channelsConfig) || []
+    const scopes = await getNoteObaSyncScope(vaultFile, channelsConfig) || []
 
     // check scope
     const inScope = scopes.contains(channelName)
@@ -66,12 +72,12 @@ export async function _commitModifiedFileSignal(
         return "error"; 
     }
     
-    const localFileName = path.basename(localFile)
+    const localFileName = path.basename(vaultFile)
     const channelConfig = channelsConfig?.[channelName] || {}
     const pushDepot = channelConfig?.["push.depot"] || null
     const vaultDepot = getVaultDir()
 
-    await commitObaSyncSignal({
+    const signal = await _publishSignalFun({
         vaultDepot,
         pushDepot,
         committerName,
@@ -86,45 +92,56 @@ export async function _commitModifiedFileSignal(
         callback: () => {
             // copy file
             const pushRepoPath = path.join(pushDepot, localFileName)
-            copyFileSync(localFile, pushRepoPath)
-            console.log(`Copied ${localFile} -> ${pushRepoPath}`)
+            copyFileSync(vaultFile, pushRepoPath)
+            console.log(`Copied ${vaultFile} -> ${pushRepoPath}`)
         },
     })
+    if (!signal) { 
+        console.error("!signal == true");
+        return "error"; 
+    }
+
+    // signal
+    _publishedSignalNotification(signal)
     
     return "handler.ok"
 }
 
 // MARK: spawn
-export async function _spawnModifiedFileSignal(
-    localFile: string, 
-    {
-        checkPulledMTime = true
-    }
-) {
+export async function _spawnModifiedFileSignal({
+    vaultFile, 
+    _publishSignalFun,
+    checkPulledMTime,
+}: {
+    vaultFile: string, 
+    checkPulledMTime: boolean,
+    _publishSignalFun: (args: _publishSignalArgs) => Promise<ObaSyncSignal>
+}) {
     console.log("--------------------------")
     console.log("_spawnModifiedFileSignal")
 
     ObaSyncScheduler.spawn({
-        id: `publishFileVersion:${localFile}`,
+        id: `publishFileVersion:${vaultFile}`,
         deltaGas: 1,
         taskFun: async (task: TaskState) => {
             const committerName = getObaConfig("obasync.me", null)
             if (!committerName) { return; }
             const channelsConfig = getObaConfig("obasync.channels", {})
             console.log("channelsConfig: ", channelsConfig)
-            const scope = await getNoteObaSyncScope(localFile, channelsConfig) || []
+            const scope = await getNoteObaSyncScope(vaultFile, channelsConfig) || []
             console.log("scope: ", scope)
             for (const channelName of scope) {
-                // TODO/ Thinkhow to include man type in configuration
+                // TODO/ Think how to include man type in configuration
                 // or think how to discover them from disk...
                 const manIder = {channelName, manType: 'main'} 
-                await _commitModifiedFileSignal(
-                    localFile,
+                await _commitModifiedFileSignal({
+                    vaultFile,
                     manIder,
                     committerName,
+                    _publishSignalFun,
                     channelsConfig,
-                    { checkPulledMTime }
-                )                
+                    checkPulledMTime,
+                })
             }
             // clamp gas
             if (task["gas"] > 1) {
@@ -137,10 +154,15 @@ export async function _spawnModifiedFileSignal(
 // MARK: handle
 // TODO/ rename
 
-export async function _handleDownloadFile(
+export async function _handleDownloadFile({
+    context,
+    channelsConfig,
+    _publishSignalFun
+}: {
     context: ObaSyncCallbackContext,
     channelsConfig: any,
-): Promise<HandlingStatus> {
+    _publishSignalFun: (args: _publishSignalArgs) => Promise<ObaSyncSignal>,
+}): Promise<HandlingStatus> {
 
     console.log("--------------------------")
     console.log("_handleDownloadFile")
@@ -189,7 +211,15 @@ export async function _handleDownloadFile(
         console.log(`echo.channelName: ${channelName1}`)
         // TODO/ handle returned status
         const manIder = {channelName: channelName1, manType} 
-        await _commitModifiedFileSignal(vaultFile, manIder, vaultUserName, channelsConfig, { checkPulledMTime: true })
+        // await _commitModifiedFileSignal(vaultFile, manIder, vaultUserName, channelsConfig, { checkPulledMTime: true })
+        await _commitModifiedFileSignal({
+            vaultFile,
+            manIder,
+            committerName: vaultUserName,
+            _publishSignalFun,
+            channelsConfig,
+            checkPulledMTime: true,
+        })
     }
 
     return "handler.ok"

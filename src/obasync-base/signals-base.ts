@@ -46,20 +46,12 @@ function _signalHashKey(val0: string, ...vals: string[]) {
     return hash
 }
 
-// MARK: commit 
+// MARK: publish
 /*
     This is an offline method
 */ 
 
-export async function commitObaSyncSignal({
-    vaultDepot,
-    pushDepot,
-    committerName,
-    manIder,
-    signalTemplate,
-    hashDig,
-    callback = () => null,
-}: {
+export interface _publishSignalArgs {
     vaultDepot: string,
     pushDepot: string,
     committerName: string,
@@ -67,14 +59,34 @@ export async function commitObaSyncSignal({
     signalTemplate: ObaSyncSignal,
     hashDig: string[],
     callback?: (() => any),
-}) {
+}
 
-    // checkpoint vault
-    await _addDummyAndCommit(vaultDepot, "obasync.pre.commit.signal", "123")
-    
-    // mod vault manifest
-    await _addDummyAndCommit(vaultDepot, "pre.commit.signal", randstring())
-    await _addDummyAndCommit(pushDepot, "pre.commit.signal", "123")
+export function _publishedSignalNotification(
+    signal: ObaSyncSignal
+) {
+    const msg = [
+        `Signal committed`,
+        ` - type: ${signal["type"]}`,
+        ` - creator.name: ${signal["creator.name"]}`,
+        ` - committer.name: ${signal["committer.name"]}`,
+        ` - creator.channelName: ${signal["creator.channelName"]}`,
+        ` - creator.hashKey: ${signal["creator.hashKey"]}`,
+        ` - creator.timestamp: ${signal["creator.timestamp"]}`,
+    ].join("\n")
+    console.log(msg)
+    console.log('Committed signal: ', signal)
+    new Notice(msg, 1 * 60 * 1000)
+}
+
+export async function _publishSignal_offline_uncommitted({
+    vaultDepot,
+    pushDepot,
+    committerName,
+    manIder,
+    signalTemplate,
+    hashDig,
+    callback = () => null,
+}: _publishSignalArgs ) {
 
     // mod vault manifest
     const vManIO = manifestJsonIO(vaultDepot, manIder)
@@ -123,16 +135,16 @@ export async function commitObaSyncSignal({
         }
     )
     
-    // ii. setup push depot
+    // setup push depot
     // check pusher
     const rManIO = manifestJsonIO(pushDepot, manIder)
-    if (!checkPusher(manIder, rManIO)) { return; }
+    if (!checkPusher(manIder, rManIO)) { return null; }
 
-    // iii. callback
+    // callback
     const flag = await callback()
-    if (flag == 'abort') { return; }
+    if (flag == 'abort') { return null; }
 
-    // iv. copy vault manifest to push depot
+    // copy vault manifest to push depot
     console.log(`Copying manifests`)
     const srcManFile = vManIO.retFile()
     const destManFile = rManIO.retFile()
@@ -141,25 +153,38 @@ export async function commitObaSyncSignal({
     console.log(`vaultMan: `, vManIO.loadd({}).retDepot())
     console.log(`pulledMan: `, rManIO.loadd({}).retDepot())
 
-    // v. git add/commit
-    await _addDummyAndCommit(pushDepot, "post.commit.signal", "123")
-    await _justPush(pushDepot, { tout: 10 })
-
-    const msg = [
-        `Signal committed`,
-        ` - type: ${signal["type"]}`,
-        ` - creator.name: ${signal["creator.name"]}`,
-        ` - committer.name: ${signal["committer.name"]}`,
-        ` - creator.channelName: ${signal["creator.channelName"]}`,
-        ` - creator.hashKey: ${signal["creator.hashKey"]}`,
-        ` - creator.timestamp: ${signal["creator.timestamp"]}`,
-    ].join("\n")
-    console.log(msg)
-    console.log('Committed signal: ', signal)
-    new Notice(msg, 1 * 60 * 1000)
+    return signal
 }
 
-// MARK: process
+export async function _publishSignal_offline_committed(args: _publishSignalArgs) {
+
+    // checkpoint vault
+    await _addDummyAndCommit(args["vaultDepot"], "pre.publish.signal", "123")
+    await _addDummyAndCommit(args["pushDepot"], "pre.publish.signal", "123")
+
+    // publish
+    const signal = await _publishSignal_offline_uncommitted(args)
+    if (!signal) { return null; }
+
+    // git add/commit
+    await _addDummyAndCommit(args["pushDepot"], "post.publish.signal", "123")
+    
+    return signal 
+}
+
+export async function _publishSignal_online_committed(args: _publishSignalArgs) {
+
+    // publish/commit
+    const signal = await _publishSignal_offline_committed(args)
+    if (!signal) { return null; }
+
+    // push
+    await _justPush(args["pushDepot"], { tout: 10 })
+    
+    return signal 
+}
+
+// MARK: resolve
 /*
     Run the callbacks for each signal event
     - bla0 means something from vault manifest
@@ -407,7 +432,9 @@ export function registerSignalEventHandler({
                         }
 
                         // record signal in vault manifest
-                        await commitObaSyncSignal({
+                        // TODO/ maybe let the _publishSignal to be optional
+                        // await _publishSignal_offline_committed({
+                        await _publishSignal_online_committed({
                             vaultDepot,
                             pushDepot,
                             committerName: handlerName,

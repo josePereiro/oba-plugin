@@ -7,7 +7,7 @@ import { DelayManager } from "src/tools-base/utils-tools";
 import { _addDummyAndCommitAndPush, _fetchCheckoutPull } from "./channels-base";
 import { _handleDownloadFile } from "./modifiedFileSignal-base";
 import { ObaSyncScheduler } from "./obasync";
-import { HandlingStatus, ObaSyncCallbackContext, registerSignalEventHandler, runSignalEvents, SignalHandlerArgs } from "./signals-base";
+import { _publishSignal_offline_committed, _publishSignal_online_committed, _publishSignalArgs, HandlingStatus, ObaSyncCallbackContext, ObaSyncSignal, registerSignalEventHandler, runSignalEvents, SignalHandlerArgs } from "./signals-base";
 
 const ANYMOVE_DELAY: DelayManager = 
     new DelayManager(1000, 1001, -1, -1) // no delay
@@ -146,7 +146,9 @@ export function _serviceCallbacks() {
     // );
 
     // download.files
-    _registerModifiedFilesHandler()
+    _registerModifiedFilesHandler({
+        _publishSignalFun: _publishSignal_online_committed
+    })
 
     // // MARK: activity mon
     // // {
@@ -178,7 +180,11 @@ let SPAWN_MOD_FILE_DELAY: {[keys: string]: DelayManager} = {}
 // deltaGas?: number,
 // taskIDDigFun?: (context: ObaSyncCallbackContext) => string[]
 
-function _registerModifiedFilesHandler() {
+function _registerModifiedFilesHandler({
+    _publishSignalFun
+}:{
+    _publishSignalFun: (args: _publishSignalArgs) => Promise<ObaSyncSignal>,
+}) {
     const handlerName = getObaConfig("obasync.me", null)
     if (!handlerName) { return; }
     registerSignalEventHandler({
@@ -203,7 +209,11 @@ function _registerModifiedFilesHandler() {
             const task = arg["task"]
             task["gas"] = 0 // Do once
 
-            return await _handleDownloadFile(context, channelsConfig)
+            return await _handleDownloadFile({
+                context,
+                channelsConfig,
+                _publishSignalFun
+            })
         }
     })
 }

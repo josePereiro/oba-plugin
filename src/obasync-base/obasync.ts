@@ -14,10 +14,10 @@ export let ObaSyncScheduler: SequentialAsyncScheduler;
 
 export function onload() {
     console.log("ObaSync:onload");
-    // DEV
+    // Order matter?
+    ObaSyncScheduler = new SequentialAsyncScheduler()
     _serviceCommands()
     _serviceCallbacks()
-    ObaSyncScheduler = new SequentialAsyncScheduler()
     ObaSyncScheduler.run()
 
 }
