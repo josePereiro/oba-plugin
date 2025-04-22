@@ -487,13 +487,13 @@ export function registerSignalEventHandler({
                         // notice
                         const msg = [
                             `Signal processed succesfully`,
-                            ` - type: ${pulledSignal["type"]}`,
-                            ` - handler.name: ${pulledSignal["handler.name"]}`,
-                            ` - handler.channelName: ${pulledSignal["handler.channelName"]}`,
-                            ` - creator.hashKey: ${pulledSignal["creator.hashKey"]}`,
-                            ` - creator.name: ${pulledSignal["creator.name"]}`,
-                            ` - creator.channelName: ${pulledSignal["creator.channelName"]}`,
-                            ` - creator.timestamp: ${pulledSignal["creator.timestamp"]}`,
+                            ` - type: ${signalTemplate["type"]}`,
+                            ` - handler.name: ${signalTemplate["handler.name"]}`,
+                            ` - handler.channelName: ${signalTemplate["handler.channelName"]}`,
+                            ` - creator.hashKey: ${signalTemplate["creator.hashKey"]}`,
+                            ` - creator.name: ${signalTemplate["creator.name"]}`,
+                            ` - creator.channelName: ${signalTemplate["creator.channelName"]}`,
+                            ` - creator.timestamp: ${signalTemplate["creator.timestamp"]}`,
                             ` - eventID: ${eventID}`,
                         ].join("\n")
                         new Notice(msg, 1 * 60 * 1000)

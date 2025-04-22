@@ -7,6 +7,9 @@ import { publishModifiedFileSignal } from "./modifiedFileSignal-base"
 import { ObaSyncScheduler } from "./obasync"
 import { getNoteObaSyncScope } from "./scope-base"
 import { resolveVaultSignalEvents } from "./signals-base"
+import { _justPush } from "./channels-base"
+import { Notice } from "obsidian"
+import { getObaSyncFlag, setObaSyncFlag } from "./obasync-base"
 
 
 const COMMAND_SPAWN_MOD_FILE_TIME = new DelayManager(1000, 100, 1000, -1)
@@ -27,7 +30,7 @@ export function _serviceCommands() {
             if (!vaultFile) { return; }
 
             ObaSyncScheduler.spawn({
-                id: `publishFileVersion:${vaultFile}:push`,
+                id: `oba-obasync-spawnModifiedFileSignal:${vaultFile}`,
                 deltaGas: 1,
                 taskFun: async (task: TaskState) => {
                     const committerName = getObaConfig("obasync.me", null)
@@ -49,7 +52,7 @@ export function _serviceCommands() {
                             controlArgs: {
                                 commitVaultRepo: true,
                                 commitPushRepo: true,
-                                pushPushRepo: true,
+                                pushPushRepo: getObaSyncFlag(`online.mode`, false),
                                 notify: true
                             }
                         })
@@ -69,15 +72,62 @@ export function _serviceCommands() {
         name: "ObaSync spawnResolveVaultSignalEvents",
         callback: async () => {
             ObaSyncScheduler.spawn({
-                id: `resolveVaultSignalEvents`,
+                id: `oba-obasync-spawnResolveVaultSignalEvents`,
                 deltaGas: 1,
                 taskFun: async (task: TaskState) => {
                     await resolveVaultSignalEvents({
                         commitVaultDepo: true,
-                        pullVaultRepo: true,
+                        pullVaultRepo: getObaSyncFlag(`online.mode`, false),
                         notify: true,
                     })
                     task["gas"] = 0
+                }
+            })
+        }
+    });
+
+    OBA.addCommand({
+        id: "oba-obasync-flip-online-mode",
+        name: "ObaSync flip online mode",
+        callback: async () => {
+
+            // set flags
+            setObaSyncFlag(`online.mode`, 
+                !getObaSyncFlag(`online.mode`, false)
+            )
+            new Notice(`ObaSync online mode: ${getObaSyncFlag(`online.mode`, false)}`, 1000)
+
+        }
+    });
+
+    OBA.addCommand({
+        id: "oba-obasync-push-all",
+        name: "ObaSync push-all",
+        callback: async () => {
+
+            // spawn push
+            ObaSyncScheduler.spawn({
+                id: `oba-obasync-push-all`,
+                deltaGas: 100,
+                taskFun: async (task: TaskState) => {
+                    if (task["gas"] > 100) {
+                        task["gas"] = 100
+                    }
+                    // run at the end
+                    if (task["gas"] > 0) {
+                        return
+                    }
+                        
+                    const channelsConfig = getObaConfig("obasync.channels", {})
+                    for (const channelName in channelsConfig) {
+                        const pushDepot = channelsConfig[channelName]["push.depot"]
+                        await _justPush(pushDepot, {tout: 30})
+                        console.log(`Pushed ${channelName}`)
+                        new Notice(`Pushed ${channelName}`, 1000)
+                    }
+
+                    task["gas"] = 0
+                    
                 }
             })
         }

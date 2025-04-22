@@ -4,7 +4,9 @@ import { SequentialAsyncScheduler, TaskState } from "src/tools-base/schedule-too
 
 /*
     /TODO/ add actions when clicking a notice
-    /TODO/fix 
+    /TODO/ publish in a manifest, the local state of repos...
+    /TODO/ Make public (in pushRepo) log file for ObaSync stuff...
+        - This can help improve troubleshooting...
 */ 
 
 /*

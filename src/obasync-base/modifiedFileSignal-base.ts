@@ -8,7 +8,7 @@ import { _publishSignalControlArgs, HandlingStatus, ObaSyncCallbackContext, ObaS
 
 const PulledMTimeReg = {} as {[keys: string]: number}
 
-// MARK: commit
+// MARK: publish
 export async function publishModifiedFileSignal({
     vaultFile,
     manIder,

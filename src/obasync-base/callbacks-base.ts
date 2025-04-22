@@ -1,21 +1,23 @@
+import { Notice } from "obsidian";
 import { OBA } from "src/oba-base/globals";
 import { getObaConfig } from "src/oba-base/obaconfig";
 import { checkEnable } from "src/tools-base/oba-tools";
 import { getCurrNotePath } from "src/tools-base/obsidian-tools";
 import { TaskState } from "src/tools-base/schedule-tools";
 import { DelayManager } from "src/tools-base/utils-tools";
+import { _addDummyAndCommitAndPush, _justPush } from "./channels-base";
 import { _handleDownloadFile, publishModifiedFileSignal } from "./modifiedFileSignal-base";
 import { ObaSyncScheduler } from "./obasync";
+import { getObaSyncFlag } from "./obasync-base";
 import { getNoteObaSyncScope } from "./scope-base";
 import { _publishSignalControlArgs, HandlingStatus, ObaSyncCallbackContext, registerSignalEventHandler, resolveVaultSignalEvents, SignalHandlerArgs } from "./signals-base";
 
 const ANYMOVE_DELAY: DelayManager = 
     new DelayManager(1000, 1001, -1, -1) // no delay
 
-const ACT_MONITOR_DELAY: DelayManager = 
-    new DelayManager(10000, 1001, -1, -1) // no delay
-
 export let INTERVAL1_ID: number;
+
+const ONEDIT_SPAWN_MOD_FILE_TIME = new DelayManager(5000, 100, 5000, -1)
 
 export function _serviceCallbacks() {
     
@@ -91,144 +93,111 @@ export function _serviceCallbacks() {
     //     )
     // }
 
-    // INTERVAL1_ID = window.setInterval(
-    //     async () => {
-    //         // run signals
-    //         ObaSyncScheduler.spawn({
-    //             id: `pullAndProcessSignals.base`,
-    //             deltaGas: 1,
-    //             taskFun: async (task: TaskState) => {
+    INTERVAL1_ID = window.setInterval(
+        async () => {
+            // run signals
+            ObaSyncScheduler.spawn({
+                id: `automatic.sync`,
+                deltaGas: 1,
+                taskFun: async (task: TaskState) => {
                     
-    //                 // pull/run
-    //                 // console.clear()
-    //                 new Notice(`Auto pulling`, 1000)
-    //                 await resolveVaultSignalEvents({
-    //                     commitVaultDepo: true,
-    //                     pullVaultRepo: true,
-    //                     notify: true,
-    //                 })
-    //                 task["gas"] = 0
+                    // pull/run
+                    new Notice(`Auto pulling/resolving`, 1000)
+                    await resolveVaultSignalEvents({
+                        commitVaultDepo: true,
+                        pullVaultRepo: getObaSyncFlag(`online.mode`, false),
+                        notify: true,
+                    })
 
-    //                 // push
-    //                 new Notice(`Auto pushing`, 1000)
-    //                 const channelsConfig = getObaConfig("obasync.channels", {})
-    //                 for (const channelName in channelsConfig) {
-    //                     const channelConfig = channelsConfig[channelName]
-    //                     const pushDepot = channelConfig?.["push.depot"] || null
-    //                     if (!pushDepot) { continue; }
-    //                     await _addDummyAndCommitAndPush(
-    //                         pushDepot, "auto.commit.push", "123", 
-    //                         { tout: 10 }
-    //                     )
-    //                     task["gas"] = 0
-    //                 }
-    //             }
-    //         })
+                    // push
+                    new Notice(`Auto pushing`, 1000)
+                    const channelsConfig = getObaConfig("obasync.channels", {})
+                    for (const channelName in channelsConfig) {
+                        const channelConfig = channelsConfig[channelName]
+                        const pushDepot = channelConfig?.["push.depot"] || null
+                        if (!pushDepot) { continue; }
+                        await _addDummyAndCommitAndPush(
+                            pushDepot, "auto.commit.push", "123", 
+                            { tout: 10 }
+                        )
+                        task["gas"] = 0
+                    }
+                }
+            })
+        }, 
+        getObaConfig("obasync.auto.sync.period", 3 * 1000 * 60)
+    );
 
-    //         // push channels
-    //         ObaSyncScheduler.spawn({
-    //             id: `autoPush`,
-    //             deltaGas: 1,
-    //             taskFun: async (task: TaskState) => {
-                    
-    //             }
-    //         })
-    //     }, 
-    //     getObaConfig("obasync.auto.sync.period", 3 * 1000 * 60)
-    // );
+    // publish.files
+    OBA.registerEvent(
+        OBA.app.workspace.on('editor-change', async (...args) => {
+            console.clear()
+            // delay for saving
+            const flag = await ONEDIT_SPAWN_MOD_FILE_TIME.manageTime()
+            if (flag != 'go') { return; }
 
-    // // publish.files
-    // OBA.registerEvent(
-    //     OBA.app.workspace.on('editor-change', async (...args) => {
-    //         console.clear()
-    //         const vaultFile = getCurrNotePath()
-    //         if (!vaultFile) { return; }
+            const vaultFile = getCurrNotePath()
+            if (!vaultFile) { return; }
 
-    //         // delay
-    //         const delayManager = SPAWN_MOD_FILE_DELAY?.[vaultFile] 
-    //             || new DelayManager(5000, 100, 5000, -1) // no delay
-    //         const flag = await delayManager.manageTime()
-    //         if (flag != 'go') { return; }
+            ObaSyncScheduler.spawn({
+                id: `publishFileVersion:${vaultFile}:push`,
+                deltaGas: 1,
+                taskFun: async (task: TaskState) => {
+                    const committerName = getObaConfig("obasync.me", null)
+                    if (!committerName) { return; }
+                    const channelsConfig = getObaConfig("obasync.channels", {})
+                    const scope = await getNoteObaSyncScope(vaultFile, channelsConfig) || []
+                    // commit all
+                    for (const channelName of scope) {
+                        // TODO/ Think how to include man type in configuration
+                        // or think how to discover them from disk...
+                        const manIder = {channelName, manType: 'main'} 
+                        await publishModifiedFileSignal({
+                            vaultFile,
+                            manIder,
+                            committerName,
+                            channelsConfig,
+                            checkPulledMTime: false,
+                            controlArgs: {
+                                commitVaultRepo: true,
+                                commitPushRepo: true,
+                                pushPushRepo: false, // always offline (push later)
+                                notify: false
+                            }
+                        })
+                    }
 
-    //         // spawn
-    //         ObaSyncScheduler.spawn({
-    //             id: `publishFileVersion:${vaultFile}:push`,
-    //             deltaGas: 1,
-    //             taskFun: async (task: TaskState) => {
-    //                 const committerName = getObaConfig("obasync.me", null)
-    //                 if (!committerName) { return; }
-    //                 const channelsConfig = getObaConfig("obasync.channels", {})
-    //                 console.log("channelsConfig: ", channelsConfig)
-    //                 const scope = await getNoteObaSyncScope(vaultFile, channelsConfig) || []
-    //                 console.log("scope: ", scope)
-    //                 for (const channelName of scope) {
-    //                     // TODO/ Think how to include man type in configuration
-    //                     // or think how to discover them from disk...
-    //                     const manIder = {channelName, manType: 'main'} 
-    //                     await publishModifiedFileSignal({
-    //                         vaultFile,
-    //                         manIder,
-    //                         committerName,
-    //                         channelsConfig,
-    //                         checkPulledMTime: false,
-    //                         controlArgs: {
-    //                             commitVaultRepo: true,
-    //                             commitPushRepo: true,
-    //                             pushPushRepo: false,
-    //                             notify: false
-    //                         }
-    //                     })
-    //                 }
-    //                 // clamp gas
-    //                 task["gas"] > 0
-    //             }, 
-    //         })
+                    // push all anyway(?)
+                    if (getObaSyncFlag(`online.mode`, false)) {
+                        for (const channelName of scope) {
+                            const pushDepot = channelsConfig?.[channelName]?.["push.depot"] || null
+                            if (!pushDepot) { continue; }
+                            await _justPush(pushDepot, {tout: 30})
+                            console.log(`Pushed ${channelName}`)
+                            new Notice(`Pushed ${channelName}`, 1000)
+                        }
+                    }
 
+                    // relove/pull
+                    await resolveVaultSignalEvents({
+                        commitVaultDepo: true,
+                        pullVaultRepo: getObaSyncFlag(`online.mode`, false),
+                        notify: true,
+                    })
 
-    //     })
-    // );
+                    // clamp gas
+                    task["gas"] = 0
+                }, 
+            })
+        })
+    );
 
     // download.files
-    _registerModifiedFilesHandler({
-        commitPushRepo: true,
-        commitVaultRepo: true,
-        pushPushRepo: true,
-        notify: true
-    })
-
-    // // MARK: activity mon
-    // // {
-    // //     const callbackID = `obasync.obsidian.anymove`
-    // //     registerObaCallback(
-    // //         callbackID, 
-    // //         async () => {
-    // //             const flag = await ACT_MONITOR_DELAY.manageTime()
-    // //             if (flag != "go") { return; }
-    // //             ObaSyncScheduler.spawn({
-    // //                 id: `obasync.obsidian.anymove:sendActivityMonitorSignal`,
-    // //                 taskFun: async (task: TaskState) => {
-    // //                     console.clear()
-    // //                     await _sendActivityMonitorSignal()
-    // //                     if (task["gas"] > 1) {
-    // //                         task["gas"] = 1
-    // //                     }
-    // //                 }
-    // //             })
-    // //         }
-    // //     )
-    // // }
-}
+    _registerModifiedFilesHandler()
     
-
-// DONE/TAI: create per note delay manager
-let SPAWN_MOD_FILE_DELAY: {[keys: string]: DelayManager} = {}
-
-// deltaGas?: number,
-// taskIDDigFun?: (context: ObaSyncCallbackContext) => string[]
-
+}
 
 function _registerModifiedFilesHandler(
-    controlArgs: _publishSignalControlArgs
 ) {
     const handlerName = getObaConfig("obasync.me", null)
     if (!handlerName) { return; }
@@ -257,7 +226,12 @@ function _registerModifiedFilesHandler(
             return await _handleDownloadFile({
                 context,
                 channelsConfig,
-                controlArgs
+                controlArgs: {
+                    commitPushRepo: true,
+                    commitVaultRepo: true,
+                    pushPushRepo: getObaSyncFlag(`online.mode`, false),
+                    notify: true
+                }
             })
         }
     })
