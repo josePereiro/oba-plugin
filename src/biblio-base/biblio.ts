@@ -21,7 +21,7 @@ export function onload() {
         id: 'oba-biblio-get-selection-consensus-biblio',
         name: 'BiblIO get selection consensus biblIO',
         callback: async () => {
-            checkEnable("biblio", true)
+            checkEnable("biblio", { notice: true, err: true })
             console.clear();
             const sel = getSelectedText();
             console.log("sel: ", sel);

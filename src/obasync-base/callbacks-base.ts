@@ -137,56 +137,56 @@ export function _serviceCallbacks() {
     //     getObaConfig("obasync.auto.sync.period", 3 * 1000 * 60)
     // );
 
-    // publish.files
-    OBA.registerEvent(
-        OBA.app.workspace.on('editor-change', async (...args) => {
-            console.clear()
-            const vaultFile = getCurrNotePath()
-            if (!vaultFile) { return; }
+    // // publish.files
+    // OBA.registerEvent(
+    //     OBA.app.workspace.on('editor-change', async (...args) => {
+    //         console.clear()
+    //         const vaultFile = getCurrNotePath()
+    //         if (!vaultFile) { return; }
 
-            // delay
-            const delayManager = SPAWN_MOD_FILE_DELAY?.[vaultFile] 
-                || new DelayManager(5000, 100, 5000, -1) // no delay
-            const flag = await delayManager.manageTime()
-            if (flag != 'go') { return; }
+    //         // delay
+    //         const delayManager = SPAWN_MOD_FILE_DELAY?.[vaultFile] 
+    //             || new DelayManager(5000, 100, 5000, -1) // no delay
+    //         const flag = await delayManager.manageTime()
+    //         if (flag != 'go') { return; }
 
-            // spawn
-            ObaSyncScheduler.spawn({
-                id: `publishFileVersion:${vaultFile}:push`,
-                deltaGas: 1,
-                taskFun: async (task: TaskState) => {
-                    const committerName = getObaConfig("obasync.me", null)
-                    if (!committerName) { return; }
-                    const channelsConfig = getObaConfig("obasync.channels", {})
-                    console.log("channelsConfig: ", channelsConfig)
-                    const scope = await getNoteObaSyncScope(vaultFile, channelsConfig) || []
-                    console.log("scope: ", scope)
-                    for (const channelName of scope) {
-                        // TODO/ Think how to include man type in configuration
-                        // or think how to discover them from disk...
-                        const manIder = {channelName, manType: 'main'} 
-                        await publishModifiedFileSignal({
-                            vaultFile,
-                            manIder,
-                            committerName,
-                            channelsConfig,
-                            checkPulledMTime: false,
-                            controlArgs: {
-                                commitVaultRepo: true,
-                                commitPushRepo: true,
-                                pushPushRepo: false,
-                                notify: false
-                            }
-                        })
-                    }
-                    // clamp gas
-                    task["gas"] > 0
-                }, 
-            })
+    //         // spawn
+    //         ObaSyncScheduler.spawn({
+    //             id: `publishFileVersion:${vaultFile}:push`,
+    //             deltaGas: 1,
+    //             taskFun: async (task: TaskState) => {
+    //                 const committerName = getObaConfig("obasync.me", null)
+    //                 if (!committerName) { return; }
+    //                 const channelsConfig = getObaConfig("obasync.channels", {})
+    //                 console.log("channelsConfig: ", channelsConfig)
+    //                 const scope = await getNoteObaSyncScope(vaultFile, channelsConfig) || []
+    //                 console.log("scope: ", scope)
+    //                 for (const channelName of scope) {
+    //                     // TODO/ Think how to include man type in configuration
+    //                     // or think how to discover them from disk...
+    //                     const manIder = {channelName, manType: 'main'} 
+    //                     await publishModifiedFileSignal({
+    //                         vaultFile,
+    //                         manIder,
+    //                         committerName,
+    //                         channelsConfig,
+    //                         checkPulledMTime: false,
+    //                         controlArgs: {
+    //                             commitVaultRepo: true,
+    //                             commitPushRepo: true,
+    //                             pushPushRepo: false,
+    //                             notify: false
+    //                         }
+    //                     })
+    //                 }
+    //                 // clamp gas
+    //                 task["gas"] > 0
+    //             }, 
+    //         })
 
 
-        })
-    );
+    //     })
+    // );
 
     // download.files
     _registerModifiedFilesHandler({
