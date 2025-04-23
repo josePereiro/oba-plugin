@@ -10,7 +10,10 @@ const OBAURI_ACTION_NAME = "oba-uri";
 export function onload() {
     console.log("ObaUri:onload");
 
-    OBA.registerObsidianProtocolHandler(OBAURI_ACTION_NAME, async (params) => {
-        await callbacks.runObaCallbacks(`callbacks.obauri.action`, params);
+    OBA.registerObsidianProtocolHandler(OBAURI_ACTION_NAME, async (args) => {
+        await callbacks.runObaCallbacks({
+            callbackID:`callbacks.obauri.action`, 
+            args
+        });
     });
 }

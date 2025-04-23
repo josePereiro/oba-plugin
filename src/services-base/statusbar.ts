@@ -1,12 +1,16 @@
 import { OBA } from "src/oba-base/globals";
 import { checkEnable } from "src/tools-base/oba-tools";
-import { DelayManager } from "src/tools-base/utils-tools";
+import { TriggerManager } from "src/tools-base/schedule-tools";
 
 let STATUSBAR: HTMLElement
 // let lastLoggedTime = Date.now();
 // let loggingPeriod = 100; // ms
-
-const SETTEXT_DELAY: DelayManager = new DelayManager(100, 50, -1, -1)
+const SETTEXT_DELAY = 
+    new TriggerManager({
+        delayTime: -1,
+        ignoreTime: 100,
+        sleepTime: 51,
+    })
 
 export function onload() {
 
@@ -43,9 +47,10 @@ export function setText(
     force = false
 ) {
     if (force) { _setText(txt); return  } 
-    SETTEXT_DELAY.manageTime()
-    .then(flag => {
-        if (flag == "go") { _setText(txt) }
+    SETTEXT_DELAY.manage({
+        ongo() {
+            _setText(txt) 
+        },
     })
 }
 

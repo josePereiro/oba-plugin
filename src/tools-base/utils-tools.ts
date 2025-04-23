@@ -239,51 +239,6 @@ export function _extractField(key: string, ...sources: any[]) {
 } 
 
 
-export class DelayManager {
-
-    constructor(
-        public ignoreTime: number = 3000,
-        public sleepTime: number = 100,
-        public delayTime: number = 3000,
-        public lastAction: number = -1,
-    ) {}
-
-    public async manageTime({
-        prewait = () => null,
-        onwait = () => null,
-        onnotyet = () => null,
-        ongo = () => null,
-    } : {
-        prewait?: (elapsed: number) => any 
-        onwait?: (elapsed: number) => any
-        onnotyet?: (elapsed: number) => any
-        ongo?: (elapsed: number) => any
-    } = {}): Promise<'notyet' | 'go'> {
-        let elapsed;
-        const now = new Date().getTime()
-        elapsed = now - this.lastAction
-        this.lastAction = now
-        if (elapsed < this.ignoreTime) { 
-            onnotyet(elapsed)
-            return 'notyet' 
-        }
-        await prewait(elapsed)
-        // roll action to future
-        while (true) {
-            const now = new Date().getTime()
-            elapsed = now - this.lastAction
-            await onwait(elapsed)
-            if (this.delayTime < 0) { break; }
-            if (elapsed > this.delayTime) { break; }
-            await sleep(this.sleepTime)
-        }
-        await ongo(elapsed)
-        return 'go'
-    }
-    
-}
-
-
 const _execAsync = promisify(exec);
 
 export async function execAsync(

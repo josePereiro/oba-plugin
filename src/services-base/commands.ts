@@ -22,8 +22,8 @@ export function onload() {
             callback: async () => {
                 // console.clear();
                 checkEnable("commands", {err: true, notice: true})
-                const callid = getCommandCallbackId(i);
-                await callbacks.runObaCallbacks(callid);
+                const callbackID = getCommandCallbackId(i);
+                await callbacks.runObaCallbacks({ callbackID });
             }
         });
     }

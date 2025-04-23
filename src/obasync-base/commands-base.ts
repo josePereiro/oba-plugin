@@ -2,7 +2,7 @@ import { OBA } from "src/oba-base/globals"
 import { getObaConfig } from "src/oba-base/obaconfig"
 import { getCurrNotePath } from "src/tools-base/obsidian-tools"
 import { TaskState } from "src/tools-base/schedule-tools"
-import { DelayManager } from "src/tools-base/utils-tools"
+import { TriggerManager } from "src/tools-base/schedule-tools"
 import { publishModifiedFileSignal } from "./modifiedFileSignal-base"
 import { ObaSyncScheduler } from "./obasync"
 import { getNoteObaSyncScope } from "./scope-base"
@@ -12,7 +12,7 @@ import { Notice } from "obsidian"
 import { getObaSyncFlag, setObaSyncFlag } from "./obasync-base"
 
 
-const COMMAND_SPAWN_MOD_FILE_TIME = new DelayManager(1000, 100, 1000, -1)
+const COMMAND_SPAWN_MOD_FILE_TIME = new TriggerManager()
 
 export function _serviceCommands() {
     
@@ -22,7 +22,13 @@ export function _serviceCommands() {
         callback: async () => {
 
             // delay for saving
-            const flag = await COMMAND_SPAWN_MOD_FILE_TIME.manageTime()
+            const flag = 
+                // 300, 100, -1, -1
+                await COMMAND_SPAWN_MOD_FILE_TIME.manage({
+                    ignoreTime: 300,
+                    sleepTime: 100,
+                    delayTime: -1,
+                })
             if (flag != 'go') { return; }
 
             console.clear()

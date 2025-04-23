@@ -1,13 +1,12 @@
 import { Notice, TFile } from 'obsidian';
-import * as obaconfig from '../oba-base/obaconfig'
-import { checkEnable, DelayManager, readFileLineByLine, tools } from 'src/tools-base/0-tools-modules';
 import { OBA } from 'src/oba-base/globals';
-import { getCurrNote, getCurrNotePath, getTags, resolveNoteAbsPath } from 'src/tools-base/obsidian-tools';
-import { getNoteConfigPath } from 'src/obanotes-base/noteconfig';
+import { checkEnable, readFileLineByLine, TriggerManager } from 'src/tools-base/0-tools-modules';
+import { getCurrNotePath } from 'src/tools-base/obsidian-tools';
+import * as obaconfig from '../oba-base/obaconfig';
 
 // TODO: Add checkout current file git cmd
-const ON_CHANGED_NOTICE_DELAY: DelayManager = new DelayManager(300, 100, -1, -1)
-const ON_OPENED_NOTICE_DELAY: DelayManager = new DelayManager(300, 100, -1, -1)
+const ON_CHANGED_NOTICE_DELAY = new TriggerManager()
+const ON_OPENED_NOTICE_DELAY = new TriggerManager()
 
 export function onload() {
     console.log("TagNotices:onload");
@@ -22,10 +21,15 @@ export function onload() {
                 if (!file) { return }
                 
                 // flowControl
-                const flag = await ON_CHANGED_NOTICE_DELAY.manageTime()
-                if (flag == "notyet") { return; }
-
-                await execNotices(file, 'changed');
+                await ON_CHANGED_NOTICE_DELAY.manage({
+                    ignoreTime: 1000,
+                    sleepTime: 100,
+                    delayTime: -1,
+                    async ongo() {
+                        await execNotices(file, 'changed');
+                    },
+                })
+                
             })
         );
     
@@ -36,10 +40,14 @@ export function onload() {
                 if (!file) { return }
                 
                 // flowControl
-                const flag = await ON_OPENED_NOTICE_DELAY.manageTime()
-                if (flag == "notyet") { return; }
-
-                await execNotices(file, 'file-open');
+                await ON_OPENED_NOTICE_DELAY.manage({
+                    ignoreTime: 300,
+                    sleepTime: 100,
+                    delayTime: -1,
+                    async ongo() {
+                        await execNotices(file, 'file-open');
+                    },
+                })
             })
         );
     }
