@@ -6,8 +6,8 @@ import { TriggerManager } from "src/tools-base/schedule-tools"
 import { publishModifiedFileSignal } from "./modifiedFileSignal-base"
 import { ObaSyncScheduler } from "./obasync"
 import { getNoteObaSyncScope } from "./scope-base"
-import { resolveVaultSignalEvents } from "./signals-base"
-import { _justPush } from "./channels-base"
+import { resolveSignalEventsAllChannles } from "./signals-base"
+import { _justPush } from "./git-base"
 import { Notice } from "obsidian"
 import { getObaSyncFlag, setObaSyncFlag } from "./obasync-base"
 
@@ -81,7 +81,7 @@ export function _serviceCommands() {
                 id: `oba-obasync-spawnResolveVaultSignalEvents`,
                 deltaGas: 1,
                 taskFun: async (task: TaskState) => {
-                    await resolveVaultSignalEvents({
+                    await resolveSignalEventsAllChannles({
                         commitVaultDepo: true,
                         pullVaultRepo: getObaSyncFlag(`online.mode`, false),
                         notify: true,

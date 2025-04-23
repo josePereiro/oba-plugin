@@ -51,15 +51,20 @@ export function manifestJsonIO(
     return manIO
 }
 
-export function modifyObaSyncManifest(
-    manIO: JsonIO, 
+export function modifyObaSyncManifest({
+    manJIO, 
+    userName, 
+    manIder,
+    onmod = () => null
+} : {
+    manJIO: JsonIO, 
     userName: string,
     manIder: ObaSyncManifestIder,
-    onmod: (manContent: ObaSyncManifest) => any
-) {
-    manIO.loaddOnDemand({})
+    onmod?: (manContent: ObaSyncManifest) => any
+}) {
+    manJIO.loaddOnDemand({})
     let obortFlag = null
-    manIO.withDepot((manContent: ObaSyncManifest) => {
+    manJIO.withDepot((manContent: ObaSyncManifest) => {
         // defaults
         manContent["type"] = manIder['manType']
         manContent["meta"] = manContent?.["meta"] || {}
@@ -71,8 +76,8 @@ export function modifyObaSyncManifest(
         obortFlag = onmod(manContent)
     })
     if (obortFlag == 'abort') { return null; }
-    manIO.write()
-    return manIO
+    manJIO.write()
+    return manJIO
 }
 
 export function checkPusher(

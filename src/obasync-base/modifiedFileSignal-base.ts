@@ -4,7 +4,7 @@ import path from "path";
 import { getVaultDir } from "src/tools-base/obsidian-tools";
 import { ObaSyncManifest, ObaSyncManifestIder } from "./manifests-base";
 import { getNoteObaSyncScope } from "./scope-base";
-import { _publishSignalControlArgs, HandlingStatus, ObaSyncCallbackContext, ObaSyncSignal, publishSignal } from "./signals-base";
+import { ObaSyncPublishControlArgs, HandlingStatus, ObaSyncCallbackContext, ObaSyncSignal, publishSignal } from "./signals-base";
 
 const PulledMTimeReg = {} as {[keys: string]: number}
 
@@ -22,7 +22,7 @@ export async function publishModifiedFileSignal({
     manIder: ObaSyncManifestIder,
     committerName: string,
     channelsConfig: any,
-    controlArgs: _publishSignalControlArgs,
+    controlArgs: ObaSyncPublishControlArgs,
     checkPulledMTime: boolean
     signalTemplate?: ObaSyncSignal | null,
 }): Promise<HandlingStatus> {
@@ -117,7 +117,7 @@ export async function _handleDownloadFile({
 }: {
     context: ObaSyncCallbackContext,
     channelsConfig: any,
-    controlArgs: _publishSignalControlArgs
+    controlArgs: ObaSyncPublishControlArgs
 }): Promise<HandlingStatus> {
 
     console.log("--------------------------")

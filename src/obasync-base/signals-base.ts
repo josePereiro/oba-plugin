@@ -3,12 +3,13 @@ import { Notice } from "obsidian"
 import { registerObaCallback, runObaCallbacks } from "src/services-base/callbacks"
 import { TaskState } from "src/tools-base/schedule-tools"
 import { hash64Chain } from "src/tools-base/utils-tools"
-import { _addDummyAndCommit, _fetchCheckoutPull, _justPush } from "./channels-base"
+import { _addDummyAndCommit, _addDummyAndCommitAndPush, _fetchCheckoutPull, _justPush } from "./git-base"
 import { checkPusher, manifestJsonIO, modifyObaSyncManifest, ObaSyncManifest, ObaSyncManifestIder } from "./manifests-base"
 import { ObaSyncScheduler } from "./obasync"
 import { utcTimeTag } from "./utils-base"
 import { getObaConfig } from "src/oba-base/obaconfig"
 import { getVaultDir } from "src/tools-base/obsidian-tools"
+import { JsonIO } from "src/tools-base/jsonio-base"
 
 // MARK: base
 export type HandlingStatus = "handler.ok" | "unhandled" | "unknown" | "error" | null
@@ -56,14 +57,14 @@ function _signalHashKey(val0: string, ...vals: string[]) {
 */ 
 
 
-export interface _publishSignalControlArgs {
+export interface ObaSyncPublishControlArgs {
     commitPushRepo: boolean,
     commitVaultRepo: boolean,
     pushPushRepo: boolean,
     notify: boolean
 }
 
-export interface _publishSignalArgs extends _publishSignalControlArgs {
+export interface _publishSignalArgs extends ObaSyncPublishControlArgs {
     vaultDepot: string,
     pushDepot: string,
     committerName: string,
@@ -101,11 +102,11 @@ export async function publishSignal({
     const signalType = signalTemplate["type"]
 
     let signal = signalTemplate;
-    modifyObaSyncManifest(
-        vManIO,
-        committerName,
-        manIder, 
-        (manContent: any) => {
+    modifyObaSyncManifest({
+        manJIO: vManIO,
+        manIder,
+        userName: committerName,
+        onmod(manContent: ObaSyncManifest) {
             // new
             // 'type': string,
             
@@ -142,17 +143,17 @@ export async function publishSignal({
             manContent['signals'] = manContent?.['signals'] || {}
             manContent['signals'][hashKey] = signalTemplate
             return signalTemplate
-        }
-    )
+        },
+    })
     
     // setup push depot
     // check pusher
     const rManIO = manifestJsonIO(pushDepot, manIder)
     if (!checkPusher(manIder, rManIO)) { return null; }
 
-    // callback
-    const flag = await callback()
-    if (flag == 'abort') { return null; }
+            // callback
+            const flag = await callback()
+            if (flag == 'abort') { return null; }
 
     // copy vault manifest to push depot
     console.log(`Copying manifests`)
@@ -171,10 +172,10 @@ export async function publishSignal({
     if (pushPushRepo) {
         await _justPush(pushDepot, { tout: 10 })
     }
-    
-    if (notify) { 
-        const msg = [
-            `Signal committed`,
+
+            if (notify) { 
+                const msg = [
+                    `Signal committed`,
             ` - type: ${signal["type"]}`,
             ` - committer.name: ${signal["committer.name"]}`,
             ` - committer.channelName: ${signal["committer.channelName"]}`,
@@ -182,14 +183,36 @@ export async function publishSignal({
             ` - creator.name: ${signal["creator.name"]}`,
             ` - creator.channelName: ${signal["creator.channelName"]}`,
             ` - creator.timestamp: ${signal["creator.timestamp"]}`,
-        ].join("\n")
-        console.log(msg)
+                ].join("\n")
+                console.log(msg)
         console.log('Committed signal: ', signal)
-        new Notice(msg, 1 * 60 * 1000)
-    }
-
+                new Notice(msg, 1 * 60 * 1000)
+            }
+    
     return signal
 }
+
+
+export async function pushAllChannels({
+    commitMsg = "push.all.channels",
+    commitPushRepo = true,
+    pushPushRepo = true,
+}: {
+    commitMsg?: string,
+    commitPushRepo?: boolean,
+    pushPushRepo?: boolean,
+}) {
+    const channelsConfig = getObaConfig("obasync.channels", {})
+    for (const channelName in channelsConfig) {
+        const channelConfig = channelsConfig[channelName]
+        const pushDepot = channelConfig?.["push.depot"] || null
+        if (!pushDepot) { continue; }
+        if (commitPushRepo) await _addDummyAndCommit(pushDepot, commitMsg, "123")
+        if (pushPushRepo) await _justPush(pushDepot, { tout: 10 })
+    }
+}
+
+
 
 // MARK: resolve
 /*
@@ -405,28 +428,28 @@ export async function resolveSignalEvents({
 
 }
 
-export async function resolveVaultSignalEvents(
+export async function resolveSignalEventsAllChannles(
     controlArgs: _resolveSignalControlArgs
 ) {
-    console.log("resolveVaultSignalEvents")
+    console.log("resolveSignalEventsAllChannles")
     const channelsConfig = getObaConfig("obasync.channels", {})
     const vaultUserName = getObaConfig("obasync.me", null)
     const vaultDepot = getVaultDir()
     for (const channelName in channelsConfig) {
         console.log("==============================")
-        console.log("resolveVaultSignalEvents:channelName: ", channelName)
+        console.log("resolveSignalEventsAllChannles:channelName: ", channelName)
         const channelConfig = channelsConfig?.[channelName] || {}
-        console.log("resolveVaultSignalEvents:channelConfig: ", channelConfig)
+        console.log("resolveSignalEventsAllChannles:channelConfig: ", channelConfig)
         const pushDepot = channelConfig?.["push.depot"] || null
-        console.log("resolveVaultSignalEvents:pushDepot: ", pushDepot)
+        console.log("resolveSignalEventsAllChannles:pushDepot: ", pushDepot)
         const pullDepots = channelConfig?.["pull.depots"] || []
-        console.log("resolveVaultSignalEvents:pullDepots: ", pullDepots)
+        console.log("resolveSignalEventsAllChannles:pullDepots: ", pullDepots)
         for (const pullDepot of pullDepots) {
             console.log("------------------------------")
-            console.log("resolveVaultSignalEvents:pullDepot: ", pullDepot)
+            console.log("resolveSignalEventsAllChannles:pullDepot: ", pullDepot)
             // process
             console.log("------------------------------")
-            console.log("resolveVaultSignalEvents:resolveSignalEvents")
+            console.log("resolveSignalEventsAllChannles:resolveSignalEvents")
             await resolveSignalEvents({
                 vaultDepot, pushDepot, pullDepot,
                 manType: 'main', //TODO/ interfece with Oba.json

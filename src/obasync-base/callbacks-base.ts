@@ -5,12 +5,12 @@ import { checkEnable } from "src/tools-base/oba-tools";
 import { getCurrNotePath } from "src/tools-base/obsidian-tools";
 import { TaskState } from "src/tools-base/schedule-tools";
 import { TriggerManager } from "src/tools-base/schedule-tools";
-import { _addDummyAndCommitAndPush, _justPush } from "./channels-base";
+import { _addDummyAndCommitAndPush, _justPush } from "./git-base";
 import { _handleDownloadFile, publishModifiedFileSignal } from "./modifiedFileSignal-base";
 import { ObaSyncScheduler } from "./obasync";
 import { getObaSyncFlag } from "./obasync-base";
 import { getNoteObaSyncScope } from "./scope-base";
-import { _publishSignalControlArgs, HandlingStatus, ObaSyncCallbackContext, registerSignalEventHandler, resolveVaultSignalEvents, SignalHandlerArgs } from "./signals-base";
+import { ObaSyncPublishControlArgs, HandlingStatus, ObaSyncCallbackContext, pushAllChannels, registerSignalEventHandler, resolveSignalEventsAllChannles, SignalHandlerArgs } from "./signals-base";
 import { registerObaCallback, runObaCallbacks } from "src/services-base/callbacks";
 
 const ANYMOVE_DELAY = new TriggerManager() 
@@ -91,34 +91,31 @@ export function _serviceCallbacks() {
     // }
 
     INTERVAL1_ID = window.setInterval(
+
         async () => {
             // run signals
             ObaSyncScheduler.spawn({
                 id: `automatic.sync`,
                 deltaGas: 1,
                 taskFun: async (task: TaskState) => {
+
+                    // push
+                    new Notice(`Auto pushing`, 1000)
+                    await pushAllChannels({
+                        commitMsg: "auto.commit.push",
+                        commitPushRepo: true,
+                        pushPushRepo: getObaSyncFlag(`online.mode`, false),
+                    })
                     
                     // pull/run
                     new Notice(`Auto pulling/resolving`, 1000)
-                    await resolveVaultSignalEvents({
+                    await resolveSignalEventsAllChannles({
                         commitVaultDepo: true,
                         pullVaultRepo: getObaSyncFlag(`online.mode`, false),
                         notify: true,
                     })
 
-                    // push
-                    new Notice(`Auto pushing`, 1000)
-                    const channelsConfig = getObaConfig("obasync.channels", {})
-                    for (const channelName in channelsConfig) {
-                        const channelConfig = channelsConfig[channelName]
-                        const pushDepot = channelConfig?.["push.depot"] || null
-                        if (!pushDepot) { continue; }
-                        await _addDummyAndCommitAndPush(
-                            pushDepot, "auto.commit.push", "123", 
-                            { tout: 10 }
-                        )
-                        task["gas"] = 0
-                    }
+                    task["gas"] = 0
                 }
             })
         }, 
@@ -181,7 +178,7 @@ export function _serviceCallbacks() {
                     }
 
                     // relove/pull
-                    await resolveVaultSignalEvents({
+                    await resolveSignalEventsAllChannles({
                         commitVaultDepo: true,
                         pullVaultRepo: getObaSyncFlag(`online.mode`, false),
                         notify: true,
@@ -254,7 +251,7 @@ export async function _resolveVaultAtAnyMove() {
                 taskFun: async (task: TaskState) => {
                     // console.clear()
                     if(task["gas"] > 1) { task["gas"] = 1 }
-                    await resolveVaultSignalEvents({
+                    await resolveSignalEventsAllChannles({
                         commitVaultDepo: true,
                         pullVaultRepo: false,
                         notify: false,
@@ -270,7 +267,7 @@ export async function _resolveVaultAtAnyMove() {
                     // console.clear()
                     if(task["gas"] > 100) { task["gas"] = 100}
                     if(task["gas"] > 0) { return; }
-                    await resolveVaultSignalEvents({
+                    await resolveSignalEventsAllChannles({
                         commitVaultDepo: true,
                         pullVaultRepo: false,
                         notify: false,
