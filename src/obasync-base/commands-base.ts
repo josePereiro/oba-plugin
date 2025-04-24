@@ -7,7 +7,7 @@ import { publishModifiedFileSignal } from "./modifiedFileSignal-base"
 import { ObaSyncScheduler } from "./obasync"
 import { getNoteObaSyncScope } from "./scope-base"
 import { resolveSignalEventsAllChannles } from "./signals-base"
-import { _justPush } from "./git-base"
+import { _justPush } from "./git-cli-base"
 import { Notice } from "obsidian"
 import { getObaSyncFlag, setObaSyncFlag } from "./obasync-base"
 

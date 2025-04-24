@@ -1,17 +1,16 @@
 import { Notice } from "obsidian";
 import { OBA } from "src/oba-base/globals";
 import { getObaConfig } from "src/oba-base/obaconfig";
+import { registerObaCallback, runObaCallbacks } from "src/services-base/callbacks";
 import { checkEnable } from "src/tools-base/oba-tools";
 import { getCurrNotePath } from "src/tools-base/obsidian-tools";
-import { TaskState } from "src/tools-base/schedule-tools";
-import { TriggerManager } from "src/tools-base/schedule-tools";
-import { _addDummyAndCommitAndPush, _justPush } from "./git-base";
+import { TaskState, TriggerManager } from "src/tools-base/schedule-tools";
+import { _justPush } from "./git-cli-base";
 import { _handleDownloadFile, publishModifiedFileSignal } from "./modifiedFileSignal-base";
 import { ObaSyncScheduler } from "./obasync";
 import { getObaSyncFlag } from "./obasync-base";
 import { getNoteObaSyncScope } from "./scope-base";
-import { ObaSyncPublishControlArgs, HandlingStatus, ObaSyncCallbackContext, pushAllChannels, registerSignalEventHandler, resolveSignalEventsAllChannles, SignalHandlerArgs } from "./signals-base";
-import { registerObaCallback, runObaCallbacks } from "src/services-base/callbacks";
+import { HandlingStatus, ObaSyncCallbackContext, pushAllChannels, registerSignalEventHandler, resolveSignalEventsAllChannles, SignalHandlerArgs } from "./signals-base";
 
 const ANYMOVE_DELAY = new TriggerManager() 
 

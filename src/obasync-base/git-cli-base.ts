@@ -241,6 +241,21 @@ export async function _fetchCheckoutPull(
     )
 }
 
+
+
+    // cd repoDir
+    // GIT_HTTP_LOW_SPEED_LIMIT=0
+    // GIT_HTTP_LOW_SPEED_TIME=${tout}
+    // git fetch --all
+    // git reset --hard ${resetCommit}
+    // git status
+    // git clean -xdf
+    // GIT_HTTP_LOW_SPEED_LIMIT=0
+    // GIT_HTTP_LOW_SPEED_TIME=${tout}
+    // git merge
+    // git status
+
+
 export function _spawnFetchCheckoutPull(
     repoDir: string, 
     {
