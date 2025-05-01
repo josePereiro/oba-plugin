@@ -6,14 +6,15 @@ import { ObaSyncScheduler } from "./obasync";
 
 
 /*
-…or create a new repository on the commandv line
-echo "# Bare-Repo-Template" >> README.md
-git init
-git add README.md
-git commit -m "first commit"
-git branch -M main
-git remote add origin https://github.com/josePereiro/Bare-Repo-Template.git
-git push -u origin main
+    setup new repo
+
+    echo "# Bare-Repo-Template" >> README.md
+    git init
+    git add README.md
+    git commit -m "first commit"
+    git branch -M main
+    git remote add origin https://github.com/josePereiro/Bare-Repo-Template.git
+    git push -u origin main
 */ 
 
 /*
@@ -22,6 +23,42 @@ git remote add origin https://github.com/josePereiro/Bare-Repo-Template.git
 git branch -M main
 git push -u origin main
 */ 
+
+/*
+    Sync down
+
+    If repo exists
+        i. git fetch --depth=1 --prune
+            - fetch and for all remote branches to be the same as remote
+            - Apply if online mode is on
+        ii. git reset --hard origin/$config.branch
+            - reset the local branch to the remote branch
+        iii. git clean -xdf
+            - remove all untracked files and directories
+    If not, or error
+        i. git clone --depth=1 $config.url
+*/ 
+
+/*
+    Sync up
+    
+    Maybe implement an stage folder with an stage (manType) manifest
+    This system will manage the  push actions...
+    This way, oba will not forget to the push events
+        - This is not required if we force push to remote
+    
+    If repo exists
+        i. git fetch origin $config.branch
+        ii. git rebase origin/$config.branch
+        # Add or update your new data files here
+        iii. git add .
+        iv. git commit -m "Data update: $(date)"
+        v. git push --force origin $config.branch
+    If not, or error
+        i. git clone --depth=1 $config.url
+*/  
+
+
 
 
 /*
@@ -314,7 +351,7 @@ export async function _clearWD(
     for (const file of files) {
         if (file == ".git") { continue; }
         const fullPath = path.join(repoDir, file);
-        rm(fullPath, { recursive: true, force: true })
+        await rm(fullPath, { recursive: true, force: true })
     }
 }
 

@@ -1,13 +1,44 @@
 import { OBA } from "src/oba-base/globals";
-import { checkEnable, tools, TriggerManager } from "./0-tools-modules";
+import { checkEnable, spawnCommand, tools, TriggerManager } from "./0-tools-modules";
 import { obanotes } from "src/services-base/0-servises-modules";
-import { getCurrNote, getNoteYamlHeader, modifyNoteYamlHeader } from "./obsidian-tools";
+import { getCurrNote, getNoteYamlHeader, getSelectedText, getVaultDir, modifyNoteYamlHeader } from "./obsidian-tools";
+import { Notice } from "obsidian";
 
 const TestTriggerManager = new TriggerManager(5000, 500, 5000)
 
 export function onload() {
         
     console.log("Tools:onload");
+
+    OBA.addCommand({
+        id: "tools-spawn-bash-command",
+        name: "Tools spawn bash command",
+        callback: async () => {
+            console.clear()
+            const sel = getSelectedText();
+            if (!sel) { return }
+            const dig = sel.split("|")
+            const cmdstr = dig[0].trim()
+            console.log("cmdstr: ", cmdstr)
+            const args = dig.slice(1).map((arg) => {
+                return arg.trim()
+            })
+            console.log("args: ", args)
+            const res = await spawnCommand({
+                cmdstr,
+                args,
+                options: {
+                    cwd: getVaultDir()
+                },
+                rollTimeOut: true,
+                timeoutMs: 10 * 1000,
+                onAnyData({ chunck } : {chunck: string}) {
+                    console.log(chunck)
+                },
+            })
+            console.log("res: ", res)
+        },
+    });
 
     // OBA.addCommand({
     //     id: "tools-dev",

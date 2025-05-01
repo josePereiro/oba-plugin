@@ -1,4 +1,4 @@
-import { exec } from "child_process";
+import { ChildProcessWithoutNullStreams, exec, spawn, SpawnOptionsWithoutStdio } from "child_process";
 import { tools } from "./0-tools-modules";
 import * as _ from 'lodash'
 import { promisify } from "util";
@@ -239,6 +239,158 @@ export function _extractField(key: string, ...sources: any[]) {
 } 
 
 
+export interface SpawnResult {
+    cmdstr: string,
+    stdout: string[],
+    stderr: string[],
+    code?: number,
+    spawnErr?: any
+    resolvedBy?: 
+        "timeout.callback" |
+        "cmd.on.error" |
+        "catched.error" | 
+        "cmd.on.close"
+}
+
+export interface SpawnCallbackArgs {
+    chunck?: string,
+    output_acc?: string[],
+    error_acc?: string[], 
+    cmd?: ChildProcessWithoutNullStreams
+}
+
+// MARK: spawnCommand
+export async function spawnCommand({
+    cmdstr,
+    args = [],
+    options,
+    extraEnv = {},
+    timeoutMs = -1,
+    rollTimeOut = false,
+    onStdoutData = () => {},
+    onStderrData = () => {},
+    onAnyData = () => {},
+}: {
+    cmdstr: string,
+    args?: string[], 
+    options?: SpawnOptionsWithoutStdio, 
+    extraEnv?: NodeJS.ProcessEnv,
+    timeoutMs?: number,
+    rollTimeOut?: boolean,
+    onStdoutData?: (arg: SpawnCallbackArgs) => any,
+    onStderrData?: (arg: SpawnCallbackArgs) => any,
+    onAnyData?: (arg: SpawnCallbackArgs) => any,
+}): Promise<SpawnResult> {
+
+    // merge extra env
+    // TODO/ revisit env handling
+    const env0 = options?.["env"] || {}
+    options["env"] = {...process.env, ...env0, ...extraEnv}
+
+    return new Promise((resolve) => {
+        
+        let cmd: ChildProcessWithoutNullStreams;
+        let output_acc: string[] = [];
+        let error_acc: string[] = [];
+        let timeout0: NodeJS.Timeout | null = null;
+        let timeout1: NodeJS.Timeout | null = null;
+        let settled = false;
+        let onTimeOut = () => {}
+
+        try {
+            cmd = spawn(cmdstr, args, options);
+
+            if (timeoutMs > 0) {
+                onTimeOut = () => {
+                    cmd.kill('SIGTERM');
+                    // force kill after 1s if still alive
+                    timeout1 = setTimeout(() => {
+                        cmd.kill('SIGKILL')
+                        console.log("cmd.kill('SIGKILL');")
+                    }, 1000); 
+                    console.log("cmd.kill('SIGTERM');")
+                    resolve({
+                        cmdstr,
+                        stdout: output_acc,
+                        stderr: error_acc,
+                        resolvedBy: "timeout.callback"
+                    })
+                    settled = true
+                }
+                // first
+                timeout0 = setTimeout(onTimeOut, timeoutMs);
+            }
+
+            cmd.stdout.on('data', (data: any) => {
+                const chunck = data.toString()
+                output_acc.push(chunck)
+                onStdoutData({chunck, output_acc, error_acc, cmd})
+                onAnyData({chunck, output_acc, error_acc, cmd})
+                
+                // reset timeout
+                if (rollTimeOut && timeout0) {
+                    clearTimeout(timeout0);
+                    timeout0 = setTimeout(onTimeOut, timeoutMs);
+                }
+            });
+            cmd.stderr.on('data', (data: any) => {
+                const chunck = data.toString()
+                error_acc.push(chunck)
+                onStderrData({chunck, output_acc, error_acc, cmd})
+                onAnyData({chunck, output_acc, error_acc, cmd})
+
+                // reset timeout
+                if (rollTimeOut && timeout0) {
+                    clearTimeout(timeout0);
+                    timeout0 = setTimeout(onTimeOut, timeoutMs);
+                }
+            });
+
+            cmd.on('error', (err) => {
+                if (timeout0) clearTimeout(timeout0);
+                if (timeout1) clearTimeout(timeout1);
+                if (settled) return;
+                resolve({
+                    cmdstr,
+                    stdout: output_acc,
+                    stderr: error_acc,
+                    spawnErr: err,
+                    resolvedBy: "cmd.on.error"
+                })
+                settled = true
+            })
+
+            cmd.on('close', (code: number) => {
+                if (timeout0) clearTimeout(timeout0);
+                if (timeout1) clearTimeout(timeout1);
+                if (settled) return;
+                resolve({
+                    cmdstr,
+                    stdout: output_acc,
+                    stderr: error_acc,
+                    code, 
+                    resolvedBy: "cmd.on.close",
+                });
+                settled = true
+            });
+        } catch (err) {
+            // Catch synchronous errors, e.g., invalid spawn parameters
+            if (timeout0) clearTimeout(timeout0);
+            if (timeout1) clearTimeout(timeout1);
+            
+            if (settled) return;
+            resolve({
+                cmdstr,
+                stdout: output_acc,
+                stderr: error_acc,
+                spawnErr: err,
+                resolvedBy: "catched.error"
+            })
+            settled = true
+        } 
+    });
+}
+
 const _execAsync = promisify(exec);
 
 export async function execAsync(
@@ -255,9 +407,9 @@ export async function execAsync(
         }
         commandv1.push(line)
     }
+    const command = commandv1.join(" 2>&1;\n")
 
     // exec
-    const command = commandv1.join(" 2>&1;\n")
     let _stdout, _stderr, _error;
     try {
         const { stdout, stderr } = await _execAsync(command);

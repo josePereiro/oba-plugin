@@ -5,90 +5,40 @@ import { registerObaCallback, runObaCallbacks } from "src/services-base/callback
 import { checkEnable } from "src/tools-base/oba-tools";
 import { getCurrNotePath } from "src/tools-base/obsidian-tools";
 import { TaskState, TriggerManager } from "src/tools-base/schedule-tools";
-import { _justPush } from "./git-cli-base";
+import { _justPush, _spawnAddDummyAndCommitAndPush, _spawnFetchCheckoutPull } from "./git-cli-base";
 import { _handleDownloadFile, publishModifiedFileSignal } from "./modifiedFileSignal-base";
 import { ObaSyncScheduler } from "./obasync";
 import { getObaSyncFlag } from "./obasync-base";
 import { getNoteObaSyncScope } from "./scope-base";
 import { HandlingStatus, ObaSyncCallbackContext, pushAllChannels, registerSignalEventHandler, resolveSignalEventsAllChannles, SignalHandlerArgs } from "./signals-base";
 
-const ANYMOVE_DELAY = new TriggerManager() 
-
-export let INTERVAL1_ID: number;
-
-const ONEDIT_SPAWN_MOD_FILE_TIME = new TriggerManager()
-
+// MARK: main
 export function _serviceCallbacks() {
     
-    if (!checkEnable("obasync", {err: false, notice: false})) { return; }
+    // if (!checkEnable("obasync", {err: false, notice: false})) { return; }
 
-    // MARK: anymove
+    // _registerAnyMove()
+    // _registerAutoSyncOnAnyMove()
+    // _autoSyncOninterval()
+    _registerModifiedFilesHandler()
+}
+
+// MARK: _resolveAtANyMove
+function _resolveAtANyMove() {
     {
-        const callbackID = '__obasync.obsidian.anymove';
-        OBA.registerDomEvent(window.document, "mousemove", () => {
-            runObaCallbacks({callbackID})
-        });
-        OBA.registerDomEvent(window.document, "click", () => {
-            runObaCallbacks({callbackID})
-        });
-        OBA.registerDomEvent(window.document, "keyup", async () => {
-            runObaCallbacks({callbackID})
-        });
-
+        const callbackID = `obasync.obsidian.anymove`
         registerObaCallback({
             callbackID, 
             async call() {
-                await ANYMOVE_DELAY.manage({
-                    delayTime: -1,
-                    ignoreTime: 300,
-                    sleepTime: 50,
-                    async ongo() {
-                        await runObaCallbacks({
-                            callbackID: 'obasync.obsidian.anymove',
-                            _verbose: true
-                        })
-                    },
-                })
+                await _resolveVaultAtAnyMove()
             }
         })
     }
+}
 
-    // auto sync
-    // {
-    //     const callbackID = `obasync.obsidian.anymove`
-    //     registerObaCallback({
-    //         callbackID, 
-    //         async call() {
-    //             const channelsConfig = getObaConfig("obasync.channels", {})
-    //             for (const channelName in channelsConfig) {
-    //                 console.log("channelName: ", channelName)
-    //                 const channelConfig = channelsConfig?.[channelName] || {}
-    //                 const pushDepot = channelConfig?.["push.depot"] || null
-    //                 if (pushDepot) {
-    //                     await _spawnAddDummyAndCommitAndPush(
-    //                         pushDepot, "manual.pushing", "123", 
-    //                         { tout: 10 }
-    //                     )
-    //                 }
-    //                 const pullDepots = channelConfig?.["pull.depots"] || []
-    //                 for (const pullDepot of pullDepots) {
-    //                     await _spawnFetchCheckoutPull(pullDepot, { tout: 10 })
-    //                 }
-    //             }
-    //         }
-    //     })
-    // }
-
-    // {
-    //     const callbackID = `obasync.obsidian.anymove`
-    //     registerObaCallback({
-    //         callbackID, 
-    //         async call() {
-    //             await _resolveVaultAtAnyMove()
-    //         }
-    //     })
-    // }
-
+// MARK: _autoSyncOninterval
+export let INTERVAL1_ID: number;
+function _autoSyncOninterval() {
     INTERVAL1_ID = window.setInterval(
 
         async () => {
@@ -120,7 +70,121 @@ export function _serviceCallbacks() {
         }, 
         getObaConfig("obasync.auto.sync.period", 3 * 1000 * 60)
     );
+}
 
+// MARK: _registerAutoSyncOnAnyMove
+function _registerAutoSyncOnAnyMove() {
+    // auto sync
+    {
+        const callbackID = `obasync.obsidian.anymove`
+        registerObaCallback({
+            callbackID, 
+            async call() {
+                const channelsConfig = getObaConfig("obasync.channels", {})
+                for (const channelName in channelsConfig) {
+                    console.log("channelName: ", channelName)
+                    const channelConfig = channelsConfig?.[channelName] || {}
+                    const pushDepot = channelConfig?.["push.depot"] || null
+                    if (pushDepot) {
+                        await _spawnAddDummyAndCommitAndPush(
+                            pushDepot, "manual.pushing", "123", 
+                            { tout: 10 }
+                        )
+                    }
+                    const pullDepots = channelConfig?.["pull.depots"] || []
+                    for (const pullDepot of pullDepots) {
+                        await _spawnFetchCheckoutPull(pullDepot, { tout: 10 })
+                    }
+                }
+            }
+        })
+    }
+}
+
+// MARK: _registerAnyMove
+const ANYMOVE_DELAY = new TriggerManager() 
+function _registerAnyMove() {
+    {
+        const callbackID = '__obasync.obsidian.anymove';
+        OBA.registerDomEvent(window.document, "mousemove", () => {
+            runObaCallbacks({callbackID})
+        });
+        OBA.registerDomEvent(window.document, "click", () => {
+            runObaCallbacks({callbackID})
+        });
+        OBA.registerDomEvent(window.document, "keyup", async () => {
+            runObaCallbacks({callbackID})
+        });
+
+        registerObaCallback({
+            callbackID, 
+            async call() {
+                await ANYMOVE_DELAY.manage({
+                    delayTime: -1,
+                    ignoreTime: 300,
+                    sleepTime: 50,
+                    async ongo() {
+                        await runObaCallbacks({
+                            callbackID: 'obasync.obsidian.anymove',
+                            _verbose: true
+                        })
+                    },
+                })
+            }
+        })
+    }
+}
+
+// MARK: _registerModifiedFilesHandler
+function _registerModifiedFilesHandler(
+) {
+    const handlerName = getObaConfig("obasync.me", null)
+    console.log("_registerModifiedFilesHandler:handlerName", handlerName)
+    if (!handlerName) { return; }
+    registerSignalEventHandler({
+        eventID: "obasync.vault.signal.ctimetag.missing.or.older",  // new signal available,
+        handlerName,
+        signalType: "modified.file", 
+        deltaGas: 1,
+        taskIDDigFun: (
+            context: ObaSyncCallbackContext
+        ) => {
+            // For doing unique the taskID
+            const channelName = context["manIder"]["channelName"]
+            const manType = context["manIder"]["manType"]
+            const pulledSignalKey = context["pulledSignalKey"]
+            return [channelName, manType, pulledSignalKey] as string[]
+        },
+        handler: async (arg: SignalHandlerArgs ): Promise<HandlingStatus> => {
+            console.log("_registerModifiedFilesHandler:handler")
+            const context = arg["context"]
+            console.log("_registerModifiedFilesHandler:context", context)
+            const channelsConfig = getObaConfig("obasync.channels", {})
+            console.log("_registerModifiedFilesHandler:channelsConfig", channelsConfig)
+            
+            // handle gas
+            const task = arg["task"]
+            task["gas"] = 0 // Do once
+            console.log("_registerModifiedFilesHandler:task", task)
+
+            return await _handleDownloadFile({
+                context,
+                channelsConfig,
+                controlArgs: {
+                    commitPushRepo: true,
+                    commitVaultRepo: true,
+                    pushPushRepo: getObaSyncFlag(`online.mode`, false),
+                    notify: true
+                }
+            })
+        }
+    })
+}
+
+
+// MARK: _handleModFileOnChange
+const ONEDIT_SPAWN_MOD_FILE_TIME = new TriggerManager()
+function _handleModFileOnChange() {
     // publish.files
     OBA.registerEvent(
         OBA.app.workspace.on('editor-change', async (...args) => {
@@ -189,52 +253,9 @@ export function _serviceCallbacks() {
             })
         })
     );
-
-    // download.files
-    _registerModifiedFilesHandler()
-    
 }
 
-function _registerModifiedFilesHandler(
-) {
-    const handlerName = getObaConfig("obasync.me", null)
-    if (!handlerName) { return; }
-    registerSignalEventHandler({
-        eventID: "obasync.vault.signal.ctimetag.missing.or.older",  // new signal available,
-        handlerName,
-        signalType: "modified.file", 
-        deltaGas: 1,
-        taskIDDigFun: (
-            context: ObaSyncCallbackContext
-        ) => {
-            // For doing unique the taskID
-            const channelName = context["manIder"]["channelName"]
-            const manType = context["manIder"]["manType"]
-            const pulledSignalKey = context["pulledSignalKey"]
-            return [channelName, manType, pulledSignalKey] as string[]
-        },
-        handler: async (arg: SignalHandlerArgs ): Promise<HandlingStatus> => {
-            const context = arg["context"]
-            const channelsConfig = getObaConfig("obasync.channels", {})
-            
-            // handle gas
-            const task = arg["task"]
-            task["gas"] = 0 // Do once
-
-            return await _handleDownloadFile({
-                context,
-                channelsConfig,
-                controlArgs: {
-                    commitPushRepo: true,
-                    commitVaultRepo: true,
-                    pushPushRepo: getObaSyncFlag(`online.mode`, false),
-                    notify: true
-                }
-            })
-        }
-    })
-}
-
+// MARK: _resolveVaultAtAnyMove
 const PULL_AND_RUN_DELAY = new TriggerManager() // no delay
 
 export async function _resolveVaultAtAnyMove() {

@@ -16,7 +16,9 @@ export async function consensusBiblIO(id: BiblIOIder) {
     // get data
     const doi0 = id["doi"]
     console.log("doi0: ", doi0)
-    const rc_biblIO = await crossref.getBiblIO(id);
+    //TODO/ I need to built a system to handle missing refs on crossref
+    // If not, it will try to download them all the time, it is time consumming
+    const rc_biblIO = await crossref.getBiblIO(id); 
     const lb_biblIO = await localbibs.getBiblIO(id);
     
     const biblio: BiblIOData = {

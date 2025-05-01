@@ -1,14 +1,15 @@
 import { copyFileSync, existsSync, statSync } from "fs";
 import { Notice } from "obsidian";
 import path from "path";
+import { getObaConfig } from "src/oba-base/obaconfig";
 import { getVaultDir } from "src/tools-base/obsidian-tools";
-import { ObaSyncManifest, ObaSyncManifestIder } from "./manifests-base";
+import { ObaSyncManifestIder } from "./manifests-base";
 import { getNoteObaSyncScope } from "./scope-base";
-import { ObaSyncPublishControlArgs, HandlingStatus, ObaSyncCallbackContext, ObaSyncSignal, publishSignal } from "./signals-base";
+import { HandlingStatus, ObaSyncCallbackContext, ObaSyncPublishControlArgs, ObaSyncSignal, publishSignal } from "./signals-base";
 
 const PulledMTimeReg = {} as {[keys: string]: number}
 
-// MARK: publish
+// MARK: publishModifiedFileSignal
 export async function publishModifiedFileSignal({
     vaultFile,
     manIder,
@@ -107,9 +108,9 @@ export async function publishModifiedFileSignal({
     return "handler.ok"
 }
 
-// MARK: handle
-// TODO/ rename
 
+// MARK: _handleDownloadFile
+// TODO/ rename
 export async function _handleDownloadFile({
     context,
     channelsConfig,
@@ -128,43 +129,42 @@ export async function _handleDownloadFile({
     const pullDepot = context['pullDepot']
     const vaultUserName = context['vaultUserName']
     const pulledUserName = context['pulledUserName']
-    console.log("pulledSignal: ", pulledSignal)
-    console.log("pullDepot: ", pullDepot)
+    console.log("_handleDownloadFile:pulledSignal: ", pulledSignal)
+    console.log("_handleDownloadFile:pullDepot: ", pullDepot)
     const targetFileName = pulledSignal?.["args"]['targetFileName']
     const channelName = context["manIder"]["channelName"]
     const vaultDir = getVaultDir()
-    const channelConfig = channelsConfig?.[channelName] || {}
-    const relpath = channelConfig?.["pull.dest.folder.relpath"] || ''
+    const relpath = getObaConfig("obanotes.notes.root.relpath", '')
     const destDir = path.join(vaultDir, relpath)
     const manType = context["manIder"]["manType"]
 
     // console.clear()
-    console.log("destDir: ", destDir)
+    console.log("_handleDownloadFile:destDir: ", destDir)
     const pullRepoFile = path.join(pullDepot, targetFileName)
     if (!existsSync(pullRepoFile)) {
         new Notice(`pullRepoFile missing! ${pullRepoFile}!`)
         return "error"
     }
     const vaultFile = path.join(destDir, targetFileName)
-    console.log("pullRepoFile: ", pullRepoFile)
-    console.log("vaultFile: ", vaultFile)
+    console.log("_handleDownloadFile:pullRepoFile: ", pullRepoFile)
+    console.log("_handleDownloadFile:vaultFile: ", vaultFile)
     
     copyFileSync(pullRepoFile, vaultFile)
     const pulledKey = `${channelName}:${vaultFile}`
     PulledMTimeReg[pulledKey] = statSync(vaultFile).mtimeMs
-    console.log(`Copied ${pullRepoFile} -> ${vaultFile}`)
+    console.log(`_handleDownloadFile:Copied ${pullRepoFile} -> ${vaultFile}`)
     
     new Notice(`Pulled ${targetFileName} from ${pulledUserName}-${channelName}!`, 10000)
-    console.log("handle.push.context: ", context)
+    console.log("_handleDownloadFile:handle.push.context: ", context)
 
     // echo
     //TODO/ TAI: no implicit connections between subvaults...
     // This is important for multi scoped notes
     // I need to say to other scopes the note have being changed
     const scopes = await getNoteObaSyncScope(vaultFile, channelsConfig)
-    console.log(`echo.scopes: ${scopes}`)
+    console.log(`_handleDownloadFile:echo.scopes: ${scopes}`)
     for (const channelName1 of scopes) {
-        console.log(`echo.channelName: ${channelName1}`)
+        console.log(`_handleDownloadFile:echo.channelName: ${channelName1}`)
         // TODO/ handle returned status
         const manIder = {channelName: channelName1, manType} 
         await publishModifiedFileSignal({

@@ -9,6 +9,7 @@ import { obaconfig } from './oba-base/0-oba-modules';
 import { citnotes } from './citnotes-base/0-citnotes-modules';
 import { tests } from './tests-base/0-tests-modules';
 import { obasync} from './obasync-base/0-obasync-modules';
+import { gittools } from './gittools-base/0-gittools-modules';
 
 // NOTES
 
@@ -52,6 +53,7 @@ export default class ObAPlugin extends Plugin {
 		scihub.onload()
 		obaup.onload()
 		obasync.onload()
+		gittools.onload()
 	
 	}
 

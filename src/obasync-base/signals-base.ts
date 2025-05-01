@@ -11,7 +11,7 @@ import { getObaConfig } from "src/oba-base/obaconfig"
 import { getVaultDir } from "src/tools-base/obsidian-tools"
 import { JsonIO } from "src/tools-base/jsonio-base"
 
-// MARK: base
+// MARK: ObaSyncSignal
 export type HandlingStatus = "handler.ok" | "unhandled" | "unknown" | "error" | null
 export interface ObaSyncSignal {
     "type": string,
@@ -34,6 +34,7 @@ export interface ObaSyncSignal {
     "args"?: {[keys: string]: any} 
 }
 
+// MARK: ObaSyncCallbackContext
 export interface ObaSyncCallbackContext {
     "vaultUserName": string,
     "pulledUserName": string,
@@ -46,17 +47,17 @@ export interface ObaSyncCallbackContext {
     "args"?: {[keys: string]: any} | null
 }
 
+// MARK: _signalHashKey
 function _signalHashKey(val0: string, ...vals: string[]) {
     const hash = hash64Chain(val0, ...vals)
     return hash
 }
 
-// MARK: publish
 /*
     This is an offline method
 */ 
 
-
+// MARK: ObaSyncPublishControlArgs
 export interface ObaSyncPublishControlArgs {
     commitPushRepo: boolean,
     commitVaultRepo: boolean,
@@ -64,6 +65,7 @@ export interface ObaSyncPublishControlArgs {
     notify: boolean
 }
 
+// MARK: _publishSignalArgs
 export interface _publishSignalArgs extends ObaSyncPublishControlArgs {
     vaultDepot: string,
     pushDepot: string,
@@ -74,7 +76,7 @@ export interface _publishSignalArgs extends ObaSyncPublishControlArgs {
     callback?: (() => any)
 }
 
-
+// MARK: publishSignal
 export async function publishSignal({
     vaultDepot,
     pushDepot,
@@ -192,7 +194,7 @@ export async function publishSignal({
     return signal
 }
 
-
+// MARK: pushAllChannels
 export async function pushAllChannels({
     commitMsg = "push.all.channels",
     commitPushRepo = true,
@@ -212,22 +214,14 @@ export async function pushAllChannels({
     }
 }
 
-
-
-// MARK: resolve
-/*
-    Run the callbacks for each signal event
-    - bla0 means something from vault manifest
-    - bla1 means something from puller manifest
-    This is an offline method
-*/ 
-
+// MARK: _resolveSignalControlArgs
 export interface _resolveSignalControlArgs {
     commitVaultDepo: boolean,
     pullVaultRepo: boolean,
     notify: boolean
 }
 
+// MARK: resolveSignalEventsArgs
 interface resolveSignalEventsArgs extends _resolveSignalControlArgs {
     vaultDepot: string,
     pushDepot: string,
@@ -237,12 +231,13 @@ interface resolveSignalEventsArgs extends _resolveSignalControlArgs {
     manType: string
 }
 
+// MARK: SignalEventCallbackArgs
 export interface SignalEventCallbackArgs {
     context: ObaSyncCallbackContext, 
     eventID: ObaSyncEventID
 }
 
-
+// MARK: ObaSyncEventID
 export type ObaSyncEventID =
     `obasync.vault.signal.missing` |
     `obasync.signals.both.ctimetags.present` | 
@@ -256,6 +251,7 @@ export type ObaSyncEventID =
     `obasync.signals.both.ctimetags.missing`
 
 
+// MARK: resolveSignalEvents
 /*
     Check manifests and run event callbacks
 */ 
@@ -298,14 +294,18 @@ export async function resolveSignalEvents({
     let eventID: ObaSyncEventID;
 
     for (const pulledSignalKey in pulledManSignals) {
-        console.log("pulledSignalKey: ", pulledSignalKey)
-
+        console.log("------------")
+        console.log("resolveSignalEvents:pulledSignalKey: ", pulledSignalKey)
+        
         // signal content
         const pulledSignal: ObaSyncSignal = pulledManSignals[pulledSignalKey]
-        const signal1Type = pulledSignal['type']
-
+        console.log("resolveSignalEvents:pulledSignal: ", pulledSignal)
+        const pulledSignalType = pulledSignal['type']
+        console.log("resolveSignalEvents:pulledSignalType: ", pulledSignalType)
+        
         // get record
         let vaultSignal = vaultManSignals?.[pulledSignalKey]
+        console.log("resolveSignalEvents:vaultSignal: ", vaultSignal)
 
         // call context
         const context: ObaSyncCallbackContext = {
@@ -313,24 +313,25 @@ export async function resolveSignalEvents({
             pulledSignalKey, pulledSignal, 
             vaultDepot, pullDepot, pushDepot
         }
+        console.log("resolveSignalEvents:context: ", context)
 
         // callback
         if (!vaultSignal) {
             // run callbacks
             eventID = `obasync.vault.signal.missing`
-            callbackID = `${eventID}:${signal1Type}`
+            callbackID = `${eventID}:${pulledSignalType}`
             await runObaCallbacks({
                 callbackID, 
                 args: {context, eventID}
             })
             eventID = `obasync.vault.signal.ctimetag.missing.or.newer`
-            callbackID = `${eventID}:${signal1Type}`
+            callbackID = `${eventID}:${pulledSignalType}`
             await runObaCallbacks({
                 callbackID, 
                 args: {context, eventID}
             })
             eventID = `obasync.vault.signal.ctimetag.missing.or.older`
-            callbackID = `${eventID}:${signal1Type}`
+            callbackID = `${eventID}:${pulledSignalType}`
             await runObaCallbacks({
                 callbackID, 
                 args: {context, eventID}
@@ -338,59 +339,69 @@ export async function resolveSignalEvents({
         }
 
         const vaultCTimeStampStr = vaultSignal?.['creator.timestamp']
+        console.log("resolveSignalEvents:vaultCTimeStampStr: ", vaultCTimeStampStr)
         const pulledCTimeStampStr = pulledSignal?.['creator.timestamp']
+        console.log("resolveSignalEvents:pulledCTimeStampStr: ", pulledCTimeStampStr)
         if (vaultCTimeStampStr && pulledCTimeStampStr) {
             const pulledCTimeStamp = new Date(pulledCTimeStampStr)
+            console.log("resolveSignalEvents:pulledCTimeStamp: ", pulledCTimeStamp)
             const vaultCTimeStamp = new Date(vaultCTimeStampStr)
+            console.log("resolveSignalEvents:vaultCTimeStamp: ", vaultCTimeStamp)
 
             // callback
             eventID = `obasync.signals.both.ctimetags.present`
-            callbackID = `${eventID}:${signal1Type}`
+            callbackID = `${eventID}:${pulledSignalType}`
             await runObaCallbacks({
                 callbackID, 
-                args: {context, eventID}
+                args: {context, eventID},
+                _verbose: true
             })
 
             // callback
             if (vaultCTimeStamp < pulledCTimeStamp) {
                 // mine.newer
                 eventID = `obasync.vault.signal.ctimetag.older`
-                callbackID = `${eventID}:${signal1Type}`
+                callbackID = `${eventID}:${pulledSignalType}`
                 await runObaCallbacks({
                     callbackID, 
-                    args: {context, eventID}
+                    args: {context, eventID},
+                    _verbose: true
                 })
                 eventID = `obasync.vault.signal.ctimetag.missing.or.older`
-                callbackID = `${eventID}:${signal1Type}`
+                callbackID = `${eventID}:${pulledSignalType}`
                 await runObaCallbacks({
                     callbackID, 
-                    args: {context, eventID}
+                    args: {context, eventID},
+                    _verbose: true
                 })
             }
             // callback
             if (vaultCTimeStamp == pulledCTimeStamp) {
                 // both.equal
                 eventID = `obasync.signals.both.ctimetags.equal`
-                callbackID = `${eventID}:${signal1Type}`
+                callbackID = `${eventID}:${pulledSignalType}`
                 await runObaCallbacks({
                     callbackID, 
-                    args: {context, eventID}
+                    args: {context, eventID},
+                    _verbose: true
                 })
             }
             // callback
             if (vaultCTimeStamp > pulledCTimeStamp) {
                 // both.equal
                 eventID = `obasync.vault.signal.ctimetag.newer`
-                callbackID = `${eventID}:${signal1Type}`
+                callbackID = `${eventID}:${pulledSignalType}`
                 await runObaCallbacks({
                     callbackID, 
-                    args: {context, eventID}
+                    args: {context, eventID},
+                    _verbose: true
                 })
                 eventID = `obasync.vault.signal.ctimetag.missing.or.newer`
-                callbackID = `${eventID}:${signal1Type}`
+                callbackID = `${eventID}:${pulledSignalType}`
                 await runObaCallbacks({
                     callbackID, 
-                    args: {context, eventID}
+                    args: {context, eventID},
+                    _verbose: true
                 })
             }
         }
@@ -398,36 +409,40 @@ export async function resolveSignalEvents({
         // callback
         if (!vaultCTimeStampStr && pulledCTimeStampStr) {
             eventID = `obasync.vault.signal.ctimetag.missing`
-            callbackID = `${eventID}:${signal1Type}`
+            callbackID = `${eventID}:${pulledSignalType}`
             await runObaCallbacks({
                 callbackID, 
-                args: {context, eventID}
+                args: {context, eventID},
+                _verbose: true
             })
         }
 
             // callback
             if (vaultCTimeStampStr && !pulledCTimeStampStr) {
                 eventID = `obasync.pulled.signal.ctimetag.missing`
-                callbackID = `${eventID}:${signal1Type}`
+                callbackID = `${eventID}:${pulledSignalType}`
                 await runObaCallbacks({
                     callbackID, 
-                    args: {context, eventID}
+                    args: {context, eventID},
+                    _verbose: true
                 })
             }
 
         // callback
         if (!vaultCTimeStampStr && !pulledCTimeStampStr) {
             eventID = `obasync.signals.both.ctimetags.missing`
-            callbackID = `${eventID}:${signal1Type}`
+            callbackID = `${eventID}:${pulledSignalType}`
             await runObaCallbacks({
                 callbackID, 
-                args: {context, eventID}
+                args: {context, eventID},
+                _verbose: true
             })
         }
     } // for (const pulledSignalKey in man1Issued)
 
 }
 
+// MARK: resolveSignalEventsAllChannles
 export async function resolveSignalEventsAllChannles(
     controlArgs: _resolveSignalControlArgs
 ) {
@@ -461,17 +476,18 @@ export async function resolveSignalEventsAllChannles(
     }
 }
 
-// MARK: register
+// MARK: SignalHandlerArgs
 export interface SignalHandlerArgs {
     context: ObaSyncCallbackContext, 
     eventID: ObaSyncEventID, 
     task: TaskState
 }
 
+// MARK: SignalHandlerType
 type SignalHandlerType = (arg: SignalHandlerArgs) => 
     (HandlingStatus | Promise<HandlingStatus>)
 
-
+// MARK: registerSignalEventHandler
 export function registerSignalEventHandler({
     handler,
     handlerName,

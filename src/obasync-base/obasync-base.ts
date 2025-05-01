@@ -1,3 +1,20 @@
+
+export interface ObaSyncRepoConfig {
+    "repodir": string
+    "branchName": string
+    "cloneRemoteUrl": string
+    "pullRemoteUrl": string
+    "pushRemoteUrl": string,
+    "pingFile": string
+}
+
+export interface ObaChannelConfig {
+    "push.depot": ObaSyncRepoConfig,
+    "pull.depots": ObaSyncRepoConfig[],
+    "include.content.regexs"?: string[]
+}
+
+
 export let OBASYNC_FLAG_REG: {[keys: string]: any} = {}
 
 export function getObaSyncFlag(

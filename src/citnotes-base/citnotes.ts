@@ -179,7 +179,7 @@ export function onload() {
 //  - 
 // const localBiblIOs = await localbibs.getMergedBiblIO()
 // refBiblIOs.push(...localBiblIOs)
-
+// MARK: copySelectedCitationFromList
 async function copySelectedCitationFromList(
     note0: TFile,
     sel0 = ''
@@ -234,6 +234,7 @@ async function copySelectedCitationFromList(
     modal.open()
 }
 
+// MARK: copySelectedCitNoteReferenceLinkFromList
 async function copySelectedCitNoteReferenceLinkFromList(
     note0: TFile,
     sel0 = ''
@@ -278,7 +279,7 @@ async function copySelectedCitNoteReferenceLinkFromList(
     modal.open()
 }
 
-
+// MARK: generateCitNoteConfigRefResolverMap
 export async function generateCitNoteConfigRefResolverMap(
     note: TFile
 ) {
@@ -322,6 +323,7 @@ function _generateReferenceString(
     return str
 }
 
+// MARK: copyCitNoteReferencesSection
 export async function copyCitNoteReferencesSection(
     note: TFile
 ) {
@@ -467,7 +469,7 @@ function getCitationStringToSearch(
     {
         prefix = '',
         suffix = '',
-    }
+    } = {}
 ) {
     
     let refi = 1;

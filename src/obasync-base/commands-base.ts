@@ -15,7 +15,8 @@ import { getObaSyncFlag, setObaSyncFlag } from "./obasync-base"
 const COMMAND_SPAWN_MOD_FILE_TIME = new TriggerManager()
 
 export function _serviceCommands() {
-    
+
+    // MARK: spawnModifiedFileSignal
     OBA.addCommand({
         id: "oba-obasync-spawnModifiedFileSignal",
         name: "ObaSync spawnModifiedFileSignal",
@@ -73,6 +74,7 @@ export function _serviceCommands() {
         }
     });
 
+    // MARK: spawnResolveVaultSignalEvents
     OBA.addCommand({
         id: "oba-obasync-spawnResolveVaultSignalEvents",
         name: "ObaSync spawnResolveVaultSignalEvents",
@@ -92,6 +94,7 @@ export function _serviceCommands() {
         }
     });
 
+    // MARK: flip online mode
     OBA.addCommand({
         id: "oba-obasync-flip-online-mode",
         name: "ObaSync flip online mode",
@@ -106,6 +109,17 @@ export function _serviceCommands() {
         }
     });
 
+    // MARK: push-all
+    OBA.addCommand({
+        id: "oba-obasync-log-ObaSyncScheduler",
+        name: "ObaSync log-ObaSyncScheduler",
+        callback: async () => {
+            console.log("ObaSyncScheduler")
+            console.log(ObaSyncScheduler)
+        }
+    });
+
+    // MARK: push-all
     OBA.addCommand({
         id: "oba-obasync-push-all",
         name: "ObaSync push-all",
