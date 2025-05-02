@@ -5,7 +5,7 @@ import { gitSyncUp } from "src/gittools-base/gitSyncUp";
 import { GitRepoOptions } from "src/gittools-base/gittools-base";
 import { OBA } from "src/oba-base/globals";
 import { getObaConfig } from "src/oba-base/obaconfig";
-import { getVaultDir } from "src/tools-base/obsidian-tools";
+import { getCurrNotePath, getVaultDir } from "src/tools-base/obsidian-tools";
 import { SequentialAsyncScheduler } from "src/tools-base/schedule-tools";
 import { INTERVAL1_ID } from "./callbacks-base";
 import { ObaChannelConfig, ObaSyncRepoConfig, setObaSyncFlag } from "./obasync-base";
@@ -125,6 +125,95 @@ export function onload() {
                     }
                 })
                 console.log("flag: ", flag)   
+            }
+        }
+    })
+
+
+    // MARK: gitSyncUp current file with all
+    OBA.addCommand({
+        id: "obasync-gitSyncUp-current-file-file-with-all",
+        name: "ObaSync gitSyncUp current file with all",
+        callback: async () => {
+            console.clear()
+
+            const vaultFile = getCurrNotePath()
+            if (!vaultFile) {
+                new Notice("ERROR: no note opened!!!")
+            }
+            const vaultFileName = path.basename(vaultFile)
+
+            const channelsConfig = getObaConfig("obasync.channels", {})
+            for (const channelName in channelsConfig) {
+                console.log("channelName: ", channelName)
+                const channelConfig: ObaChannelConfig = 
+                    channelsConfig?.[channelName] || {}
+                const pushRepoConfig = channelConfig["push.depot"]
+                console.log("pushRepoConfig: ", pushRepoConfig)
+                const flag = await gitSyncUp({
+                    repoOps: pushRepoConfig,
+                    cloneEnable: true,
+                    mkRepoDirEnable: true,
+                    rmRepoEnable: true,
+                    addEnable: true,
+                    pushEnable: true,
+                    commitEnable: true,
+                    touchEnable: true,
+                    cloneForce: false,
+                    callback() {
+                        const pushFile = path.join(pushRepoConfig['repodir'], vaultFileName)
+                        if (!existsSync(vaultFile)) { return 'abort'; }
+                        copyFileSync(vaultFile, pushFile)
+                    }
+                })
+                new Notice(`gitSyncUp ${channelName}`)
+                console.log("flag: ", flag)
+            }
+        }
+    })
+
+    // MARK: gitSyncUp current file with all
+    OBA.addCommand({
+        id: "obasync-gitSyncDown-current-file-with-all",
+        name: "ObaSync gitSyncDown current file with all",
+        callback: async () => {
+            console.clear()
+            
+            const vaultFile = getCurrNotePath()
+            if (!vaultFile) {
+                new Notice("ERROR: no note opened!!!")
+            }
+            const vaultFileName = path.basename(vaultFile)
+
+            const channelsConfig = getObaConfig("obasync.channels", {})
+            for (const channelName in channelsConfig) {
+                console.log("channelName: ", channelName)
+                const channelConfig: ObaChannelConfig = channelsConfig?.[channelName] || {}
+                const pullDepots = channelConfig?.["pull.depots"] || []
+                for (const pullDepotConfig of pullDepots) {
+                    // bring larger Dev1
+                    console.log("pullDepotConfig: ", pullDepotConfig)
+                    const flag = await gitSyncDown({
+                        repoOps: pullDepotConfig,
+                        fetchEnable: true,
+                        cloneEnable: true,
+                        mkRepoDirEnable: true,
+                        resetEnable: true,
+                        gcEnable: false,
+                        cleanEnable: true,
+                        rmRepoEnable: true,
+                        cloneForce: false
+                    })
+                    console.log("flag: ", flag)
+                    new Notice(`gitSyncDown ${channelName}`)
+                    const pullFile = path.join(
+                        pullDepotConfig['repodir'], vaultFileName
+                    )
+                    console.log("pullFile: ", pullFile)
+                    if (!existsSync(pullFile)) { continue; }
+                    copyFileSync(pullFile, vaultFile)
+
+                }
             }
         }
     })
