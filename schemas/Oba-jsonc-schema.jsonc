@@ -1,0 +1,185 @@
+{
+  "type": "object",
+  "title": "Oba app Configuration",
+  "description": "Main configuration source for Oba Obasydian pluggin",
+  
+  // -------------------------------------
+  // MARK: $defs
+  "$defs": {
+    "ObaSyncRepoConfig": {
+      "type": "object",
+      "properties": {
+        "repodir": { 
+          "type": "string",
+          "description": "The absolute path to the repo root folder."
+        },
+        "branchName": { 
+          "type": "string",
+          "description": "Working branch for sync actions."
+        },
+        "cloneRemoteUrl": { 
+          "type": "string",
+          "description": "Url for clone commands. In this url you can add github access tokens for authentication porpuses. This is not THAT secure, but:\n- i. this config file should be local,\n- ii. the token reach can be control in github.\nAdditionally, 'extraEnv' can be use for contextualizing git cli calls."
+        },
+        "pullRemoteUrl": { 
+          "type": "string",
+          "description": "Url for pull commands. In this url you can add github access tokens for authentication porpuses. This is not THAT secure, but:\n- i. this config file should be local,\n- ii. the token reach can be control in github.\nAdditionally, 'extraEnv' can be use for contextualizing git cli calls."
+        },
+        "pushRemoteUrl": { 
+          "type": "string",
+          "description": "Url for push commands. In this url you can add github access tokens for authentication porpuses. This is not THAT secure, but:\n- i. this config file should be local,\n- ii. the token reach can be control in github.\nAdditionally, 'extraEnv' can be use for contextualizing git cli calls."
+        },
+        "pingFile": { 
+          "type": "string", 
+          "description": "A file for testing communications. It is recommended for this file to have a unique name."
+        },
+        "extraEnv" : {
+          "type": "array",
+          "description": "Extra env variables (on top of process.env) to be used in all git cli calls.",
+          "patternProperties": {
+            ".*": { "type": "string" }
+          }
+        }
+      },
+      "required": ["repodir", "branchName", "cloneRemoteUrl", "pullRemoteUrl", "pushRemoteUrl", "pingFile"],
+      "additionalProperties": false 
+    }
+  },
+
+  // -------------------------------------
+  "properties": {
+    
+    // MARK: enable flags
+    "all.enable": {
+      "type": "boolean",
+      "default": false,
+      "description": "Control enable/disable all Oba functionalities."
+    },
+    "obasync.enable": {
+      "type": "boolean",
+      "default": false,
+      "description": "Control enable/disable all ObaSync functionalities."
+    },
+
+    // MARK: ObaNotes
+    "obanotes.notes.root.relpath": {
+      "type": "string",
+      "default": "",
+      "description": "Oba assumes all your notes will be in the same folder. Here you can declare the vault relative path to that folder"
+    },
+    "obanotes.configs.folder.relpath": {
+      "type": "string",
+      "default": "",
+      "description": "Each oba note has a `jsonc` file for adding configurations. Here you can declare the vault relative path to that folder"
+    },
+    "obanotes.include.folders.relpath": {
+      "type": "array",
+      "description": "Some Oba actions require iteration across all files in the vault. Here you can declare the vault relative path to root folders for including in the search.",
+      "items": { "type": "string" }
+    },
+    
+    // MARK: pdf-transcription
+    "markerpdf.dir": {
+      "type": "string",
+      "description": "The absolute path to marker's pdf-markdown transcriptions folder."
+    },
+    "local.pdfs.dir": {
+      "type": "string",
+      "default": "",
+      "description": "An absolute path to the PDFs depot. It is used for searching note's attachments"
+    },
+
+    // MARK: replacer
+    "replacer.ignore" : {
+      "type": "array",
+      "description": "Folders (vault relpath) in the vault for replacer to ignore",
+      "items": { "type": "string" }
+    },
+    "replacer.include" : {
+      "type": "array",
+      "description": "Folders (vault relpath) in the vault for replacer to include",
+      "items": { "type": "string" }
+    },
+
+    "vault.git.repo": {
+      "type": "object",
+      "description": "Config for the vault git repo utils.",
+      "properties": {
+        "branchName": { 
+          "$ref": "#/$defs/ObaSyncRepoConfig/properties/branchName"
+        },
+        "pushRemoteUrl": { 
+          "$ref": "#/$defs/ObaSyncRepoConfig/properties/pushRemoteUrl"
+        },
+        "extraEnv": { 
+          "$ref": "#/$defs/ObaSyncRepoConfig/properties/extraEnv"
+        }
+      },
+      "required": ["branchName", "pushRemoteUrl", "extraEnv"],
+      "additionalProperties": false 
+    },
+
+    "local.bib.files": {
+      "type": "array",
+      "description": "A set of absolute paths to .bib files. The .bib files will be another source for biblIO data.",
+      "items": { "type": "string" }
+    },
+
+    // MARK: tag notices
+    "tag.notices": {
+      "type": "array",
+      "description": "Definitions of tag notices.",
+      "items": { "type": "object" }
+    },
+
+    // MARK: vscode
+    "vscode.exec": {
+      "type": "string",
+      "default": "code",
+      "description": "Bash command for calling vscode cli. It can be an absolute path to an executable."
+    },
+    "vscode.oba.workspace": {
+      "type": "string",
+      "default": "",
+      "description": "An absolute path to a vscode workspace. It is 'recommended' to create a vscode workspace with all Obsidian related folders. the workspace will be used when opening files in vscode (even .md notes)."
+    },
+
+    // MARK: obasync
+    "obasync.me": {
+      "type": "string",
+      "default": "yuyo",
+      "description": "Your user name in obasync files and manifests. At the moment is mostly decorative."
+    },
+    "obasync.channels" : {
+      "type": "object",
+      "description": "Configuration for each obasync channel. Use the channel name as the key. This configuration must be synced (coordinated) appropiatly between users of the channels. Just communicate please.",
+      "patternProperties": {
+        ".*": {
+          "type": "object",
+          "description": "Configurations for this obasync channel",
+          "properties": {
+            "push.depot": { 
+              "description": "The configuration of your push repo for this channel. In the entire world, you should be the only one pushing to it.",
+              "$ref": "#/$defs/ObaSyncRepoConfig"
+            }, 
+            "pull.depots": {
+              "type": "array", 
+              "description": "A list of configurations for obasync pull repos",
+              "items": { "$ref": "#/$defs/ObaSyncRepoConfig" }
+            },
+            "include.content.regexs": {
+              "type": "array",
+              "description": "It is used for determining if a given note belong to this channel. In this case, the content of the note (line by line) will be test agains all regexes. One hit is sufficient for considering inclusion.",
+              "items": { "type": "string" }
+            }, 
+            "additionalProperties": false 
+          }
+        }
+      }
+
+      
+    }
+  },
+  "required": [],
+  "additionalProperties": false 
+}

@@ -15,7 +15,7 @@ import { getCurrNote, getCurrNotePath, processNoteByLines } from "src/tools-base
 export function onload() {
     console.log("Replacer:onload");
 
-    // TODO/ link with Oba.json
+    // TODO/ link with Oba.jsonc
     // TODO/ improve this
     OBA.addCommand({
         id: "oba-replacer-replace all",

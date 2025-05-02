@@ -1,7 +1,9 @@
 import { existsSync, readFileSync, writeFileSync } from "fs";
-import { errVersion, ErrVersionCallerOptions, mkdirParent, tools } from "./0-tools-modules";
 import { readFile, writeFile } from "fs/promises";
 import * as _ from 'lodash';
+import path from "path";
+import { ErrVersionCallerOptions, mkdirParent, tools } from "./0-tools-modules";
+import stripJsonComments from "strip-json-comments";
 
 // MARK: JsonIO
 // // TOOD: implement jsonio as a class
@@ -207,15 +209,17 @@ function __generalLoadJson(
 }
 
 export function loadJsonFileSync(
-    path: string, 
+    filePath: string, 
     errops: ErrVersionCallerOptions = {}
 ) {
     const fun = () => { 
-        const data = readFileSync(path, 'utf8') 
+        const ext = path.extname(filePath)
+        let data = readFileSync(filePath, 'utf8') 
+        if (ext == '.jsonc') { data = stripJsonComments(data); }
         const obj = JSON.parse(data); // try parse
         return obj
     }
-    return __generalLoadJson(path, fun, errops)
+    return __generalLoadJson(filePath, fun, errops)
 }
 
 export async function loadJsonFileAsync(

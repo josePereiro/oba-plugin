@@ -467,7 +467,7 @@ export async function resolveSignalEventsAllChannles(
             console.log("resolveSignalEventsAllChannles:resolveSignalEvents")
             await resolveSignalEvents({
                 vaultDepot, pushDepot, pullDepot,
-                manType: 'main', //TODO/ interfece with Oba.json
+                manType: 'main', //TODO/ interfece with Oba.jsonc
                 vaultUserName,
                 channelName,
                 ...controlArgs

@@ -50,9 +50,10 @@ export async function gitCommitCmd() {
 
 export async function commitToBranch(): Promise<void> {
     try {
-        const targetBranch = obaconfig.getObaConfig("git.commit.branch.target")
+        const vaultRepoConfig = obaconfig.getObaConfig("vault.git.repo", {})
+        const targetBranch = vaultRepoConfig?.["branchName"]
         if (!targetBranch) {
-            new Notice(`Target brach not setup. See Oba.json "git.commit.branch.target"`)
+            new Notice(`Target branch not setup. See Oba.jsonc "gvault.git.repo"`)
             return;
         }
 
@@ -60,7 +61,7 @@ export async function commitToBranch(): Promise<void> {
         
         const currBranch = await getCurrentBranch()
         if (currBranch != targetBranch) {
-            new Notice(`Target brach != current brach. target: ${targetBranch}, current: ${currBranch}`);
+            new Notice(`Target branch != current branch. target: ${targetBranch}, current: ${currBranch}`);
             return;
         }
 

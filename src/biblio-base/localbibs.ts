@@ -21,7 +21,7 @@ export function onload() {
         id: "localbibs-clear-json-cache",
         name: "LocalBIBs Clear JSON caches",
         callback: async () => {
-            checkEnable("localbibs", true)
+            checkEnable("localbibs", { notice: true, err: true })
             console.clear();
             await clearJSONCache()
         },
@@ -31,7 +31,7 @@ export function onload() {
         id: "localbibs-clear-ram-cache",
         name: "LocalBIBs Clear RAM caches",
         callback: () => {
-            checkEnable("localbibs", true)
+            checkEnable("localbibs", { notice: true, err: true })
             console.clear();
             clearRAMCache()
         },
@@ -41,7 +41,7 @@ export function onload() {
         id: "localbibs-clear-all-cache",
         name: "LocalBIBs Clear ALL caches",
         callback: async () => {
-            checkEnable("localbibs", true)
+            checkEnable("localbibs", { notice: true, err: true })
             console.clear();
             clearRAMCache()
             await clearJSONCache()
@@ -52,7 +52,7 @@ export function onload() {
         id: "LocalBibs-load-merged-biblIO",
         name: "LocalBibs load merged biblIO",
         callback: async () => {
-            checkEnable("localbibs", true)
+            checkEnable("localbibs", { notice: true, err: true })
             console.clear();
             const biblIO = await getMergedBiblIO()
             console.log("biblIO")
@@ -64,7 +64,7 @@ export function onload() {
         id: "LocalBibs-vscode-open-localbibs",
         name: "LocalBibs vscode open localbibs",
         callback: async () => {
-            checkEnable("localbibs", true)
+            checkEnable("localbibs", { notice: true, err: true })
             console.clear();
             const sourceFiles: string[] = 
                 obaconfig.getObaConfig("local.bib.files")
@@ -79,7 +79,7 @@ export function onload() {
         id: "LocalBibs-dev",
         name: "LocalBibs dev",
         callback: async () => {
-            checkEnable("localbibs", true)
+            checkEnable("localbibs", { notice: true, err: true })
             console.clear()
             const sourceFiles: string[] = 
                 obaconfig.getObaConfig("local.bib.files")
@@ -95,7 +95,7 @@ export function onload() {
     //     id: "LocalBibs-dev",
     //     name: "LocalBibs dev",
     //     callback: async () => {
-    //         checkEnable("localbibs", true)
+    //         checkEnable("localbibs", { notice: true, err: true })
     //         console.clear();
     //         const sel = getSelectedText();
     //         console.log("sel: ", sel);

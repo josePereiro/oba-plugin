@@ -20,9 +20,9 @@ export function onload() {
 
     OBA.addCommand({
         id: 'oba-obaconfig-open-confic-file',
-        name: 'obaconfig open Oba.json',
+        name: 'obaconfig open Oba.jsonc',
         callback: async () => {
-            checkEnable("obaconfig", true)
+            checkEnable("obaconfig", { notice: true, err: true })
             console.clear()
             const path = getObaConfigPath()
             vscode.goto(path)
@@ -69,5 +69,5 @@ export function obaConfigMtimeMs() {
 
 export function getObaConfigPath(): string {
     const vaultDir = getVaultDir()
-    return join(vaultDir, "Oba.json")
+    return join(vaultDir, "Oba.jsonc")
 }

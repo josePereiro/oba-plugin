@@ -1,9 +1,9 @@
 
 export interface ObaSyncRepoConfig {
-    "repodir": string
-    "branchName": string
-    "cloneRemoteUrl": string
-    "pullRemoteUrl": string
+    "repodir": string,
+    "branchName": string,
+    "cloneRemoteUrl": string,
+    "pullRemoteUrl": string,
     "pushRemoteUrl": string,
     "pingFile": string
 }

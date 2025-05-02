@@ -7,7 +7,7 @@ import { absPath, modifyNoteYamlHeader, resolveNoteAbsPath } from 'src/tools-bas
 
 // MARK: FileSys
 export function getObaNotesDir(): string {
-    const path = obaconfig.getObaConfig("obanotes.configs.folder", null)
+    const path = obaconfig.getObaConfig("obanotes.configs.folder.relpath", null)
     if (path) { return absPath(path); }
     return filesys.getObaDir("obanotes")
 }
@@ -42,9 +42,9 @@ export async function ensureObaNoteID(
     return await tools.errVersion(fun, errops)
 }
 
-// "obanotes.include.folders": ["2_notes"],
+// "obanotes.include.folders.relpath": ["2_notes"],
 export function getObaNotes() {
-    const folders: string[] = obaconfig.getObaConfig("obanotes.include.folders", [''])
+    const folders: string[] = obaconfig.getObaConfig("obanotes.include.folders.relpath", [''])
     const notes = OBA.app.vault.getMarkdownFiles()
     return notes.filter((note) => {
         return folders.some(folder => note.path.includes(folder))

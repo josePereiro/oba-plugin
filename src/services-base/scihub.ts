@@ -5,7 +5,7 @@ export function onload() {
 
     console.log("SciHub:onload")
 
-    // TODO/ link with Oba.json
+    // TODO/ link with Oba.jsonc
     // TODO/ improve this
     OBA.addCommand({
         id: "oba-scihub-fetch-selected-doi",
