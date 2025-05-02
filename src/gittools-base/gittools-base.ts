@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync } from "fs"
+import { mkdirSync } from "fs"
 import { rm } from "fs/promises"
 import { Notice } from "obsidian"
 import { spawnCommand } from "src/tools-base/utils-tools"
@@ -8,20 +8,19 @@ export interface GitRepoOptions {
     pullRemoteUrl?: string,
     pushRemoteUrl?: string,
     cloneRemoteUrl?: string,
-    branchName?: string
+    branchName?: string,
+    extraEnv?: NodeJS.ProcessEnv
 }
 
 // MARK: runGitCommand
 export async function runGitCommand({
     repoOps,
     args = [],
-    extraEnv = {},
     timeoutMs = -1,
     rollTimeOut = false,
 }: {
     args: string[]
     repoOps: GitRepoOptions,
-    extraEnv?: NodeJS.ProcessEnv,
     timeoutMs?: number
     rollTimeOut?: boolean
 }) {
@@ -30,7 +29,7 @@ export async function runGitCommand({
     const res = await spawnCommand({
         cmdstr: "git", // force to use system resolved git
         args: args,
-        extraEnv,
+        extraEnv: repoOps?.["extraEnv"] || {},
         options: {
             cwd: repoOps["repodir"]
         },
@@ -46,15 +45,12 @@ export async function runGitCommand({
 // MARK: isGitDirty
 export async function isGitDirty({
     repoOps,
-    extraEnv = {}
 }: {
-    repoOps: GitRepoOptions,
-    extraEnv: NodeJS.ProcessEnv
+    repoOps: GitRepoOptions
 }) {
     const res = await runGitCommand({
         repoOps,
-        args: ['status', '--porcelain'],
-        extraEnv
+        args: ['status', '--porcelain']
     })
     if (res?.["code"] != 0 ) { return false; }
     if (res?.["stdout"]?.length > 0) { return true; }
@@ -63,16 +59,13 @@ export async function isGitDirty({
 
 // MARK: isGitValidRepo
 export async function isGitValidRepo({
-    repoOps,
-    extraEnv = {}
+    repoOps
 }: {
-    repoOps: GitRepoOptions,
-    extraEnv: NodeJS.ProcessEnv
+    repoOps: GitRepoOptions
 }) {
     const res = await runGitCommand({
         repoOps,
-        args: ['status', '--porcelain'],
-        extraEnv
+        args: ['status', '--porcelain']
     })
     return res?.["code"] == 0
 }
@@ -82,14 +75,12 @@ export async function gitCloneHard({
     repoOps,
     cloneEnable = false,
     mkRepoDirEnable = false,
-    rmRepoEnable = false,
-    extraEnv = {}
+    rmRepoEnable = false
 }: {
     repoOps: GitRepoOptions,
     cloneEnable?: boolean,
     mkRepoDirEnable?: boolean,
-    rmRepoEnable?: boolean,
-    extraEnv?: NodeJS.ProcessEnv
+    rmRepoEnable?: boolean
 }) {
 
     const repodir = repoOps["repodir"]
@@ -125,7 +116,6 @@ export async function gitCloneHard({
         ],
         rollTimeOut: true,
         timeoutMs: 40 * 1000, // TODO: make it an argument
-        extraEnv
     })
 
     // check res
@@ -144,19 +134,16 @@ export async function gitCloneHard({
 
 
 export async function gitHead({
-    repoOps,
-    extraEnv = {}
+    repoOps
 }: {
-    repoOps: GitRepoOptions,
-    extraEnv: NodeJS.ProcessEnv
+    repoOps: GitRepoOptions
 }) {
     // git symbolic-ref --short HEAD
     const res = await runGitCommand({
         repoOps,
         args: [
             'symbolic-ref', '--short', 'HEAD'
-        ],
-        extraEnv
+        ]
     })
     // check res
     if (res?.["code"] != 0) {

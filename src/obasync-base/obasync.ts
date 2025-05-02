@@ -48,7 +48,6 @@ export function onload() {
                 const channelConfig: ObaChannelConfig = channelsConfig?.[channelName] || {}
                 const pullDepots = channelConfig?.["pull.depots"] || []
                 for (const pullDepotConfig of pullDepots) {
-                    
                     // bring larger Dev1
                     console.log("pullDepotConfig: ", pullDepotConfig)
                     const flag = await gitSyncDown({
@@ -60,8 +59,7 @@ export function onload() {
                         gcEnable: false,
                         cleanEnable: true,
                         rmRepoEnable: true,
-                        cloneForce: false,
-                        extraEnv: {}
+                        cloneForce: false
                     })
                     console.log("flag: ", flag)
 
@@ -108,7 +106,6 @@ export function onload() {
                     commitEnable: true,
                     touchEnable: true,
                     cloneForce: false,
-                    extraEnv: {}, 
                     callback() {
 
                         const pingFileName = pushRepoConfig?.["pingFile"]

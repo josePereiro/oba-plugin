@@ -25,7 +25,6 @@ export async function gitSyncUp({
     touchEnable = false,
     cloneForce = false,
     dummyText = 'Hello Oba',
-    extraEnv = {}, 
     callback = () => null
 }: {
     repoOps: GitRepoOptions
@@ -38,7 +37,6 @@ export async function gitSyncUp({
     mkRepoDirEnable?: boolean,
     cloneForce?: boolean,
     dummyText?: string,
-    extraEnv?: NodeJS.ProcessEnv
     callback?: () => any
 }) {
 
@@ -54,7 +52,7 @@ export async function gitSyncUp({
     }
 
     // check git repo
-    const isValidGit = await isGitValidRepo({ repoOps, extraEnv })
+    const isValidGit = await isGitValidRepo({ repoOps })
 
     // MARK: .... git clone
     // clone is need it
@@ -65,13 +63,12 @@ export async function gitSyncUp({
             cloneEnable,
             mkRepoDirEnable,
             rmRepoEnable,
-            extraEnv
         })
         if (!flag) { return false; } // fatal
     }
 
     // MARK: .... check head
-    const head = await gitHead({repoOps, extraEnv})
+    const head = await gitHead({repoOps})
     const branchName = repoOps?.["branchName"] || 'main'
     if (head != branchName) {
         const msg = [
@@ -99,7 +96,6 @@ export async function gitSyncUp({
             repoOps,
             args: [ 'add', '.' ],
             timeoutMs: 120 * 1000, // TODO: make it an argument
-            extraEnv
         })
         // check res
         if (res?.["code"] != 0) {
@@ -114,14 +110,13 @@ export async function gitSyncUp({
     }
 
     // MARK: .... git commit
-    const doCommit = commitEnable && await isGitDirty({repoOps, extraEnv})
+    const doCommit = commitEnable && await isGitDirty({repoOps})
     if (doCommit) {
         // git commit -m "Data update: $(date)"
         const res = await runGitCommand({
             repoOps,
             args: [ 'commit', '-m', '"sync Up"' ],
             timeoutMs: 120 * 1000, // TODO: make it an argument
-            extraEnv
         })
         // check res
         if (res?.["code"] != 0) {
@@ -142,7 +137,6 @@ export async function gitSyncUp({
             repoOps,
             args: ['push', '--force', 'origin', branchName],
             timeoutMs: 120 * 1000, // TODO: make it an argument
-            extraEnv
         })
         // check res
         if (res?.["code"] != 0) {

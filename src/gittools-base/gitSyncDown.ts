@@ -15,8 +15,7 @@ export async function gitSyncDown({
     gcEnable = false,
     cleanEnable = false,
     rmRepoEnable = false,
-    cloneForce = false,
-    extraEnv = {}
+    cloneForce = false
 }: {
     repoOps: GitRepoOptions
     fetchEnable?: boolean,
@@ -27,7 +26,6 @@ export async function gitSyncDown({
     gcEnable?: boolean,
     cleanEnable?: boolean,
     cloneForce?: boolean,
-    extraEnv?: NodeJS.ProcessEnv
 }) {
 
     let res: SpawnResult;
@@ -40,7 +38,8 @@ export async function gitSyncDown({
     }
 
     // check git repo
-    const isValidGit = await isGitValidRepo({ repoOps, extraEnv })
+    const extraEnv = repoOps?.["extraEnv"]  || {}
+    const isValidGit = await isGitValidRepo({ repoOps })
 
     // MARK: .... git clone
     // clone is need it
@@ -50,8 +49,7 @@ export async function gitSyncDown({
             repoOps,
             cloneEnable,
             mkRepoDirEnable,
-            rmRepoEnable,
-            extraEnv
+            rmRepoEnable
         })
         if (!flag) { return false; } // fatal
     }
@@ -65,7 +63,6 @@ export async function gitSyncDown({
             args: [ 'fetch', 'origin', branchName, '--prune', '--depth=1' ],
             rollTimeOut: true,
             timeoutMs: 10 * 1000, // TODO: make it an argument
-            extraEnv
         })
         // check res
         if (res?.["code"] != 0) {
@@ -87,7 +84,6 @@ export async function gitSyncDown({
             repoOps,
             args: [ 'reset', '--hard', `origin/${branchName}` ],
             timeoutMs: 120 * 1000, // TODO: make it an argument
-            extraEnv
         })
         // check res
         if (res?.["code"] != 0) {
@@ -108,7 +104,6 @@ export async function gitSyncDown({
             repoOps,
             args: [ 'gc', '--prune' ],
             timeoutMs: 120 * 1000, // TODO: make it an argument
-            extraEnv
         })
         // check res
         if (res?.["code"] != 0) {
@@ -129,7 +124,6 @@ export async function gitSyncDown({
             repoOps,
             args: ['clean', "-fdx"],
             timeoutMs: 120 * 1000, // TODO: make it an argument
-            extraEnv
         })
         // check res
         if (res?.["code"] != 0) {

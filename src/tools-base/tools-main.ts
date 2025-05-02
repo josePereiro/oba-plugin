@@ -1,8 +1,7 @@
 import { OBA } from "src/oba-base/globals";
-import { checkEnable, spawnCommand, tools, TriggerManager } from "./0-tools-modules";
 import { obanotes } from "src/services-base/0-servises-modules";
+import { checkEnable, spawnCommand, tools, TriggerManager } from "./0-tools-modules";
 import { getCurrNote, getNoteYamlHeader, getSelectedText, getVaultDir, modifyNoteYamlHeader } from "./obsidian-tools";
-import { Notice } from "obsidian";
 
 const TestTriggerManager = new TriggerManager(5000, 500, 5000)
 

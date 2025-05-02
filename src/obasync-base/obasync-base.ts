@@ -5,7 +5,8 @@ export interface ObaSyncRepoConfig {
     "cloneRemoteUrl": string,
     "pullRemoteUrl": string,
     "pushRemoteUrl": string,
-    "pingFile": string
+    "pingFile": string,
+    "extraEnv"?: NodeJS.ProcessEnv
 }
 
 export interface ObaChannelConfig {

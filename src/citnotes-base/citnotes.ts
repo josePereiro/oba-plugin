@@ -192,14 +192,14 @@ async function copySelectedCitationFromList(
     if (!refBiblIOs) {
         console.log("No references found. note0: ", note0);
     } else {
-        const references1 = getCitationStringToSearch(refBiblIOs, { suffix: ' {ref}'});
+        const references1 = getCitationStringToSearch(refBiblIOs, { suffix: ' #ref'});
         references.push(...references1)
     }
     const localBiblIOs = await localbibs.getMergedBiblIO()
     if (!localBiblIOs) {
         console.log("localBiblIOs not found");
     } else {
-        const references1 = getCitationStringToSearch(localBiblIOs, { suffix: ' {local}'});
+        const references1 = getCitationStringToSearch(localBiblIOs, { suffix: ' #localbib'});
         references.push(...references1)
     }
     // TODO: add all from crossref cache?

@@ -34,7 +34,7 @@
           "description": "A file for testing communications. It is recommended for this file to have a unique name."
         },
         "extraEnv" : {
-          "type": "array",
+          "type": "object",
           "description": "Extra env variables (on top of process.env) to be used in all git cli calls.",
           "patternProperties": {
             ".*": { "type": "string" }
