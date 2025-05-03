@@ -1,9 +1,10 @@
-import { Notice } from 'obsidian';
 import { exec } from 'child_process';
+import { Notice } from 'obsidian';
 import { OBA } from 'src/oba-base/globals';
-import { obaconfig } from '../oba-base/0-oba-modules'
-import { checkEnable, tools } from 'src/tools-base/0-tools-modules';
+import { checkEnable } from 'src/tools-base/0-tools-modules';
 import { getCurrNotePath, getCursorPosition } from 'src/tools-base/obsidian-tools';
+import { obaconfig } from '../oba-base/0-oba-modules';
+import { addObaCommand } from 'src/oba-base/commands';
 
 /*
     Handle integration with vscode
@@ -11,31 +12,30 @@ import { getCurrNotePath, getCursorPosition } from 'src/tools-base/obsidian-tool
 export function onload() {
     console.log("VSCode:onload")
 
-    OBA.addCommand({
-        id: "oba-vscode-open-workspace",
-        name: "VSCode open workspace",
-        callback: () => {
-            checkEnable("vscode", {err: true, notice: true})
+    // TODO/ add check in case workspace config is missing
+    addObaCommand({
+        commandName: "open workspace",
+        serviceName: "VSCode",
+        async commandCallback({ commandID, commandFullName }) {
             console.clear()
-            call()
+            vscodeCall()
         },
-    });
+    })
 
-    OBA.addCommand({
-        id: "oba-vscode-goto-position",
-        name: "VSCode goto position",
-        callback: () => {
-            checkEnable("vscode", {err: true, notice: true})
+    addObaCommand({
+        commandName: "goto position",
+        serviceName: "VSCode",
+        async commandCallback({ commandID, commandFullName }) {
             console.clear()
             const path = getCurrNotePath();
             const cursor = getCursorPosition();
-            goto(path, cursor.line, cursor.ch)
+            vscodeGotoFile(path, cursor.line, cursor.ch)
         },
-    });
+    })
 
 }
 
-export function call(args = "") {
+export function vscodeCall(args = "") {
     const vscode = obaconfig.getObaConfig("vscode.exec", "code")
     const wrokspace = obaconfig.getObaConfig("vscode.oba.workspace", "")
     const command = `${vscode} ${wrokspace} ${args}`;
@@ -54,7 +54,12 @@ export function call(args = "") {
     });
 }
 
-export function goto(path: string, line = 0, ch = 0) {
+export function vscodeGotoFile(path: string, line = 0, ch = 0) {
     console.log("path: ", path)
-    call(`--goto "${path}":${line+1}:${ch+1}`)
+    vscodeCall(`--goto "${path}":${line+1}:${ch+1}`)
+}
+
+export function vscodeOpenFolder(path: string) {
+    console.log("path: ", path)
+    vscodeCall(path)
 }

@@ -1,6 +1,10 @@
+import { addObaCommand } from "src/oba-base/commands";
 import { OBA } from "src/oba-base/globals";
 import { checkEnable } from "src/tools-base/oba-tools";
 import { TriggerManager } from "src/tools-base/schedule-tools";
+
+
+// TODO/ create a per task/id statusbar spot
 
 let STATUSBAR: HTMLElement
 // let lastLoggedTime = Date.now();
@@ -18,18 +22,17 @@ export function onload() {
 
     STATUSBAR = OBA.addStatusBarItem();
 
-    OBA.addCommand({
-        id: "oba-statusbar-dev",
-        name: "StatusBar dev",
-        callback: async () => {
-            checkEnable("statusbar", {err: true, notice: true})
+    addObaCommand({
+        commandName: "dev",
+        serviceName: "StatusBar",
+        async commandCallback({ commandID, commandFullName }) {
             for (let i = 0; i < 10; i++) {
                 setText(`HI ${i}`)
                 await sleep(500)
             }
             setText('')
         },
-    });
+    })
 }
 
 export function onunload() {

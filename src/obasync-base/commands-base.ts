@@ -1,27 +1,26 @@
+import { Notice } from "obsidian"
+import { addObaCommand } from "src/oba-base/commands"
 import { OBA } from "src/oba-base/globals"
 import { getObaConfig } from "src/oba-base/obaconfig"
 import { getCurrNotePath } from "src/tools-base/obsidian-tools"
-import { TaskState } from "src/tools-base/schedule-tools"
-import { TriggerManager } from "src/tools-base/schedule-tools"
+import { TaskState, TriggerManager } from "src/tools-base/schedule-tools"
+import { _justPush } from "./git-cli-base"
 import { publishModifiedFileSignal } from "./modifiedFileSignal-base"
 import { ObaSyncScheduler } from "./obasync"
+import { getObaSyncFlag, setObaSyncFlag } from "./obasync-base"
 import { getNoteObaSyncScope } from "./scope-base"
 import { resolveSignalEventsAllChannles } from "./signals-base"
-import { _justPush } from "./git-cli-base"
-import { Notice } from "obsidian"
-import { getObaSyncFlag, setObaSyncFlag } from "./obasync-base"
 
 
 const COMMAND_SPAWN_MOD_FILE_TIME = new TriggerManager()
 
 export function _serviceCommands() {
 
-    // MARK: spawnModifiedFileSignal
-    OBA.addCommand({
-        id: "oba-obasync-spawnModifiedFileSignal",
-        name: "ObaSync spawnModifiedFileSignal",
-        callback: async () => {
-
+    // MARK: spawn modified file signal
+    addObaCommand({
+        commandName: "spawn modified file signal",
+        serviceName: "ObaSync",
+        async commandCallback({ commandID, commandFullName }) {
             // delay for saving
             const flag = 
                 // 300, 100, -1, -1
@@ -70,15 +69,14 @@ export function _serviceCommands() {
                     }
                 }, 
             })
-            
-        }
-    });
+        },
+    })
 
-    // MARK: spawnResolveVaultSignalEvents
-    OBA.addCommand({
-        id: "oba-obasync-spawnResolveVaultSignalEvents",
-        name: "ObaSync spawnResolveVaultSignalEvents",
-        callback: async () => {
+    // MARK: spawn resolve vault signal events
+    addObaCommand({
+        commandName: "spawn resolve vault signal events",
+        serviceName: "ObaSync",
+        async commandCallback({ commandID, commandFullName }) {
             ObaSyncScheduler.spawn({
                 id: `oba-obasync-spawnResolveVaultSignalEvents`,
                 deltaGas: 1,
@@ -91,40 +89,38 @@ export function _serviceCommands() {
                     task["gas"] = 0
                 }
             })
-        }
-    });
-
+        },
+    })
+    
     // MARK: flip online mode
-    OBA.addCommand({
-        id: "oba-obasync-flip-online-mode",
-        name: "ObaSync flip online mode",
-        callback: async () => {
-
-            // set flags
-            setObaSyncFlag(`online.mode`, 
+    addObaCommand({
+        commandName: "flip online mode",
+        serviceName: "ObaSync",
+        async commandCallback({ commandID, commandFullName }) {
+            
+             // set flags
+             setObaSyncFlag(`online.mode`, 
                 !getObaSyncFlag(`online.mode`, false)
             )
             new Notice(`ObaSync online mode: ${getObaSyncFlag(`online.mode`, false)}`, 1000)
+        },
+    })
 
-        }
-    });
-
-    // MARK: push-all
-    OBA.addCommand({
-        id: "oba-obasync-log-ObaSyncScheduler",
-        name: "ObaSync log-ObaSyncScheduler",
-        callback: async () => {
+    // MARK: Dev: log ObaSyncScheduler
+    addObaCommand({
+        commandName: "Dev: log ObaSyncScheduler",
+        serviceName: "ObaSync",
+        async commandCallback({ commandID, commandFullName }) {
             console.log("ObaSyncScheduler")
             console.log(ObaSyncScheduler)
-        }
-    });
+        },
+    })
 
     // MARK: push-all
-    OBA.addCommand({
-        id: "oba-obasync-push-all",
-        name: "ObaSync push-all",
-        callback: async () => {
-
+    addObaCommand({
+        commandName: "push-all",
+        serviceName: "ObaSync",
+        async commandCallback({ commandID, commandFullName }) {
             // spawn push
             ObaSyncScheduler.spawn({
                 id: `oba-obasync-push-all`,
@@ -150,6 +146,6 @@ export function _serviceCommands() {
                     
                 }
             })
-        }
-    });
+        },
+    })
 }

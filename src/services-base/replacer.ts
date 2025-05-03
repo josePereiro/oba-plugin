@@ -1,31 +1,29 @@
-/*
-    Add and interface for static replacements
-    - for instance 
-        - #!mdate -> modification date of the note
-*/
 import { existsSync, statSync } from "fs";
-import { OBA } from "src/oba-base/globals";
-import { checkEnable, tools } from "src/tools-base/0-tools-modules";
 import { DateTime } from 'luxon';
-import { obanotes } from "./0-servises-modules";
-import { TFile } from "obsidian";
 import { citnotes } from "src/citnotes-base/0-citnotes-modules";
+import { addObaCommand } from "src/oba-base/commands";
 import { getCurrNote, getCurrNotePath, processNoteByLines } from "src/tools-base/obsidian-tools";
+import { obanotes } from "./0-servises-modules";
+
+
+/*
+    TODO/ Integrate with general template engine
+*/
+
 
 export function onload() {
     console.log("Replacer:onload");
 
-    // TODO/ link with Oba.jsonc
+    // TODO/ link better with Oba.jsonc
     // TODO/ improve this
-    OBA.addCommand({
-        id: "oba-replacer-replace all",
-        name: "Replacer replace all",
-        callback: async () => {
-            checkEnable("replacer", {err: true, notice: true})
+    addObaCommand({
+        commandName: "run replacer",
+        serviceName: "Replacer",
+        async commandCallback({ commandID, commandFullName }) {
             console.clear()
             await runReplacer()
         },
-    });
+    })
 }
 
 // TODO/TAI Move out
@@ -94,7 +92,5 @@ export async function runReplacer() {
 }
 
 function _replacerRegexes(src: string) {
-    return [
-        `#!${src}`, `{{${src}}}`
-    ] as string[]
+    return [`#!${src}`, `{{${src}}}`]
 }

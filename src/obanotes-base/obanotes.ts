@@ -1,16 +1,14 @@
-import { TFile } from 'obsidian';
 import { basename } from 'path';
-import { OBA } from 'src/oba-base/globals';
-import { checkEnable, tools } from 'src/tools-base/0-tools-modules';
-import { obanotes } from './0-obanotes-modules';
-import { vscode } from 'src/services-base/0-servises-modules';
-import { getNoteConfigPath, getObaNoteConfigJSON, getSetObaNoteConfig } from './noteconfig';
-import { genObaNoteId } from './obanotes-base';
+import { addObaCommand } from 'src/oba-base/commands';
+import { vscodeGotoFile } from 'src/services-base/vscode';
+import { tools } from 'src/tools-base/0-tools-modules';
 import { getCurrNote, getCurrNotePath, getSelectedText } from 'src/tools-base/obsidian-tools';
+import { obanotes } from './0-obanotes-modules';
+import { getNoteConfigPath, getObaNoteConfigJSON } from './noteconfig';
 
 // index
-export * from './obanotes-base'
-export * from './noteconfig'
+export * from './noteconfig';
+export * from './obanotes-base';
 
 /*
     Handle the manipulation of note
@@ -22,11 +20,10 @@ export * from './noteconfig'
 export function onload() {
     console.log("ObaNotes:onload");
 
-    OBA.addCommand({
-        id: "oba-obanotes-add-ob.id-to-all",
-        name: "ObaNotes add oba-id to all",
-        callback: async () => {
-            checkEnable("backends", {err: true, notice: true})
+    addObaCommand({
+        commandName: "add oba-id to all notes",
+        serviceName: "ObaNotes",
+        async commandCallback({ commandID, commandFullName }) {
             console.clear()
             const notes = obanotes.getObaNotes();
             let i = 1;
@@ -39,55 +36,58 @@ export function onload() {
                 i++;
             }
         },
-    });
+    })
 
-    OBA.addCommand({
-        id: "oba-obanotes-subnote-link",
-        name: "ObaNotes subnote link",
-        callback: async () => {
-            checkEnable("backends", {err: true, notice: true})
+    addObaCommand({
+        commandName: "subnote link",
+        serviceName: "ObaNotes",
+        async commandCallback({ commandID, commandFullName }) {
             console.clear()
             const link = subNoteLinkFromSelection()
             await tools.copyToClipboard(link)
         },
-    });
+    })
 
-    OBA.addCommand({
-        id: "oba-obanotes-open-note-config-json",
-        name: "ObaNotes open note config json",
-        callback: async () => {
-            checkEnable("backends", {err: true, notice: true})
+    addObaCommand({
+        commandName: "open note config json",
+        serviceName: "ObaNotes",
+        async commandCallback({ commandID, commandFullName }) {
             console.clear()
             const note = getCurrNote({strict: true})
             const path = await getNoteConfigPath(note)
-            vscode.goto(path)
+            vscodeGotoFile(path)
         },
-    });
+    })
 
-    OBA.addCommand({
-        id: "oba-obanotes-log-note-config",
-        name: "ObaNotes log note config",
-        callback: async () => {
-            checkEnable("backends", {err: true, notice: true})
+    addObaCommand({
+        commandName: "log note config",
+        serviceName: "ObaNotes",
+        async commandCallback({ commandID, commandFullName }) {
             console.clear()
             const note = getCurrNote({strict: true})
             const config = await getObaNoteConfigJSON(note)
             console.log("config: ", config)
         },
-    });
+    })
 
-    OBA.addCommand({
-        id: "oba-obanotes-dev",
-        name: "ObaNotes dev",
-        callback: async () => {
-            checkEnable("backends", {err: true, notice: true})
+    addObaCommand({
+        commandName: "log note config",
+        serviceName: "ObaNotes",
+        async commandCallback({ commandID, commandFullName }) {
             console.clear()
             const note = getCurrNote({strict: true})
-            // const config = await getSetObaNoteConfig(note, "oba.test", genObaNoteId())
             const config = await getObaNoteConfigJSON(note)
             console.log("config: ", config)
         },
-    });
+    })
+
+    // addObaCommand({
+    //     commandName: "Dev",
+    //     serviceName: "ObaNotes",
+    //     async commandCallback({ commandID, commandFullName }) {
+            
+    //     },
+    // })
     
 }
 

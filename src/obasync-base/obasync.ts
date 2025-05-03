@@ -10,6 +10,7 @@ import { SequentialAsyncScheduler } from "src/tools-base/schedule-tools";
 import { INTERVAL1_ID } from "./callbacks-base";
 import { ObaChannelConfig, ObaSyncRepoConfig, setObaSyncFlag } from "./obasync-base";
 import { Notice } from "obsidian";
+import { addObaCommand } from "src/oba-base/commands";
 
 /*
     /TODO/ add actions when clicking a notice
@@ -35,12 +36,12 @@ export function onload() {
     
     ObaSyncScheduler.run()
 
-    OBA.addCommand({
-        id: "obasync-gitSyncDown-ping-file",
-        name: "ObaSync gitSyncDown ping file",
-        callback: async () => {
+    // MARK: gitSyncDown ping file
+    addObaCommand({
+        commandName: "gitSyncDown ping file",
+        serviceName: "ObaSync",
+        async commandCallback({ commandID, commandFullName }) {
             console.clear()
-
             
             const channelsConfig = getObaConfig("obasync.channels", {})
             for (const channelName in channelsConfig) {
@@ -80,13 +81,13 @@ export function onload() {
                     copyFileSync(pullFile, vaultFile)
                 }
             }
-        }
+        },
     })
 
-    OBA.addCommand({
-        id: "obasync-gitSyncUp-ping-files",
-        name: "ObaSync gitSyncUp ping files",
-        callback: async () => {
+    addObaCommand({
+        commandName: "gitSyncUp ping files",
+        serviceName: "ObaSync",
+        async commandCallback({ commandID, commandFullName }) {
             console.clear()
 
             const channelsConfig = getObaConfig("obasync.channels", {})
@@ -126,15 +127,13 @@ export function onload() {
                 })
                 console.log("flag: ", flag)   
             }
-        }
+        },
     })
 
-
-    // MARK: gitSyncUp current file with all
-    OBA.addCommand({
-        id: "obasync-gitSyncUp-current-file-file-with-all",
-        name: "ObaSync gitSyncUp current file with all",
-        callback: async () => {
+    addObaCommand({
+        commandName: "gitSyncUp current file with all",
+        serviceName: "ObaSync",
+        async commandCallback({ commandID, commandFullName }) {
             console.clear()
 
             const vaultFile = getCurrNotePath()
@@ -169,14 +168,13 @@ export function onload() {
                 new Notice(`gitSyncUp ${channelName}`)
                 console.log("flag: ", flag)
             }
-        }
+        },
     })
 
-    // MARK: gitSyncUp current file with all
-    OBA.addCommand({
-        id: "obasync-gitSyncDown-current-file-with-all",
-        name: "ObaSync gitSyncDown current file with all",
-        callback: async () => {
+    addObaCommand({
+        commandName: "gitSyncDown current file with all",
+        serviceName: "ObaSync",
+        async commandCallback({ commandID, commandFullName }) {
             console.clear()
             
             const vaultFile = getCurrNotePath()
@@ -215,9 +213,8 @@ export function onload() {
 
                 }
             }
-        }
+        },
     })
-
 }
 
 export function onunload() {

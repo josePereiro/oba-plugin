@@ -1,9 +1,11 @@
 import { statSync } from 'fs';
 import { join } from 'path';
-import { checkEnable, JsonIO, tools } from '../tools-base/0-tools-modules';
-import { OBA } from './globals';
 import { vscode } from 'src/services-base/0-servises-modules';
 import { getVaultDir } from 'src/tools-base/obsidian-tools';
+import { checkEnable, JsonIO, tools } from '../tools-base/0-tools-modules';
+import { addObaCommand } from './commands';
+import { OBA } from './globals';
+import { vscodeGotoFile } from 'src/services-base/vscode';
 
 /*
     Handle Oba confg file
@@ -18,16 +20,15 @@ export function onload() {
     // first load
     loadObaConfigOnDemand()
 
-    OBA.addCommand({
-        id: 'oba-obaconfig-open-confic-file',
-        name: 'obaconfig open Oba.jsonc',
-        callback: async () => {
-            checkEnable("obaconfig", { notice: true, err: true })
+    addObaCommand({
+        commandName: "open Oba.jsonc",
+        serviceName: "ObaConfig",
+        async commandCallback({ commandID, commandFullName }) {
             console.clear()
             const path = getObaConfigPath()
-            vscode.goto(path)
-        }
-    });
+            vscodeGotoFile(path)
+        },
+    })
 }
 
 export function loadObaConfigOnDemand() : boolean {

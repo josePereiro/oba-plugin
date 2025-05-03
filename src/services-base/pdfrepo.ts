@@ -8,34 +8,66 @@ import { checkEnable, tools } from 'src/tools-base/0-tools-modules';
 import { obaconfig } from 'src/oba-base/0-oba-modules';
 import { BiblIOIder } from 'src/biblio-base/biblio-data';
 import { getCurrNote, getSelectedText } from 'src/tools-base/obsidian-tools';
+import { addObaCommand } from 'src/oba-base/commands';
 
 /*
     Given a path, open a pdf related with the note.
     TODO/ Move to citnote
 */
 
+/*
+    /TODO Move out
+    TODO/DONE Create a validate for command method
+    - validate arguments and notify user
+    - Just a basic dev tool
+    - validateForCommand
+*/ 
+export function validateCommandContext(obj: any) {
+    const nully: string[] = []
+    for (const key in obj) {
+        if (!obj[key]) nully.push(key)
+    }
+
+    if (nully.length == 0) return true;
+    new Notice([
+        "💔 Invalid command context:\n",
+        "- nully variables: ", nully.join(", ")
+    ].join(), 1)
+    return false
+}
+
+// TODO/ Rename to PDF Depot
 export function onload() {
     console.log("PDFRepo:onload");
+
+    addObaCommand({
+        commandName: "open note's pdf",
+        serviceName: "PDFRepo",
+        async commandCallback({ commandID, commandFullName }) {
+            console.clear()
+            const note = getCurrNote()
+            openPdfFromNote(note)
+        },
+    })
     
-    OBA.addCommand({
-        id: "oba-pdfrepo-open-notes-pdf",
-        name: "PDFRepo Open note's pdf",
-        callback: () => {
-            checkEnable("pdfrepo", {err: true, notice: true})
-            openPdfFromNote()
-        },
-    });
-
-    OBA.addCommand({
-        id: "oba-pdfrepo-check-notes-pdf",
-        name: "PDFRepo check note's pdf",
-        callback: () => {
-            checkEnable("pdfrepo", {err: true, notice: true})
+    addObaCommand({
+        commandName: "check note's pdf",
+        serviceName: "PDFRepo",
+        async commandCallback({ commandID, commandFullName }) {
+            console.clear()
             const sel = getSelectedText();
-            checkPdfFromNote(sel)
+            const isValid = validateCommandContext({sel})
+            if (isValid) { return; }
+            
+            // Check exist
+            const pdfFilePath = obaNotePdfFileName(sel)
+            if (existsSync(pdfFilePath)) {
+                new Notice(`👍 PDF file found at ${pdfFilePath}`);
+            } else {
+                new Notice(`💔 PDF file NOT found at ${pdfFilePath}`);
+            }
         },
-    });
-
+    })
 }
 
 
@@ -48,21 +80,8 @@ function obaNotePdfFileName(name: string) {
     return pdfFilePath
 }
 
-export function checkPdfFromNote(name: string) {
-
-    // Check exist
-    const pdfFilePath = obaNotePdfFileName(name)
-    if (existsSync(pdfFilePath)) {
-        new Notice(`👍 PDF file found at ${pdfFilePath}`);
-    } else {
-        new Notice(`💔 PDF file NOT found at ${pdfFilePath}`);
-    }
-}
-
-
-
 export function openPdfFromNote(
-    note: TFile | null = getCurrNote()
+    note: TFile | null
 ) {
     if (!note) {
         new Notice("No active note found.");

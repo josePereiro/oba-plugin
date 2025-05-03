@@ -1,7 +1,8 @@
-import { OBA } from "src/oba-base/globals";
-import { callbacks } from "./0-servises-modules";
 import { obaconfig } from "src/oba-base/0-oba-modules";
+import { addObaCommand } from "src/oba-base/commands";
+import { OBA } from "src/oba-base/globals";
 import { checkEnable } from "src/tools-base/oba-tools";
+import { callbacks } from "./0-servises-modules";
 
 /*
     General purpose commands.
@@ -16,16 +17,15 @@ export function onload() {
     NCOMMANDS = obaconfig.getObaConfig("commands.defaults.num", 5)
 
     for (const i of getCommandRange()) {
-        OBA.addCommand({
-            id: getCommandId(i),
-            name: getCommandName(i),
-            callback: async () => {
-                // console.clear();
-                checkEnable("commands", {err: true, notice: true})
+
+        addObaCommand({
+            commandName: getCommandName(i),
+            serviceName: "Commands",
+            async commandCallback({ commandID, commandFullName }) {
                 const callbackID = getCommandCallbackId(i);
                 await callbacks.runObaCallbacks({ callbackID });
-            }
-        });
+            },
+        })
     }
 }
 

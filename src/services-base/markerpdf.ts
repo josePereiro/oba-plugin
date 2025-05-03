@@ -1,11 +1,10 @@
 import { existsSync } from 'fs';
-import { basename, join } from 'path';
 import { Notice } from 'obsidian';
-import { OBA } from 'src/oba-base/globals';
-import { checkEnable, tools } from 'src/tools-base/0-tools-modules';
-import { vscode } from './0-servises-modules';
+import path from 'path';
 import { obaconfig } from 'src/oba-base/0-oba-modules';
+import { addObaCommand } from 'src/oba-base/commands';
 import { getCurrNotePath } from 'src/tools-base/obsidian-tools';
+import { vscodeGotoFile, vscodeOpenFolder } from './vscode';
 
 /*
     Integration with marker pdf.
@@ -15,35 +14,60 @@ import { getCurrNotePath } from 'src/tools-base/obsidian-tools';
 export function onload() {
     console.log("MarkerPDF:onload");
 
-    OBA.addCommand({
-        id: "oba-markerpdf-open-note-md",
-        name: "MarkerPDF open notes md",
-        callback: () => {
-            checkEnable("markerpdf", {err: true, notice: true})
+    addObaCommand({
+        commandName: "open note md",
+        serviceName: "MarkerPDF",
+        async commandCallback({ commandID, commandFullName }) {
             console.clear()
-            openNoteMD()
+            const notePath = getCurrNotePath();
+            const mdPath = getMarkerMDFilePath({notePath})
+            if (!existsSync(mdPath)) {
+                const errorMsg = `File not found, ${mdPath}`
+                new Notice(`ERROR: ${errorMsg}`);
+                throw {msg: errorMsg};
+            }
+            vscodeGotoFile(mdPath)
         },
-    });
+    })
+
+    addObaCommand({
+        commandName: "check note md",
+        serviceName: "MarkerPDF",
+        async commandCallback({ commandID, commandFullName }) {
+            console.clear()
+            const notePath = getCurrNotePath();
+            const mdPath = getMarkerMDFilePath({notePath})
+            if (existsSync(mdPath)) {
+                new Notice(`👍 PDF file found at ${mdPath}`);
+            } else {
+                new Notice(`💔 PDF file NOT found at ${mdPath}`);
+            }
+        },
+    })
+
+    addObaCommand({
+        commandName: "open marker folder",
+        serviceName: "MarkerPDF",
+        async commandCallback({ commandID, commandFullName }) {
+            console.clear()
+            const notePath = getMarkerDir()
+            vscodeOpenFolder(notePath)
+        },
+    })
 }
 
-/*
-    Open marker note directory in vscode
-*/ 
-export function openNoteMD() {
-    const notePath = getCurrNotePath();
-    const noteName = basename(notePath).
-        replace("@", "").
-        replace(".md", "")
+export function getMarkerMDFilePath({
+    notePath,
+}: {
+    notePath: string,
+}) {
+    const noteName = path.basename(notePath)
+        .replace("@", "")
+        .replace(".md", "")
     const markerDir = getMarkerDir();
-    const mdPath = join(
+    return path.join(
         markerDir, noteName, `${noteName}.md`
     )
-    if (!existsSync(mdPath)) {
-        const errorMsg = `File not found, ${mdPath}`
-        new Notice(`ERROR: ${errorMsg}`);
-        throw {msg: errorMsg};
-    }
-    vscode.goto(mdPath)
 }
 
 export function getMarkerDir() {

@@ -1,9 +1,14 @@
-import simpleGit, { SimpleGit, StatusResult } from 'simple-git';
 import { Notice } from 'obsidian';
-import { checkEnable, tools } from 'src/tools-base/0-tools-modules';
+import simpleGit, { SimpleGit, StatusResult } from 'simple-git';
 import { obaconfig } from 'src/oba-base/0-oba-modules';
-import { OBA } from 'src/oba-base/globals';
+import { addObaCommand } from 'src/oba-base/commands';
 import { getVaultDir } from 'src/tools-base/obsidian-tools';
+
+
+/*
+    TODO/ Move to use gittools
+    TODO/ rename to Vault Git
+*/ 
 
 /*
     Add a few git utilities
@@ -15,18 +20,18 @@ import { getVaultDir } from 'src/tools-base/obsidian-tools';
 let GIT: SimpleGit;
 
 export function onload() {
-    console.log("Git:onload");
+    console.log("VaultGit:onload");
 
     GIT = simpleGit(getVaultDir());
 
-    OBA.addCommand({
-        id: 'oba-git-commit-default-branch',
-        name: 'Git commit default branch',
-        callback: async () => {
-            checkEnable("git", {err: true, notice: true})
+    addObaCommand({
+        commandName: "commit default branch",
+        serviceName: "VaultGit",
+        async commandCallback({ commandID, commandFullName }) {
+            console.clear()
             await commitToBranch();
-        }
-    });
+        },
+    })
 } 
 
 export async function isGitRepo(): Promise<boolean> {
@@ -48,6 +53,7 @@ export async function gitCommitCmd() {
     await commitToBranch();
 }
 
+// TODO/ Move to use gittools
 export async function commitToBranch(): Promise<void> {
     try {
         const vaultRepoConfig = obaconfig.getObaConfig("vault.git.repo", {})

@@ -1,32 +1,26 @@
-import { OBA } from "src/oba-base/globals";
-import { checkEnable, tools } from "src/tools-base/0-tools-modules";
+import { execSync } from 'child_process';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+import { filesys } from "src/oba-base/0-oba-modules";
+import { addObaCommand } from "src/oba-base/commands";
+import { getSelectedText } from "src/tools-base/obsidian-tools";
+
 
 export function onload() {
 
     console.log("SciHub:onload")
 
-    // TODO/ link with Oba.jsonc
-    // TODO/ improve this
-    OBA.addCommand({
-        id: "oba-scihub-fetch-selected-doi",
-        name: "SciHub fetch selected doi",
-        callback: async () => {
-            checkEnable("scihub", {err: true, notice: true})
+    // TODO/ Make it work
+    addObaCommand({
+        commandName: "fetch selected doi",
+        serviceName: "SciHub",
+        async commandCallback({ commandID, commandFullName }) {
             console.clear()
             const sel = getSelectedText()
             await fetchPdfFromSciHubWithCurl(sel)
         },
-    });
+    })
 }
-
-
-import { exec, execSync } from 'child_process';
-import { readFileSync, unlinkSync } from 'fs';
-import { tmpdir } from 'os';
-import { join } from 'path';
-import { filesys } from "src/oba-base/0-oba-modules";
-import { Notice } from "obsidian";
-import { getSelectedText } from "src/tools-base/obsidian-tools";
 
 async function fetchViaCurl(sciHubUrl: string): Promise<string> {
     // Create a temporary file path

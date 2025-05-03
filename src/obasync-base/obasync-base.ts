@@ -39,6 +39,8 @@ export function consumeObaSyncFlag(
     }
     return dflt
 }
+
+// TODO? DEPRECATE. Use oba.state
 export function setObaSyncFlag(
     key: string, 
     value: any, 

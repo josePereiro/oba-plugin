@@ -1,13 +1,16 @@
 import { Notice, TFile } from 'obsidian';
-import { biblio, crossref, localbibs } from 'src/biblio-base/0-biblio-modules';
-import { BiblIOData, BiblIOIder } from 'src/biblio-base/biblio-data';
+import { crossref, localbibs } from 'src/biblio-base/0-biblio-modules';
+import { BiblIOData } from 'src/biblio-base/biblio-data';
+import { addObaCommand } from 'src/oba-base/commands';
 import { OBA } from 'src/oba-base/globals';
-import { checkEnable, tools } from 'src/tools-base/0-tools-modules';
+import { getObaConfig } from 'src/oba-base/obaconfig';
+import { getState, setState } from 'src/oba-base/state';
 import { obanotes } from 'src/obanotes-base/0-obanotes-modules';
-import { citNoteBiblIO, citNoteReferenceBiblIOs, parseCitNoteCiteKey } from './citnotes-base';
 import { statusbar } from 'src/services-base/0-servises-modules';
+import { checkEnable, tools } from 'src/tools-base/0-tools-modules';
 import { getCurrNote, getSelectedText } from 'src/tools-base/obsidian-tools';
-export * from './citnotes-base'
+import { citNoteBiblIO, citNoteReferenceBiblIOs, parseCitNoteCiteKey } from './citnotes-base';
+export * from './citnotes-base';
 
 /*
     Handle citation notes.
@@ -29,12 +32,10 @@ export * from './citnotes-base'
 export function onload() {
     console.log("CitNotes:onload");
 
-
-    OBA.addCommand({
-        id: "citnotes-dev",
-        name: "CitNotes dev",
-        callback: async () => {
-            checkEnable("citnotes", { notice: true, err: true })
+    addObaCommand({
+        commandName: "dev",
+        serviceName: "CitNotes",
+        async commandCallback({ commandID, commandFullName }) {
             console.clear();
             const note0 = getCurrNote();
             console.log("note0: ", note0);
@@ -48,91 +49,77 @@ export function onload() {
             console.log("crossref: ", biblIO2);
             const biblIO3 = await citNoteBiblIO(note0);
             console.log("citnote: ", biblIO3);
-        }
-    });
-    
-    // TODO\ Make something like this but from all 
-    // localbibs + references
-    OBA.addCommand({
-        id: "citnotes-copy-selected-reference-link-from-list",
-        name: "CitNotes copy selected reference link from list",
-        callback: async () => {
-            checkEnable("citnotes", { notice: true, err: true })
-            console.clear();
-            // copy selection
-            const sel0 = getSelectedText()
-            await tools.copyToClipboard(sel0)
-            const note0 = getCurrNote();
-            await copySelectedCitNoteReferenceLinkFromList(note0, sel0)
         },
-    });
+    })
 
-    // OBA.addCommand({
-    //     id: 'oba-citnotes-copy-reference-selected-doi',
-    //     name: 'CitNotes copy references of selected doi',
-    //     callback: async () => {
-    //         checkEnable("citnotes", { notice: true, err: true })
-    //         console.clear();
-    //         const doi0 = getSelectedText()
-    //         if (!doi0) {
-    //             new Notice('Select a doi');
-    //             return;
-    //         }
-    //         const doi = tools.absDoi(doi0);
-    //         await this.copyCitNoteReferencesSection(doi);
-    //     }
-    // });
-    
-    OBA.addCommand({
-        id: 'oba-citnotes-copy-reference-current-note',
-        name: 'CitNotes copy references of current note',
-        callback: async () => {
-            checkEnable("citnotes", { notice: true, err: true })
+    addObaCommand({
+        commandName: "copy references of current note",
+        serviceName: "CitNotes",
+        async commandCallback({ commandID, commandFullName }) {
             console.clear();
             const note = getCurrNote()
             await this.copyCitNoteReferencesSection(note);
-        }
-    });
+        },
+    })
 
-    OBA.addCommand({
-        id: 'oba-citnotes-generate-references-resolver-map',
-        name: 'CitNotes generate references resolver map',
-        callback: async () => {
-            checkEnable("citnotes", { notice: true, err: true })
+    addObaCommand({
+        commandName: "generate references resolver map",
+        serviceName: "CitNotes",
+        async commandCallback({ commandID, commandFullName }) {
             console.clear();
             const citnote = getCurrNote()
             await generateCitNoteConfigRefResolverMap(citnote)
-        }
-    });
+        },
+    })
 
-    OBA.addCommand({
-        id: "citnotes-copy-citstr-from-list",
-        name: "CitNotes search citation from list",
-        callback: async () => {
-            checkEnable("citnotes", { notice: true, err: true })
+    addObaCommand({
+        commandName: "search citation from list",
+        serviceName: "CitNotes",
+        async commandCallback({ commandID, commandFullName }) {
             console.clear();
             const sel0 = getSelectedText() || ''
             const citnote = getCurrNote()
-            await copySelectedCitationFromList(citnote, sel0)
-        }
-    });
+            const template = getState(
+                'citnotes.citation.current.template', 
+                `[[@citekey]]`
+            )
+            await copySelectedCitationFromList(citnote, sel0, template)
+        },
+    })
 
-    OBA.addCommand({
-        id: 'oba-citnotes-copy-non-local-reference-current-note',
-        name: 'CitNotes copy non-local references of current note',
-        callback: async () => {
-            checkEnable("citnotes", { notice: true, err: true })
+    addObaCommand({
+        commandName: "select current citation template",
+        serviceName: "CitNotes",
+        async commandCallback({ commandID, commandFullName }) {
+            const templates = getObaConfig("citnotes.citation.templates", [])
+            new tools.SelectorModalV2(
+                templates, 
+                "Select template",
+                '',
+                async (refnum: number) => {
+                    if (refnum == -1) { return; }
+                    console.clear();
+                    setState('citnotes.citation.current.template', templates[refnum])
+                    new Notice(`Template changed`);
+                }
+            ).open()
+        },
+    })
+
+    addObaCommand({
+        commandName: "copy non-local references of current note",
+        serviceName: "CitNotes",
+        async commandCallback({ commandID, commandFullName }) {
             console.clear();
             const note = getCurrNote()
             await copyCitNoteNonLocalReferences(note);
-        }
-    });
-    
-    OBA.addCommand({
-        id: "oba-citnotes-copy-link-selected-reference-number",
-        name: "CitNotes copy link of selected reference number",
-        callback: async () => {
-            checkEnable("citnotes", { notice: true, err: true })
+        },
+    })
+
+    addObaCommand({
+        commandName: "copy link of selected reference number",
+        serviceName: "CitNotes",
+        async commandCallback({ commandID, commandFullName }) {
             console.clear();
             // const str = getSelectedText().
                 // replace(/\D+/g, "")
@@ -140,18 +127,17 @@ export function onload() {
             const refnums = extractRefNums(str);
             const note = getCurrNote()
             await copyCitNoteReferenceLink(note, refnums)
-        }
-    });
+        },
+    })
 
-    OBA.addCommand({
-        id: "oba-citnotes-download-all-local-notes",
-        name: "CitNotes download all local notes",
-        callback: async () => {
-            checkEnable("citnotes", { notice: true, err: true })
+    addObaCommand({
+        commandName: "download all local notes",
+        serviceName: "CitNotes",
+        async commandCallback({ commandID, commandFullName }) {
             console.clear();
             await downloadAllLocalReferences()
-        }
-    });
+        },
+    })
 
 }
 
@@ -164,6 +150,40 @@ export function onload() {
 //      - or just use a incomplete BiblIOData object
 
 // MARK: copy
+
+
+// TODO/ move out
+
+export function expandTemplateFromObject(
+    obj: {[keys: string]: string}, 
+    template: string
+) {
+    for (const key in obj) {
+        const val = obj[key]
+        const regex = new RegExp(`{{${key}}}`, 'g')
+        template = template.replace(regex, val)
+    }
+    return template
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
+}
+
+export function expandTemplateFromBiblIO(
+    biblIO: BiblIOData, 
+    template: string, 
+    extras: {[keys: string]: string} = {}
+) {
+    // expand biblio
+    return expandTemplateFromObject({
+        "shortAuthors": _shortAuthorsStr(biblIO, 2),
+        "title": biblIO?.["title"] || "No title",
+        "citekey": biblIO?.["citekey"] || "No Citekey",
+        "year": biblIO?.["published-date"]?.["year"]?.toString() || "No Year",
+        "doi": biblIO?.["doi"] || "No DOI",
+        ...extras
+    }, template)
+}
+
 
 
 // DEV
@@ -182,30 +202,43 @@ export function onload() {
 // MARK: copySelectedCitationFromList
 async function copySelectedCitationFromList(
     note0: TFile,
-    sel0 = ''
+    sel0 = '',
+    citTemplate: string
 ) {
     // select from list
     console.log("note0: ", note0);
     // const biblIOs = [] as BiblIOData[];
-    const references: string[] = []
-    const refBiblIOs = await citNoteReferenceBiblIOs(note0);
-    if (!refBiblIOs) {
-        console.log("No references found. note0: ", note0);
-    } else {
-        const references1 = getCitationStringToSearch(refBiblIOs, { suffix: ' #ref'});
-        references.push(...references1)
+    const biblIOs: BiblIOData[] = []
+    const extrasAll: {[keys: string]: string}[] = []
+    const refBiblIOs = await citNoteReferenceBiblIOs(note0) || []
+    for (let citenum = 0; citenum < refBiblIOs.length; citenum++) {
+        const refBiblIO = refBiblIOs[citenum]
+        extrasAll.push({suffix: ' #ref', citenum: `${citenum}`})
+        biblIOs.push(refBiblIO)
     }
-    const localBiblIOs = await localbibs.getMergedBiblIO()
-    if (!localBiblIOs) {
-        console.log("localBiblIOs not found");
-    } else {
-        const references1 = getCitationStringToSearch(localBiblIOs, { suffix: ' #localbib'});
-        references.push(...references1)
+    
+    const localBiblIOs = await localbibs.getMergedBiblIO() || []
+    for (let citenum = 0; citenum < localBiblIOs.length; citenum++) {
+        const localBiblIO = localBiblIOs[citenum]
+        extrasAll.push({suffix: ' #localbib', citenum: `${citenum}`})
+        biblIOs.push(localBiblIO)
     }
     // TODO: add all from crossref cache?
 
-    if (!references || references.length === 0) {
-        console.log(`No references found. citekey: ${note0}`);
+    const searchStrs: string[] = []
+    const searchTemplate = `[{{citenum}}] {{shortAuthors}} ({{year}}). "{{title}}" [[@{{citekey}}]] ({{doi}}) {{suffix}}`
+    for (let bibi = 0; bibi < biblIOs.length; bibi++) {
+        const biblIO = biblIOs[bibi]
+        const extras = extrasAll[bibi]
+        const searchStr = expandTemplateFromBiblIO(
+            biblIO, searchTemplate, extras
+        )
+        searchStrs.push(searchStr)
+    }
+    
+
+    if (!searchStrs || searchStrs.length === 0) {
+        console.log(`No citation data found.`);
         return;
     }
     
@@ -218,20 +251,38 @@ async function copySelectedCitationFromList(
         .trim();
 
     const modal = new tools.SelectorModalV2(
-        references, 
+        searchStrs, 
         "Select reference to copy link",
         query,
         async (refnum: number) => {
             if (refnum == -1) { return; }
             console.clear();
             console.log("refnum: ", refnum+1);
-            const ref = references?.[refnum]
-            if (!ref) { return; }
-            await tools.copyToClipboard(ref)
-            new Notice(`Cit copied. cit: ${ref}`);
+            const biblIO = biblIOs?.[refnum]
+            if (!biblIO) { return; }
+            const extras = extrasAll?.[refnum]
+            if (!extras) { return; }
+            const cit = expandTemplateFromBiblIO(
+                biblIO, citTemplate, extras
+            )
+            await tools.copyToClipboard(cit)
+            new Notice(`Cit copied`, 300);
         }
     );
     modal.open()
+}
+
+function _formatQueryForSelectorModalV2(
+    query: string | null
+){
+    if (!query) { return '' }
+    return query
+        .normalize("NFD")
+        .replace(/[^a-zA-Z0-9\s]/g, ' ')
+        .replace(/ et\.? al\.?,?;?/g, ' ')
+        .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
+        .replace(/\s\s/g, ' ')
+        .trim();
 }
 
 // MARK: copySelectedCitNoteReferenceLinkFromList
@@ -252,14 +303,7 @@ async function copySelectedCitNoteReferenceLinkFromList(
         return;
     }
     
-    const query = !sel0 ? '' : sel0
-        .normalize("NFD")
-        .replace(/[^a-zA-Z0-9\s]/g, ' ')
-        .replace(/ et\.? al\.?,?;?/g, ' ')
-        .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
-        .replace(/\s\s/g, ' ')
-        .trim();
-
+    const query = _formatQueryForSelectorModalV2(sel0)    
     const modal = new tools.SelectorModalV2(
         references, 
         "Select reference to copy link",
@@ -447,21 +491,13 @@ function extractRefNums(str: string): number[] {
     return matches.map(num => parseInt(num, 10));
 }
 
-function getCitationStringV1(biblIO: BiblIOData) {
-    const MAX_AUTHORS = 5;
-    let authors = biblIO?.["authors"]?.map(author => author?.["lastName"]) || ["Unknown Author"];
-    if (authors.length > MAX_AUTHORS) {
-        authors = authors.slice(0, MAX_AUTHORS).concat(["et al."]);
+function _shortAuthorsStr(biblIO: BiblIOData, n: number) {
+    let authors = biblIO?.["authors"]?.map(author => author?.["lastName"]) || ["No Author(s)"];
+    if (authors.length > n) {
+        authors = authors.slice(0, n);
+        return authors.join(', ') + ' et al.'
     }
-    const authorsStr = authors.join(", ");
-    const title = biblIO?.["title"] || "Untitled";
-    const citekey = biblIO?.["citekey"] || "No Citekey";
-    const year = biblIO?.["published-date"]?.["year"] || "Unknown Year";
-    const doi = biblIO?.["doi"] || "No DOI";
-    let cit = `${authorsStr} (${year}). "${title}" [${citekey}] (${doi})`;
-    return cit.normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
-        .trim();
+    return authors.join(', ')
 }
 
 function getCitationStringToSearch(
@@ -471,12 +507,14 @@ function getCitationStringToSearch(
         suffix = '',
     } = {}
 ) {
-    
+    const template = `{{prefix}}[{{refi}}] {{shortAuthors}} ({{year}}). "{{title}}" [[@{{citekey}}]] ({{doi}}) {{suffix}}`
     let refi = 1;
     const citStrs: string[] = [];
     for (const biblIO of biblIOs) {
-        const body = getCitationStringV1(biblIO);
-        const cit = `${prefix}[${refi}] ${body}${suffix}`
+        const cit = expandTemplateFromBiblIO(
+            biblIO, template, 
+            { prefix, refi: refi.toString() }
+        )
         citStrs.push(cit)
         refi++;
     }

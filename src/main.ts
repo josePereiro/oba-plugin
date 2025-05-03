@@ -18,6 +18,18 @@ import { gittools } from './gittools-base/0-gittools-modules';
 // That is, any subsystem can inject stuff from the current state of Oba
 // example: An TagNotice which message is "{{ACTIVE_FILE}} contains TODOs"
 
+/*
+	TODO/ make a collect all command
+	- It will copy into the clipboard all matches to a given regex
+*/ 
+
+/*
+	TODO/ create addObaCommand
+	- interface with the enable configs
+	- Handle naming homogeneity
+	- handle scheduling (At least one schedule per service)
+*/ 
+
 export default class ObAPlugin extends Plugin {
 	
 	// MARK: onload

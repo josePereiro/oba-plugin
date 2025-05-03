@@ -2,6 +2,7 @@ import { OBA } from "src/oba-base/globals";
 import { obanotes } from "src/services-base/0-servises-modules";
 import { checkEnable, spawnCommand, tools, TriggerManager } from "./0-tools-modules";
 import { getCurrNote, getNoteYamlHeader, getSelectedText, getVaultDir, modifyNoteYamlHeader } from "./obsidian-tools";
+import { addObaCommand } from "src/oba-base/commands";
 
 const TestTriggerManager = new TriggerManager(5000, 500, 5000)
 
@@ -9,10 +10,10 @@ export function onload() {
         
     console.log("Tools:onload");
 
-    OBA.addCommand({
-        id: "tools-spawn-bash-command",
-        name: "Tools spawn bash command",
-        callback: async () => {
+    addObaCommand({
+        commandName: "Dev: spawn bash command",
+        serviceName: "Tools",
+        async commandCallback({ commandID, commandFullName }) {
             console.clear()
             const sel = getSelectedText();
             if (!sel) { return }
@@ -37,25 +38,12 @@ export function onload() {
             })
             console.log("res: ", res)
         },
-    });
+    })
 
-    // OBA.addCommand({
-    //     id: "tools-dev",
-    //     name: "Tools dev",
-    //     callback: async () => {
-    //         console.clear();
-    //         const sel = getSelectedText();
-    //         console.log("sel: ", sel);
-    //         const h = tools.hash64(sel);
-    //         console.log("hash64: ", h);
-    //     },
-    // });
-
-    OBA.addCommand({
-        id: "tools-dev",
-        name: "Tools dev",
-        callback: async () => {
-            checkEnable("tools", {err: true, notice: true})
+    addObaCommand({
+        commandName: "Dev: dev",
+        serviceName: "Tools",
+        async commandCallback({ commandID, commandFullName }) {
             console.clear();
             const note = getCurrNote({strict: true});
             let yaml = getNoteYamlHeader(note);
@@ -67,13 +55,12 @@ export function onload() {
             const uuid = await obanotes.ensureObaNoteID(note)
             console.log("uuid: ", uuid);
         },
-    });
+    })
 
-    OBA.addCommand({
-        id: "tools-test-TriggerManager",
-        name: "Tools test TriggerManager",
-        callback: async () => {
-            checkEnable("tools", {err: true, notice: true})
+    addObaCommand({
+        commandName: "Dev: test TriggerManager",
+        serviceName: "Tools",
+        async commandCallback({ commandID, commandFullName }) {
             TestTriggerManager.manage({
                 ongo() {
                     console.log("ongo")
@@ -98,6 +85,6 @@ export function onload() {
                 },
             })
         },
-    });
+    })
 
 }

@@ -7,7 +7,7 @@ import * as commands from "./commands"
 export { commands }
 import * as dev from "./dev"
 export { dev }
-import * as git from "./git"
+import * as git from "./vault.git"
 export { git }
 import * as intervals from "./intervals"
 export { intervals }

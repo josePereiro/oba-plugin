@@ -5,18 +5,17 @@
 */
 
 import { readFileSync } from "fs";
-import { OBA } from "src/oba-base/globals";
-import { checkEnable, tools } from "src/tools-base/0-tools-modules";
+import { addObaCommand } from "src/oba-base/commands";
+import { tools } from "src/tools-base/0-tools-modules";
 import { getCurrNotePath } from "src/tools-base/obsidian-tools";
 
 export function onload() {
-    console.log("MdJSON:onload");
+    console.log("Md-JSON:onload");
 
-    OBA.addCommand({
-        id: "oba-mdjson-parse-current-note",
-        name: "MdJSON parse current note",
-        callback: () => {
-            checkEnable("mdjson", {err: true, notice: true})
+    addObaCommand({
+        commandName: "Test: parse current note",
+        serviceName: "Md-JSON",
+        async commandCallback({ commandID, commandFullName }) {
             console.clear()
             const path = getCurrNotePath()
             const text = readFileSync(path, 'utf8')
@@ -24,7 +23,7 @@ export function onload() {
             console.log("mdjson")
             console.log(mdjson)
         },
-    });
+    })
 }
 
 // MARK: parseKVOnelines
@@ -65,7 +64,14 @@ function _parseKVOneline(line: string, kvs) {
     return true;
 }
 
-export function parseKVOnelines(text: string, filter = (line) => true) {
+// TODO add streamed line by line reading file version
+// - see readFileLineByLine
+
+
+export function parseKVOnelines(
+    text: string, 
+    filter = (line: string) => true
+) {
     const lines = text.split('\n'); // Split the text into lines
     const kv = {};
 

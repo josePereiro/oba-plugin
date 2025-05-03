@@ -1,11 +1,12 @@
-import { join } from 'path';
-import { Notice } from 'obsidian';
 import { existsSync, mkdirSync } from 'fs';
-import { checkEnable, tools } from 'src/tools-base/0-tools-modules';
+import { Notice } from 'obsidian';
+import { join } from 'path';
 import { filesys } from 'src/oba-base/0-oba-modules';
-import { callbacks } from './0-servises-modules';
+import { addObaCommand } from 'src/oba-base/commands';
 import { OBA } from 'src/oba-base/globals';
+import { checkEnable, tools } from 'src/tools-base/0-tools-modules';
 import { getCurrNotePath, getCursorPosition, getSelectedText, getSelectionRange } from 'src/tools-base/obsidian-tools';
+import { callbacks } from './0-servises-modules';
 
 /*
 	Deal with signals to backends.
@@ -31,14 +32,15 @@ export function onload() {
 	console.log("BackEnds:onload");
 	BACKENDS_EXTRAS = {}
 
-	OBA.addCommand({
-		id: 'oba-backends-signal-backends',
-		name: 'BackEnds signal backends',
-		callback: async () => {
-			checkEnable("backends", {err: true, notice: true})
+	// MARK: signal backends
+	addObaCommand({
+	    commandName: "signal backends",
+	    serviceName: "BackEnds",
+	    async commandCallback({ commandID, commandFullName }) {
 			await signalBackend();
-		}
-	});
+	    },
+	})
+
 }
 
 export function getBackEndsDir(): string {

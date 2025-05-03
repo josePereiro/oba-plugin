@@ -1,8 +1,9 @@
 import { MarkdownView, Notice } from 'obsidian';
-import { SimilarityModal } from '../tools-base/modals-tools';
 import { obaconfig } from 'src/oba-base/0-oba-modules';
+import { addObaCommand } from 'src/oba-base/commands';
 import { OBA } from 'src/oba-base/globals';
 import { checkEnable, tools } from 'src/tools-base/0-tools-modules';
+import { SimilarityModal } from '../tools-base/modals-tools';
 
 /*
     TODO/ Make a log system controlable by a flag
@@ -22,59 +23,14 @@ export function onload() {
 
     _URLHandler_onload();
 
-    OBA.addCommand({
-        id: 'oba-dev-console-clear',
-        name: 'Dev console.clear',
-        callback: () => {
-            checkEnable("dev", {err: true, notice: true})
+    addObaCommand({
+        commandName: "console.clear",
+        serviceName: "Dev",
+        async commandCallback({ commandID, commandFullName }) {
             console.clear()
-        }
+        },
     })
-
-    // OBA.addCommand({
-    //     id: 'oba-dev-injection',
-    //     name: 'Dev injection',
-    //     callback: () => {
-    //         console.clear()
-    //         // TODO/TAI/ This approach is no secure
-    //         // But Im not important neither
-    //         const expression = "console.log(OBA)"
-    //         eval(expression)
-    //     }
-    // })
     
-    OBA.addCommand({
-        id: 'oba-dev-cmd',
-        name: 'Dev cmd',
-        callback: () => {
-            // () => { new Notice('hello oba') }, 
-            // () => {
-            // 	const question = this.getSelectedText();
-            // 	this.tools.askLLM(question).then(console.log).catch(console.error);
-            // },
-            // () => {
-            // 	this.tools.insertAtCursor(this.tools.randstring("test.", 8))
-            // }
-            // () => {
-            //     // Usage
-            //     const colorModal = new SelectorModal(this.oba, ["A", "B", "C"]);
-            //     colorModal.open();
-            // }
-            {
-                const options = []
-                for (let i = 0; i < 100; i++) {
-                    options.push(tools.randstring('', 10))
-                }
-                const modal = new SimilarityModal(OBA, 
-                    options,
-                    (selectedOption) => {
-                    console.log("Selected Option:", selectedOption);
-                    // Do something with the selected option
-                });
-                modal.open();
-            }
-        }
-    });
 }
 
 // TODO/ implement thsi... To handle incoming comunication from backends

@@ -4,15 +4,15 @@ import { OBA } from "../oba-base/globals";
 import { jsonIO_tests } from "./jsonio-tests";
 import { obaconfig_tests } from "./obaconfig-tests";
 import { tools_tests } from "./tools-tests";
+import { addObaCommand } from "src/oba-base/commands";
 
 export function onload() {
     console.log("Test:onload")
     
-    OBA.addCommand({
-        id: 'oba-tests-run-all',
-        name: 'Tests run all',
-        callback: async () => {
-            checkEnable("tests", {err: true, notice: true})
+    addObaCommand({
+        commandName: "run all",
+        serviceName: "Tests",
+        async commandCallback({ commandID, commandFullName }) {
             console.clear()
             console.log("--------")
             console.log("TESTS")
@@ -21,8 +21,8 @@ export function onload() {
             await jsonIO_tests();
             obaconfig_tests();
             tools_tests();
-        }
-    });
+        },
+    })
 }
 
 
