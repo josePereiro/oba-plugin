@@ -77,6 +77,13 @@
       "description": "Some Oba actions require iteration across all files in the vault. Here you can declare the vault relative path to root folders for including in the search.",
       "items": { "type": "string" }
     },
+
+    // MARK: citnotes
+    "citnotes.citation.templates": {
+      "type": "array",
+      "description": "Templates for citation string creation.",
+      "items": { "type": "string" }
+    },
     
     // MARK: pdf-transcription
     "markerpdf.dir": {
