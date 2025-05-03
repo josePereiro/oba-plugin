@@ -22,7 +22,7 @@ export function onload() {
 
     addObaCommand({
         commandName: "open Oba.jsonc",
-        serviceName: "ObaConfig",
+        serviceName: ["ObaConfig"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear()
             const path = getObaConfigPath()

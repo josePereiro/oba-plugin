@@ -15,15 +15,20 @@ import { OBA } from "./globals"
 */ 
 
 
+function _defaultEnableKey(serviceName: string[]) {
+    return serviceName.join(":").toLowerCase()
+}
+
+// TODO/TAI Maybe accept as a servise name an array
+// This way I can deal with subservices
 export function addObaCommand({
     commandName,
     serviceName,
     commandCallback,
-    enableKey = serviceName.toLowerCase(),
-    commandIDExtras = [],
+    enableKey = _defaultEnableKey(serviceName)
 }:{
     commandName: string,
-    serviceName: string,
+    serviceName: string[],
     commandCallback: ({
         commandID, 
         commandFullName
@@ -31,14 +36,12 @@ export function addObaCommand({
         commandID: string, 
         commandFullName: string
     }) => any,
-    enableKey?: string,
-    commandIDExtras?: string[]
+    enableKey?: string
 }) {
 
-    const commandFullName = `${serviceName}: ${commandName}`
+    const commandFullName = `${serviceName.join(": ")}: ${commandName}`
 
     const commandIDDig = commandFullName.split(":")
-    commandIDDig.push(...commandIDExtras)
     const commandID = commandIDDig
         .join(":")
         .toLowerCase()

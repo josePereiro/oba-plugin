@@ -13,7 +13,7 @@ export function onload() {
     // TODO/ Make it work
     addObaCommand({
         commandName: "fetch selected doi",
-        serviceName: "SciHub",
+        serviceName: ["SciHub"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear()
             const sel = getSelectedText()

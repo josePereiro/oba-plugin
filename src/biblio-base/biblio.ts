@@ -20,7 +20,7 @@ export function onload() {
     // MARK: commands
     addObaCommand({
         commandName: "Dev: log selection's consensus biblIO",
-        serviceName: "BiblIO",
+        serviceName: ["BiblIO"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear();
             const sel = getSelectedText();

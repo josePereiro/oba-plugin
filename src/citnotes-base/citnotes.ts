@@ -33,8 +33,8 @@ export function onload() {
     console.log("CitNotes:onload");
 
     addObaCommand({
-        commandName: "dev",
-        serviceName: "CitNotes",
+        commandName: "test",
+        serviceName: ["CitNotes", "Dev"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear();
             const note0 = getCurrNote();
@@ -54,7 +54,7 @@ export function onload() {
 
     addObaCommand({
         commandName: "copy references of current note",
-        serviceName: "CitNotes",
+        serviceName: ["CitNotes"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear();
             const note = getCurrNote()
@@ -64,7 +64,7 @@ export function onload() {
 
     addObaCommand({
         commandName: "generate references resolver map",
-        serviceName: "CitNotes",
+        serviceName: ["CitNotes"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear();
             const citnote = getCurrNote()
@@ -74,7 +74,7 @@ export function onload() {
 
     addObaCommand({
         commandName: "search citation from list",
-        serviceName: "CitNotes",
+        serviceName: ["CitNotes"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear();
             const sel0 = getSelectedText() || ''
@@ -89,7 +89,7 @@ export function onload() {
 
     addObaCommand({
         commandName: "select current citation template",
-        serviceName: "CitNotes",
+        serviceName: ["CitNotes"],
         async commandCallback({ commandID, commandFullName }) {
             const templates = getObaConfig("citnotes.citation.templates", [])
             new tools.SelectorModalV2(
@@ -108,7 +108,7 @@ export function onload() {
 
     addObaCommand({
         commandName: "copy non-local references of current note",
-        serviceName: "CitNotes",
+        serviceName: ["CitNotes"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear();
             const note = getCurrNote()
@@ -118,7 +118,7 @@ export function onload() {
 
     addObaCommand({
         commandName: "copy link of selected reference number",
-        serviceName: "CitNotes",
+        serviceName: ["CitNotes"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear();
             // const str = getSelectedText().
@@ -132,7 +132,7 @@ export function onload() {
 
     addObaCommand({
         commandName: "download all local notes",
-        serviceName: "CitNotes",
+        serviceName: ["CitNotes"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear();
             await downloadAllLocalReferences()

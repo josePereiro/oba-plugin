@@ -11,7 +11,7 @@ export function onload() {
     
     addObaCommand({
         commandName: "run all",
-        serviceName: "Tests",
+        serviceName: ["Tests"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear()
             console.log("--------")

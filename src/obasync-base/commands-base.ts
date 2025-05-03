@@ -19,7 +19,7 @@ export function _serviceCommands() {
     // MARK: spawn modified file signal
     addObaCommand({
         commandName: "spawn modified file signal",
-        serviceName: "ObaSync",
+        serviceName: ["ObaSync"],
         async commandCallback({ commandID, commandFullName }) {
             // delay for saving
             const flag = 
@@ -75,7 +75,7 @@ export function _serviceCommands() {
     // MARK: spawn resolve vault signal events
     addObaCommand({
         commandName: "spawn resolve vault signal events",
-        serviceName: "ObaSync",
+        serviceName: ["ObaSync"],
         async commandCallback({ commandID, commandFullName }) {
             ObaSyncScheduler.spawn({
                 id: `oba-obasync-spawnResolveVaultSignalEvents`,
@@ -95,7 +95,7 @@ export function _serviceCommands() {
     // MARK: flip online mode
     addObaCommand({
         commandName: "flip online mode",
-        serviceName: "ObaSync",
+        serviceName: ["ObaSync"],
         async commandCallback({ commandID, commandFullName }) {
             
              // set flags
@@ -108,8 +108,8 @@ export function _serviceCommands() {
 
     // MARK: Dev: log ObaSyncScheduler
     addObaCommand({
-        commandName: "Dev: log ObaSyncScheduler",
-        serviceName: "ObaSync",
+        commandName: "log ObaSyncScheduler",
+        serviceName: ["ObaSync", "Dev"],
         async commandCallback({ commandID, commandFullName }) {
             console.log("ObaSyncScheduler")
             console.log(ObaSyncScheduler)
@@ -119,7 +119,7 @@ export function _serviceCommands() {
     // MARK: push-all
     addObaCommand({
         commandName: "push-all",
-        serviceName: "ObaSync",
+        serviceName: ["ObaSync"],
         async commandCallback({ commandID, commandFullName }) {
             // spawn push
             ObaSyncScheduler.spawn({

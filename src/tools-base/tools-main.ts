@@ -11,8 +11,8 @@ export function onload() {
     console.log("Tools:onload");
 
     addObaCommand({
-        commandName: "Dev: spawn bash command",
-        serviceName: "Tools",
+        commandName: "spawn bash command",
+        serviceName: ["Tools", "Dev"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear()
             const sel = getSelectedText();
@@ -41,8 +41,8 @@ export function onload() {
     })
 
     addObaCommand({
-        commandName: "Dev: dev",
-        serviceName: "Tools",
+        commandName: "test",
+        serviceName: ["Tools", "Dev"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear();
             const note = getCurrNote({strict: true});
@@ -58,8 +58,8 @@ export function onload() {
     })
 
     addObaCommand({
-        commandName: "Dev: test TriggerManager",
-        serviceName: "Tools",
+        commandName: "test TriggerManager",
+        serviceName: ["Tools", "Dev"],
         async commandCallback({ commandID, commandFullName }) {
             TestTriggerManager.manage({
                 ongo() {

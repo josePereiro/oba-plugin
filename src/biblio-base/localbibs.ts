@@ -18,7 +18,7 @@ export function onload() {
 
     addObaCommand({
         commandName: "Clear JSON caches",
-        serviceName: "LocalBIBs",
+        serviceName: ["LocalBIBs"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear();
             await clearJSONCache()
@@ -27,7 +27,7 @@ export function onload() {
 
     addObaCommand({
         commandName: "Clear RAM caches",
-        serviceName: "LocalBIBs",
+        serviceName: ["LocalBIBs"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear();
             clearRAMCache()
@@ -36,7 +36,7 @@ export function onload() {
 
     addObaCommand({
         commandName: "Clear ALL caches",
-        serviceName: "LocalBIBs",
+        serviceName: ["LocalBIBs"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear();
             clearRAMCache()
@@ -46,7 +46,7 @@ export function onload() {
 
     addObaCommand({
         commandName: "Load merged biblIO",
-        serviceName: "LocalBIBs",
+        serviceName: ["LocalBIBs"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear();
             const biblIO = await getMergedBiblIO()
@@ -56,8 +56,8 @@ export function onload() {
     })
 
     addObaCommand({
-        commandName: "Dev: open localbibs in vscode",
-        serviceName: "LocalBIBs",
+        commandName: "open localbibs in vscode",
+        serviceName: ["LocalBIBs", "Dev"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear();
             const sourceFiles: string[] = 
@@ -70,8 +70,8 @@ export function onload() {
     })
 
     addObaCommand({
-        commandName: "dev",
-        serviceName: "LocalBIBs",
+        commandName: "test",
+        serviceName: ["LocalBIBs", "Dev"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear();
             const sourceFiles: string[] = 

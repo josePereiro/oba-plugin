@@ -20,7 +20,7 @@ export function onload() {
 
         addObaCommand({
             commandName: getCommandName(i),
-            serviceName: "Commands",
+            serviceName: ["Commands"],
             async commandCallback({ commandID, commandFullName }) {
                 const callbackID = getCommandCallbackId(i);
                 await callbacks.runObaCallbacks({ callbackID });

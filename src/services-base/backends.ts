@@ -35,7 +35,7 @@ export function onload() {
 	// MARK: signal backends
 	addObaCommand({
 	    commandName: "signal backends",
-	    serviceName: "BackEnds",
+	    serviceName: ["BackEnds"],
 	    async commandCallback({ commandID, commandFullName }) {
 			await signalBackend();
 	    },

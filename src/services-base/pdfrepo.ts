@@ -42,7 +42,7 @@ export function onload() {
 
     addObaCommand({
         commandName: "open note's pdf",
-        serviceName: "PDFRepo",
+        serviceName: ["PDFRepo"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear()
             const note = getCurrNote()
@@ -52,7 +52,7 @@ export function onload() {
     
     addObaCommand({
         commandName: "check note's pdf",
-        serviceName: "PDFRepo",
+        serviceName: ["PDFRepo"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear()
             const sel = getSelectedText();

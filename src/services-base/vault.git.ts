@@ -26,7 +26,7 @@ export function onload() {
 
     addObaCommand({
         commandName: "commit default branch",
-        serviceName: "VaultGit",
+        serviceName: ["VaultGit"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear()
             await commitToBranch();

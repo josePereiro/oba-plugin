@@ -22,7 +22,7 @@ export function onload() {
 
     addObaCommand({
         commandName: "add oba-id to all notes",
-        serviceName: "ObaNotes",
+        serviceName: ["ObaNotes"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear()
             const notes = obanotes.getObaNotes();
@@ -40,7 +40,7 @@ export function onload() {
 
     addObaCommand({
         commandName: "subnote link",
-        serviceName: "ObaNotes",
+        serviceName: ["ObaNotes"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear()
             const link = subNoteLinkFromSelection()
@@ -50,7 +50,7 @@ export function onload() {
 
     addObaCommand({
         commandName: "open note config json",
-        serviceName: "ObaNotes",
+        serviceName: ["ObaNotes"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear()
             const note = getCurrNote({strict: true})
@@ -61,7 +61,7 @@ export function onload() {
 
     addObaCommand({
         commandName: "log note config",
-        serviceName: "ObaNotes",
+        serviceName: ["ObaNotes", "Dev"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear()
             const note = getCurrNote({strict: true})
@@ -71,23 +71,12 @@ export function onload() {
     })
 
     addObaCommand({
-        commandName: "log note config",
-        serviceName: "ObaNotes",
+        commandName: "test",
+        serviceName: ["ObaNotes", "Dev"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear()
-            const note = getCurrNote({strict: true})
-            const config = await getObaNoteConfigJSON(note)
-            console.log("config: ", config)
         },
     })
-
-    // addObaCommand({
-    //     commandName: "Dev",
-    //     serviceName: "ObaNotes",
-    //     async commandCallback({ commandID, commandFullName }) {
-            
-    //     },
-    // })
     
 }
 

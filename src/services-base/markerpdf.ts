@@ -16,7 +16,7 @@ export function onload() {
 
     addObaCommand({
         commandName: "open note md",
-        serviceName: "MarkerPDF",
+        serviceName: ["MarkerPDF"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear()
             const notePath = getCurrNotePath();
@@ -32,7 +32,7 @@ export function onload() {
 
     addObaCommand({
         commandName: "check note md",
-        serviceName: "MarkerPDF",
+        serviceName: ["MarkerPDF"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear()
             const notePath = getCurrNotePath();
@@ -47,7 +47,7 @@ export function onload() {
 
     addObaCommand({
         commandName: "open marker folder",
-        serviceName: "MarkerPDF",
+        serviceName: ["MarkerPDF"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear()
             const notePath = getMarkerDir()

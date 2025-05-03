@@ -39,7 +39,7 @@ export function onload() {
     // MARK: gitSyncDown ping file
     addObaCommand({
         commandName: "gitSyncDown ping file",
-        serviceName: "ObaSync",
+        serviceName: ["ObaSync", "Dev"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear()
             
@@ -86,7 +86,7 @@ export function onload() {
 
     addObaCommand({
         commandName: "gitSyncUp ping files",
-        serviceName: "ObaSync",
+        serviceName: ["ObaSync", "Dev"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear()
 
@@ -132,7 +132,7 @@ export function onload() {
 
     addObaCommand({
         commandName: "gitSyncUp current file with all",
-        serviceName: "ObaSync",
+        serviceName: ["ObaSync", "Dev"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear()
 
@@ -173,7 +173,7 @@ export function onload() {
 
     addObaCommand({
         commandName: "gitSyncDown current file with all",
-        serviceName: "ObaSync",
+        serviceName: ["ObaSync", "Dev"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear()
             

@@ -23,7 +23,7 @@ export function onload() {
     // MARK: commands
     addObaCommand({
         commandName: "fetch selected doi",
-        serviceName: "Crossref",
+        serviceName: ["Crossref"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear();
             const sel = getSelectedText();

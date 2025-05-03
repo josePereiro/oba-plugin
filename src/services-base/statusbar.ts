@@ -23,8 +23,8 @@ export function onload() {
     STATUSBAR = OBA.addStatusBarItem();
 
     addObaCommand({
-        commandName: "dev",
-        serviceName: "StatusBar",
+        commandName: "test",
+        serviceName: ["StatusBar", "Dev"],
         async commandCallback({ commandID, commandFullName }) {
             for (let i = 0; i < 10; i++) {
                 setText(`HI ${i}`)

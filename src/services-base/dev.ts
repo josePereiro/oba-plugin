@@ -19,13 +19,13 @@ import { SimilarityModal } from '../tools-base/modals-tools';
 // const plugin = app.plugins.getPlugin('super-uri') as SuperUriPlugin;
 
 export function onload() {
-    console.log("Dev:onload");
+    console.log("DevLand:onload");
 
     _URLHandler_onload();
 
     addObaCommand({
         commandName: "console.clear",
-        serviceName: "Dev",
+        serviceName: ["DevLand"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear()
         },

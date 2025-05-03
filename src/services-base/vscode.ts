@@ -15,7 +15,7 @@ export function onload() {
     // TODO/ add check in case workspace config is missing
     addObaCommand({
         commandName: "open workspace",
-        serviceName: "VSCode",
+        serviceName: ["VSCode"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear()
             vscodeCall()
@@ -24,7 +24,7 @@ export function onload() {
 
     addObaCommand({
         commandName: "goto position",
-        serviceName: "VSCode",
+        serviceName: ["VSCode"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear()
             const path = getCurrNotePath();

@@ -13,8 +13,8 @@ export function onload() {
     console.log("Md-JSON:onload");
 
     addObaCommand({
-        commandName: "Test: parse current note",
-        serviceName: "Md-JSON",
+        commandName: "parse current note",
+        serviceName: ["Md-JSON", "Dev"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear()
             const path = getCurrNotePath()

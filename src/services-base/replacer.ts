@@ -18,7 +18,7 @@ export function onload() {
     // TODO/ improve this
     addObaCommand({
         commandName: "run replacer",
-        serviceName: "Replacer",
+        serviceName: ["Replacer"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear()
             await runReplacer()
