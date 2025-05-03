@@ -57,7 +57,7 @@ export function onload() {
             console.clear()
             const sel = getSelectedText();
             const isValid = validateCommandContext({sel})
-            if (isValid) { return; }
+            if (!isValid) { return; }
             
             // Check exist
             const pdfFilePath = obaNotePdfFileName(sel)
