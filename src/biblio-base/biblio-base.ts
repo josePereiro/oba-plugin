@@ -17,7 +17,8 @@ export async function consensusBiblIO(id: BiblIOIder) {
     const doi0 = id["doi"]
     console.log("doi0: ", doi0)
     //TODO/ I need to built a system to handle missing refs on crossref
-    // If not, it will try to download them all the time, it is time consumming
+    // - If not, it will try to download them all the time, it is time consumming
+    //  - A simple flag in the Oba.state for disabling crossref fetching would be useful
     const rc_biblIO = await crossref.getBiblIO(id); 
     const lb_biblIO = await localbibs.getBiblIO(id);
     

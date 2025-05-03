@@ -77,7 +77,7 @@ export async function _fetchCrossrefData(doi: string) {
         const url = `https://api.crossref.org/works/${doi}`;
         const response = await fetch(url);
         await sleep(101); // avoid abuse
-        if (!response["processed.ok"]) {
+        if (!response["ok"]) {
             // TODO: create a error handling interface
             console.error(`Server error, check selected doi.\ndoi: ${doi}`);
             // new Notice(`Server error, check selected doi.\ndoi: ${doi}`);

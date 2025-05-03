@@ -9,7 +9,7 @@ export * from "./biblio-data";
 
 /*
     Integrated tools to work with bibliography data
-    // TODO/TAI create local/online search interface
+    - A main feature is just a search bib -> create citation tool
 */
 
 export function onload() {

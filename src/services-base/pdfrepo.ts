@@ -32,7 +32,7 @@ export function validateCommandContext(obj: any) {
     new Notice([
         "💔 Invalid command context:\n",
         "- nully variables: ", nully.join(", ")
-    ].join(), 1)
+    ].join(""), 1000)
     return false
 }
 

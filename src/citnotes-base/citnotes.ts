@@ -52,13 +52,19 @@ export function onload() {
         },
     })
 
+    /*
+        Add reference consistance test
+        - on config, I can add the doi of the last reference...
+            - This will avoid any error because of gaps
+    */ 
+
     addObaCommand({
         commandName: "copy references of current note",
         serviceName: ["CitNotes"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear();
             const note = getCurrNote()
-            await this.copyCitNoteReferencesSection(note);
+            await copyCitNoteReferencesSection(note);
         },
     })
 
