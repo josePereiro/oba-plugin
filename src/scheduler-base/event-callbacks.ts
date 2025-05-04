@@ -34,7 +34,7 @@ export async function runObaEventCallbacks({
     blockID: string,
     context: ObaSchedulerExecContext | null,
 }){
-    const block = OBA_SCHEDULER_REGISTRY?.["blockID"] || null
+    const block = OBA_SCHEDULER_REGISTRY?.[blockID] || null
     if (!block) {
         console.error("missing block,\nblockID: ", blockID, ", context: ", context)
         return; 

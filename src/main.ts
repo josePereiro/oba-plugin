@@ -11,6 +11,7 @@ import { backends, callbacks, commands, dev, git, intervals, markerpdf, mdjson, 
 import { tests } from './tests-base/0-tests-modules';
 import { tools } from './tools-base/0-tools-modules';
 import { obascheduler } from './scheduler-base/0-scheduler-module';
+import { ObaSchedulerTask } from './scheduler-base/scheduler-base';
 
 // NOTES
 

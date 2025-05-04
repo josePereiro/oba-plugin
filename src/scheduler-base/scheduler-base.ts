@@ -6,7 +6,7 @@
         - spawn: The task will be placed on a execution list
 */ 
 
-export const MIN_PRIORITY = 0;
+export const MIN_PRIORITY = 1; // importat avoid falsy bugs
 export const DEFT_PRIORITY = 3;
 export const MAX_PRIORITY = 5;
 
@@ -18,9 +18,17 @@ export interface ObaSchedulerTask {
 // Register here all blockID
 export type ObaSchedulerExecContext = {[keys: string]: any}
 
-export type ObaSchedulerTaskFunReturn = void | null | 'abort' 
+export type ObaSchedulerTaskFunReturn = | 
+    void | null | 'abort'  
+    | Promise<void | null | 'abort'>
 
-export type ObaSchedulerTaskFun = (task:ObaSchedulerTask, execBlock: ObaSchedulerExecutionBlock) => (ObaSchedulerTaskFunReturn | Promise<ObaSchedulerTaskFunReturn>)
+export type ObaSchedulerTaskFunArg = {
+    task:ObaSchedulerTask, 
+    execBlock: ObaSchedulerExecutionBlock
+}
+export type ObaSchedulerTaskFun = 
+    (arg: ObaSchedulerTaskFunArg) => ObaSchedulerTaskFunReturn
+
 
 export type ObaSchedulerExecBlockType = 
     | 'manual.exec.block' 
@@ -53,11 +61,11 @@ export async function _execBlockTasks(
         priority0++
     ) {
         for (const task of tasks) {
-            const priority1 = task?.["taskPriority"] || DEFT_PRIORITY
+            const priority1 = task?.["taskPriority"] ?? DEFT_PRIORITY
             if (priority1 != priority0) { continue; }
             try {
                 const callback = task["callback"]
-                const flag = await callback(task, execBlock)
+                const flag = await callback({task, execBlock})
                 idle = false
                 if (flag == 'abort') { break; }
             } catch (err) {
@@ -107,10 +115,14 @@ export function _registerObaTask({
     if (blockGas) {
         block["blockGas"] = blockGas
     }
+    OBA_SCHEDULER_REGISTRY[blockID] = block
 
     // format task
-    const taskPriority = task?.["taskPriority"] || DEFT_PRIORITY
+    console.log("_registerObaTask:task ", task)
+    const taskPriority = task?.["taskPriority"] ?? DEFT_PRIORITY
+    console.log("_registerObaTask:taskPriority ", taskPriority)
     task["taskPriority"] = Math.clamp(taskPriority, MIN_PRIORITY, MAX_PRIORITY)
+    console.log("_registerObaTask:task.taskPriority ", task["taskPriority"])
 
     // handle task
     const tasks = block["tasks"] = block?.["tasks"] || []

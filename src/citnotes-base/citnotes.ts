@@ -1,15 +1,17 @@
 import { Notice, TFile } from 'obsidian';
-import { crossref, localbibs } from 'src/biblio-base/0-biblio-modules';
-import { BiblIOData } from 'src/biblio-base/biblio-data';
-import { addObaCommand } from 'src/oba-base/commands';
-import { getObaConfig } from 'src/oba-base/obaconfig';
-import { getState, setState } from 'src/oba-base/state';
-import { obanotes } from 'src/obanotes-base/0-obanotes-modules';
-import { statusbar } from 'src/services-base/0-servises-modules';
-import { tools } from 'src/tools-base/0-tools-modules';
-import { getCurrNote, getSelectedText } from 'src/tools-base/obsidian-tools';
-import { citNoteBiblIO, citNoteReferenceBiblIOs, parseCitNoteCiteKey } from './citnotes-base';
+import { localbibs, crossref } from '../biblio-base/0-biblio-modules';
+import { BiblIOData } from '../biblio-base/biblio-data';
+import { addObaCommand } from '../oba-base/commands';
+import { getObaConfig } from '../oba-base/obaconfig';
+import { getState, setState } from '../oba-base/state';
+import { obanotes } from '../services-base/0-servises-modules';
+import { tools } from '../tools-base/0-tools-modules';
+import { getCurrNote, getSelectedText } from '../tools-base/obsidian-tools';
+import { parseCitNoteCiteKey, citNoteBiblIO, citNoteReferenceBiblIOs } from './citnotes-base';
+
 export * from './citnotes-base';
+
+
 
 /*
     Handle citation notes.

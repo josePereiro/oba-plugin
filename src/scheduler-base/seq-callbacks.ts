@@ -54,6 +54,7 @@ export async function _onePassObaSeqCallbackLoop() {
         for (const blockID in OBA_SCHEDULER_REGISTRY) {
             const block = OBA_SCHEDULER_REGISTRY[blockID]
             if (block["blockType"] != "auto.sequencial.exec.block") { continue; }
+            console.log("_onePassObaSeqCallbackLoop:blockID", blockID)
             if (block["blockGas"] < 1) { delete OBA_SCHEDULER_REGISTRY[blockID]; continue }
             const priority1 = block["blockPriority"]
             if (priority1 > priority0) { continue; }

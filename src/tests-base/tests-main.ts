@@ -1,5 +1,5 @@
 import { addObaCommand } from "src/oba-base/commands";
-import { filesys } from "../oba-base/0-oba-modules";
+import { filesys } from "src/oba-base/0-oba-modules";
 import { jsonIO_tests } from "./jsonio-tests";
 import { obaconfig_tests } from "./obaconfig-tests";
 import { tools_tests } from "./tools-tests";
