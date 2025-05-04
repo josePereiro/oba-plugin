@@ -23,8 +23,3 @@ export function utcTimeTag() {
 //     return subVaultConf?.[key] ?? dflt
 // }
 
-export function getSyncChannelsConfig(
-    dflt: any = {}
-) {
-    return obaconfig.getObaConfig("obasync.channels", dflt)
-}

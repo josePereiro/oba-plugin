@@ -8,7 +8,7 @@ import { obaconfig } from './oba-base/0-oba-modules';
 import { setOba } from './oba-base/globals';
 import { obasync } from './obasync-base/0-obasync-modules';
 import { obascheduler } from './scheduler-base/0-scheduler-module';
-import { backends, callbacks, commands, dev, git, intervals, markerpdf, mdjson, obanotes, obaup, obauri, pdfrepo, replacer, scihub, statusbar, tagnotices, vscode } from './services-base/0-servises-modules';
+import { backends, callbacks, commands, dev, vaultgit, intervals, markerpdf, mdjson, obanotes, obaup, obauri, pdfrepo, replacer, scihub, statusbar, tagnotices, vscode } from './services-base/0-servises-modules';
 import { tests } from './tests-base/0-tests-modules';
 import { tools } from './tools-base/0-tools-modules';
 
@@ -49,7 +49,7 @@ export default class ObAPlugin extends Plugin {
 		tools.onload()
 		biblio.onload()
 		vscode.onload()
-		git.onload()
+		vaultgit.onload()
 		backends.onload()
 		commands.onload()
 		pdfrepo.onload()

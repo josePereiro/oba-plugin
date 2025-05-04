@@ -1,4 +1,4 @@
-import { _devCommands } from "./dev-commands";
+import { _obascheduler_devCommands } from "./dev-commands";
 import { startObaSeqCallbackLoop, stopObaSeqCallbackLoop } from "./seq-callbacks";
 
 /*
@@ -9,7 +9,7 @@ export function onload() {
 
     startObaSeqCallbackLoop()
     
-    _devCommands()
+    _obascheduler_devCommands()
     
 }
 

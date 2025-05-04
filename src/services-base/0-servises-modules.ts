@@ -7,8 +7,8 @@ import * as commands from "./commands"
 export { commands }
 import * as dev from "./dev"
 export { dev }
-import * as git from "./vault.git"
-export { git }
+import * as vaultgit from "./vault.git"
+export { vaultgit }
 import * as intervals from "./intervals"
 export { intervals }
 // import * as linecmds from "./line.cmds"

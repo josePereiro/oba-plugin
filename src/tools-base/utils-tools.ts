@@ -346,7 +346,7 @@ export async function spawnCommand({
                 }
             });
 
-            cmd.on('error', (err) => {
+            cmd.on('error', (err: any) => {
                 if (timeout0) clearTimeout(timeout0);
                 if (timeout1) clearTimeout(timeout1);
                 if (settled) return;

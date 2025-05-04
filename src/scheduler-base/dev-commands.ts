@@ -4,7 +4,7 @@ import { registerObaEventCallback, runObaEventCallbacks } from "./event-callback
 import { MIN_PRIORITY, MAX_PRIORITY, ObaSchedulerTaskFunArgs, OBA_SCHEDULER_REGISTRY } from "./scheduler-base";
 import { stopObaSeqCallbackLoop, spawnObaSeqCallback } from "./seq-callbacks";
 
-export function _devCommands() {
+export function _obascheduler_devCommands() {
 
     addObaCommand({
         commandName: 'stopObaSeqCallbackLoop',

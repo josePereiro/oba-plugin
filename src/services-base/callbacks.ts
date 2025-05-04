@@ -1,7 +1,7 @@
 import { Notice } from 'obsidian';
 import { registerObaEventCallback } from 'src/scheduler-base/event-callbacks';
 import { ObaSchedulerExecutionBlock, ObaSchedulerTask } from 'src/scheduler-base/scheduler-base';
-import { backends, commands, git, replacer } from './0-servises-modules';
+import { backends, commands, vaultgit, replacer } from './0-servises-modules';
 
 /*
     TODO/ Make it an Scheduler or use ObaScheduler itself
@@ -33,7 +33,7 @@ export function onload() {
         ) {
             await backends.signalBackend()
             await replacer.runReplacer()
-            await git.gitCommitCmd()
+            await vaultgit.commitVaultGit()
         }
     })
 

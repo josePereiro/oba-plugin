@@ -28,5 +28,5 @@
   "include": [
     "src/**/*",
     "types/**/*"
-  ]
+, "_DEPRECATED/v2-git-utils/git-cli-base.ts", "_DEPRECATED/v2-git-utils/git-simple-git-base.ts"  ]
 }
