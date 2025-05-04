@@ -5,13 +5,12 @@ import { biblio } from './biblio-base/0-biblio-modules';
 import { citnotes } from './citnotes-base/0-citnotes-modules';
 import { gittools } from './gittools-base/0-gittools-modules';
 import { obaconfig } from './oba-base/0-oba-modules';
-import { ObaScheduler, setOba } from './oba-base/globals';
+import { setOba } from './oba-base/globals';
 import { obasync } from './obasync-base/0-obasync-modules';
+import { obascheduler } from './scheduler-base/0-scheduler-module';
 import { backends, callbacks, commands, dev, git, intervals, markerpdf, mdjson, obanotes, obaup, obauri, pdfrepo, replacer, scihub, statusbar, tagnotices, vscode } from './services-base/0-servises-modules';
 import { tests } from './tests-base/0-tests-modules';
 import { tools } from './tools-base/0-tools-modules';
-import { obascheduler } from './scheduler-base/0-scheduler-module';
-import { ObaSchedulerTask } from './scheduler-base/scheduler-base';
 
 // NOTES
 
@@ -42,7 +41,6 @@ export default class ObAPlugin extends Plugin {
 
 		// Setup globals
 		setOba(this);
-		// ObaScheduler.run();
 
 		// init modules
 		callbacks.onload()
@@ -74,7 +72,6 @@ export default class ObAPlugin extends Plugin {
 
 	onunload() {
 		console.log('ObAPlugin:onunload');
-		ObaScheduler.stop()
 		obascheduler.onunload()
 		statusbar.onunload();
 		obasync.onunload();

@@ -1,7 +1,7 @@
 import { App, FuzzySuggestModal, Notice } from "obsidian";
 import { Modal, Setting } from "obsidian";
 import * as levenshtein from "fast-levenshtein";
-import ObAPlugin from "src/main";
+import ObAPlugin from "dev.src/main";
 import { OBA } from "src/oba-base/globals";
 
 

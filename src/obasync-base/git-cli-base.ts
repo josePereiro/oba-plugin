@@ -1,6 +1,7 @@
 import { readdir, rm } from "fs/promises";
 import path from "path";
-import { ObaScheduler } from "src/oba-base/globals";
+import { ObaSchedulerTaskFunArgs } from "src/scheduler-base/scheduler-base";
+import { spawnObaSeqCallback } from "src/scheduler-base/seq-callbacks";
 import { TaskState } from "src/tools-base/schedule-tools";
 import { execAsync } from "src/tools-base/utils-tools";
 
@@ -369,17 +370,20 @@ function _spawnToTheEnd(
     taskFun: (() => any),
     initGas = 100
 ) {
-    ObaScheduler.spawn({
-        id: `spawnJustPush:${id}`,
-        taskFun: async (task: TaskState) => {
+    spawnObaSeqCallback({
+        blockID: `spawnJustPush:${id}`,
+        context: {}, 
+        blockGas: initGas,
+        callback: async (args: ObaSchedulerTaskFunArgs) => {
+            // TODO/ extract as a function and communicate only using context
+            const block = args["execBlock"]
             // clamp down
-            if (task["gas"] > initGas) { 
-                task["gas"] = initGas
+            if (block["blockGas"] > initGas) { 
+                block["blockGas"] = initGas
                 return; 
             } 
-            if (task["gas"] > 0) { return; } // ignore till the end
+            if (block["blockGas"] > 0) { return; } // ignore till the end
             await taskFun()
-        }, 
-        deltaGas: initGas
+        }
     })
 }

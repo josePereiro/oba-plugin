@@ -15,7 +15,7 @@
     "isolatedModules": false,
     "allowSyntheticDefaultImports": true,
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": "src",
     "typeRoots": ["./node_modules/@types", "./types"],
     "noEmitOnError": true,
     "lib": ["DOM", "ES2020"]

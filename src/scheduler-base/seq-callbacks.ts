@@ -14,12 +14,12 @@ export const ObaSeqCallbackState: {
 
 
 // MARK: ObaSeqCallbacks
-export async function spawnObaSeqCallback({
+export function spawnObaSeqCallback({
     blockID,
     context,
     callback,
-    blockPriority, 
-    blockGas, 
+    blockPriority = DEFT_PRIORITY, 
+    blockGas = 1, 
     taskPriority = DEFT_PRIORITY,
     regMode = 'first'
 }:{
@@ -27,8 +27,8 @@ export async function spawnObaSeqCallback({
     callback: ObaSchedulerTaskFun,
     taskPriority?: number,
     context: ObaSchedulerExecContext | null,
-    blockPriority: number | null,
-    blockGas: number | null,
+    blockPriority?: number | null,
+    blockGas?: number | null,
     regMode?: ObaSchedulerTaskRegMode
 }) {
     ObaSeqCallbackState["running"] = true

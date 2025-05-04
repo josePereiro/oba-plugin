@@ -1,7 +1,8 @@
 import { Notice } from "obsidian"
 import { addObaCommand } from "src/oba-base/commands"
-import { ObaScheduler } from "src/oba-base/globals"
 import { getObaConfig } from "src/oba-base/obaconfig"
+import { ObaSchedulerTaskFunArgs } from "src/scheduler-base/scheduler-base"
+import { spawnObaSeqCallback } from "src/scheduler-base/seq-callbacks"
 import { getCurrNotePath } from "src/tools-base/obsidian-tools"
 import { TaskState, TriggerManager } from "src/tools-base/schedule-tools"
 import { _justPush } from "./git-cli-base"
@@ -20,6 +21,7 @@ export function _serviceCommands() {
         commandName: "spawn modified file signal",
         serviceName: ["ObaSync"],
         async commandCallback({ commandID, commandFullName }) {
+
             // delay for saving
             const flag = 
                 // 300, 100, -1, -1
@@ -34,10 +36,13 @@ export function _serviceCommands() {
             const vaultFile = getCurrNotePath()
             if (!vaultFile) { return; }
 
-            ObaScheduler.spawn({
-                id: `oba-obasync-spawnModifiedFileSignal:${vaultFile}`,
-                deltaGas: 1,
-                taskFun: async (task: TaskState) => {
+            spawnObaSeqCallback({
+                blockID: `oba-obasync-spawnModifiedFileSignal:${vaultFile}`,
+                context: {}, 
+                blockGas: 1,
+                callback: async (args: ObaSchedulerTaskFunArgs) => {
+                    // TODO/ extract as a function and communicate only using context
+                    const block = args["execBlock"]
                     const committerName = getObaConfig("obasync.me", null)
                     if (!committerName) { return; }
                     const channelsConfig = getObaConfig("obasync.channels", {})
@@ -63,10 +68,10 @@ export function _serviceCommands() {
                         })
                     }
                     // clamp gas
-                    if (task["gas"] > 1) {
-                        task["gas"] = 1
+                    if (block["blockGas"] > 1) {
+                        block["blockGas"] = 1
                     }
-                }, 
+                }
             })
         },
     })
@@ -76,16 +81,19 @@ export function _serviceCommands() {
         commandName: "spawn resolve vault signal events",
         serviceName: ["ObaSync"],
         async commandCallback({ commandID, commandFullName }) {
-            ObaScheduler.spawn({
-                id: `oba-obasync-spawnResolveVaultSignalEvents`,
-                deltaGas: 1,
-                taskFun: async (task: TaskState) => {
+            spawnObaSeqCallback({
+                blockID: `oba-obasync-spawnResolveVaultSignalEvents`,
+                context: {}, 
+                blockGas: 1,
+                callback: async (args: ObaSchedulerTaskFunArgs) => {
+                    // TODO/ extract as a function and communicate only using context
+                    const block = args["execBlock"]
                     await resolveSignalEventsAllChannles({
                         commitVaultDepo: true,
                         pullVaultRepo: getObaSyncFlag(`online.mode`, false),
                         notify: true,
                     })
-                    task["gas"] = 0
+                    block["blockGas"] = 0
                 }
             })
         },
@@ -105,32 +113,24 @@ export function _serviceCommands() {
         },
     })
 
-    // MARK: Dev: log ObaScheduler
-    // TODO/ Move out
-    addObaCommand({
-        commandName: "log ObaScheduler",
-        serviceName: ["ObaSync", "Dev"],
-        async commandCallback({ commandID, commandFullName }) {
-            console.log("ObaScheduler")
-            console.log(ObaScheduler)
-        },
-    })
-
     // MARK: push-all
     addObaCommand({
         commandName: "push-all",
         serviceName: ["ObaSync"],
         async commandCallback({ commandID, commandFullName }) {
             // spawn push
-            ObaScheduler.spawn({
-                id: `oba-obasync-push-all`,
-                deltaGas: 100,
-                taskFun: async (task: TaskState) => {
-                    if (task["gas"] > 100) {
-                        task["gas"] = 100
+            spawnObaSeqCallback({
+                blockID: `oba-obasync-push-all`,
+                context: {}, 
+                blockGas: 100,
+                callback: async (args: ObaSchedulerTaskFunArgs) => {
+                    // TODO/ extract as a function and communicate only using context
+                    const block = args["execBlock"]
+                    if (block["blockGas"] > 100) {
+                        block["blockGas"] = 100
                     }
                     // run at the end
-                    if (task["gas"] > 0) {
+                    if (block["blockGas"] > 0) {
                         return
                     }
                         
@@ -142,8 +142,7 @@ export function _serviceCommands() {
                         new Notice(`Pushed ${channelName}`, 1000)
                     }
 
-                    task["gas"] = 0
-                    
+                    block["blockGas"] = 0
                 }
             })
         },

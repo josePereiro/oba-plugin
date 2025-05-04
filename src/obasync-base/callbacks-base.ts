@@ -1,5 +1,5 @@
 import { Notice } from "obsidian";
-import { OBA, ObaScheduler } from "src/oba-base/globals";
+import { OBA } from "src/oba-base/globals";
 import { getObaConfig } from "src/oba-base/obaconfig";
 import { registerObaEventCallback, runObaEventCallbacks } from "src/scheduler-base/event-callbacks";
 import { getCurrNotePath } from "src/tools-base/obsidian-tools";
@@ -9,6 +9,8 @@ import { _handleDownloadFile, publishModifiedFileSignal } from "./modifiedFileSi
 import { getObaSyncFlag } from "./obasync-base";
 import { getNoteObaSyncScope } from "./scope-base";
 import { HandlingStatus, ObaSyncCallbackContext, pushAllChannels, registerSignalEventHandler, resolveSignalEventsAllChannles, SignalHandlerArgs } from "./signals-base";
+import { spawnObaSeqCallback } from "src/scheduler-base/seq-callbacks";
+import { ObaSchedulerTaskFunArgs } from "src/scheduler-base/scheduler-base";
 
 // MARK: main
 export function _serviceCallbacks() {
@@ -42,10 +44,11 @@ function _autoSyncOninterval() {
         async () => {
             // run signals
             
-            ObaScheduler.spawn({
-                id: `automatic.sync`,
-                deltaGas: 1,
-                taskFun: async (task: TaskState) => {
+            spawnObaSeqCallback({
+                blockID: `automatic.sync`,
+                context: {}, 
+                callback: async (args: ObaSchedulerTaskFunArgs) => {
+                    const block = args["execBlock"]
 
                     // push
                     new Notice(`Auto pushing`, 1000)
@@ -63,7 +66,8 @@ function _autoSyncOninterval() {
                         notify: true,
                     })
 
-                    task["gas"] = 0
+                    block["blockGas"] = 0
+                    return;
                 }
             })
         }, 
@@ -172,10 +176,12 @@ function _handleModFileOnChange() {
             const vaultFile = getCurrNotePath()
             if (!vaultFile) { return; }
 
-            ObaScheduler.spawn({
-                id: `publishFileVersion:${vaultFile}:push`,
-                deltaGas: 1,
-                taskFun: async (task: TaskState) => {
+            spawnObaSeqCallback({
+                blockID: `publishFileVersion:${vaultFile}:push`,
+                context: { vaultFile }, 
+                callback: async (args: ObaSchedulerTaskFunArgs) => {
+                    // TODO/ extract as a function and communicate only using context
+                    const block = args["execBlock"]
                     const committerName = getObaConfig("obasync.me", null)
                     if (!committerName) { return; }
                     const channelsConfig = getObaConfig("obasync.channels", {})
@@ -219,8 +225,8 @@ function _handleModFileOnChange() {
                     })
 
                     // clamp gas
-                    task["gas"] = 0
-                }, 
+                    block["blockGas"] = 0
+                }
             })
         })
     );
@@ -236,12 +242,14 @@ export async function _resolveVaultAtAnyMove() {
         ignoreTime: 10000,
         sleepTime: 500,
         prewait: () => {
-            ObaScheduler.spawn({
-                id: `pullAndProcessSignals.first`,
-                deltaGas: 1,
-                taskFun: async (task: TaskState) => {
+            spawnObaSeqCallback({
+                blockID: `pullAndProcessSignals.first`,
+                context: {}, 
+                callback: async (args: ObaSchedulerTaskFunArgs) => {
+                    // TODO/ extract as a function and communicate only using context
+                    const block = args["execBlock"]
                     // console.clear()
-                    if(task["gas"] > 1) { task["gas"] = 1 }
+                    if(block["blockGas"] > 1) { block["blockGas"] = 1 }
                     await resolveSignalEventsAllChannles({
                         commitVaultDepo: true,
                         pullVaultRepo: false,
@@ -251,13 +259,18 @@ export async function _resolveVaultAtAnyMove() {
             })
         }, 
         ongo: () => {
-            ObaScheduler.spawn({
-                id: `pullAndProcessSignals.last`,
-                deltaGas: 100,
-                taskFun: async (task: TaskState) => {
+
+            // TODO/ reimplement
+            spawnObaSeqCallback({
+                blockID: `pullAndProcessSignals.last`,
+                context: {}, 
+                blockGas: 100,
+                callback: async (args: ObaSchedulerTaskFunArgs) => {
+                    // TODO/ extract as a function and communicate only using context
+                    const block = args["execBlock"]
                     // console.clear()
-                    if(task["gas"] > 100) { task["gas"] = 100}
-                    if(task["gas"] > 0) { return; }
+                    if(block["blockGas"] > 100) { block["blockGas"] = 100}
+                    if(block["blockGas"] > 0) { return; }
                     await resolveSignalEventsAllChannles({
                         commitVaultDepo: true,
                         pullVaultRepo: false,

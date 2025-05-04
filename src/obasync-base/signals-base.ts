@@ -559,6 +559,7 @@ export function registerSignalEventHandler({
             //     args: {...args, handler, handlerName},
             //     taskFun: _signalEventHandlerTaskFun
             // })
+            return;
         }
     })
 }
