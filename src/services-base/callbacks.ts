@@ -4,7 +4,9 @@ import { openNoteAtLine } from 'src/tools-base/obsidian-tools';
 import { backends, commands, git, replacer } from './0-servises-modules';
 
 /*
-    TODO: Add priority
+    TODO/ Make it an Scheduler or use ObaScheduler itself
+    - Use a task object
+    - Add priority
 */ 
 export type TObaCallback = ((...args: any[]) => void | Promise<void>)
 export let CALLBACKS_REGISTRY: { [key: string]: TObaCallback[] };

@@ -1,5 +1,5 @@
 import { Notice } from "obsidian";
-import { OBA } from "src/oba-base/globals";
+import { OBA, ObaScheduler } from "src/oba-base/globals";
 import { getObaConfig } from "src/oba-base/obaconfig";
 import { registerObaCallback, runObaCallbacks } from "src/services-base/callbacks";
 import { checkEnable } from "src/tools-base/oba-tools";
@@ -7,7 +7,6 @@ import { getCurrNotePath } from "src/tools-base/obsidian-tools";
 import { TaskState, TriggerManager } from "src/tools-base/schedule-tools";
 import { _justPush, _spawnAddDummyAndCommitAndPush, _spawnFetchCheckoutPull } from "./git-cli-base";
 import { _handleDownloadFile, publishModifiedFileSignal } from "./modifiedFileSignal-base";
-import { ObaSyncScheduler } from "./obasync";
 import { getObaSyncFlag } from "./obasync-base";
 import { getNoteObaSyncScope } from "./scope-base";
 import { HandlingStatus, ObaSyncCallbackContext, pushAllChannels, registerSignalEventHandler, resolveSignalEventsAllChannles, SignalHandlerArgs } from "./signals-base";
@@ -43,7 +42,8 @@ function _autoSyncOninterval() {
 
         async () => {
             // run signals
-            ObaSyncScheduler.spawn({
+            
+            ObaScheduler.spawn({
                 id: `automatic.sync`,
                 deltaGas: 1,
                 taskFun: async (task: TaskState) => {
@@ -201,7 +201,7 @@ function _handleModFileOnChange() {
             const vaultFile = getCurrNotePath()
             if (!vaultFile) { return; }
 
-            ObaSyncScheduler.spawn({
+            ObaScheduler.spawn({
                 id: `publishFileVersion:${vaultFile}:push`,
                 deltaGas: 1,
                 taskFun: async (task: TaskState) => {
@@ -265,7 +265,7 @@ export async function _resolveVaultAtAnyMove() {
         ignoreTime: 10000,
         sleepTime: 500,
         prewait: () => {
-            ObaSyncScheduler.spawn({
+            ObaScheduler.spawn({
                 id: `pullAndProcessSignals.first`,
                 deltaGas: 1,
                 taskFun: async (task: TaskState) => {
@@ -280,7 +280,7 @@ export async function _resolveVaultAtAnyMove() {
             })
         }, 
         ongo: () => {
-            ObaSyncScheduler.spawn({
+            ObaScheduler.spawn({
                 id: `pullAndProcessSignals.last`,
                 deltaGas: 100,
                 taskFun: async (task: TaskState) => {

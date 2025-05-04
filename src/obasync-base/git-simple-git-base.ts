@@ -2,7 +2,6 @@
 // import path from "path";
 // import { TaskState } from "src/tools-base/schedule-tools";
 // import { execAsync } from "src/tools-base/utils-tools";
-// import { ObaSyncScheduler } from "./obasync";
 // import simpleGit, { SimpleGit } from "simple-git";
 
 
@@ -333,7 +332,7 @@
 //     taskFun: (() => any),
 //     initGas = 100
 // ) {
-//     ObaSyncScheduler.spawn({
+//     ObaScheduler.spawn({
 //         id: `spawnJustPush:${id}`,
 //         taskFun: async (task: TaskState) => {
 //             // clamp down

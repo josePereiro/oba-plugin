@@ -1,8 +1,8 @@
 import { readdir, rm } from "fs/promises";
 import path from "path";
+import { ObaScheduler } from "src/oba-base/globals";
 import { TaskState } from "src/tools-base/schedule-tools";
 import { execAsync } from "src/tools-base/utils-tools";
-import { ObaSyncScheduler } from "./obasync";
 
 
 /*
@@ -369,7 +369,7 @@ function _spawnToTheEnd(
     taskFun: (() => any),
     initGas = 100
 ) {
-    ObaSyncScheduler.spawn({
+    ObaScheduler.spawn({
         id: `spawnJustPush:${id}`,
         taskFun: async (task: TaskState) => {
             // clamp down

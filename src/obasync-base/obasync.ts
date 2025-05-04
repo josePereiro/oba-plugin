@@ -1,16 +1,13 @@
 import { copyFileSync, existsSync } from "fs";
+import { Notice } from "obsidian";
 import path from "path";
 import { gitSyncDown } from "src/gittools-base/gitSyncDown";
 import { gitSyncUp } from "src/gittools-base/gitSyncUp";
-import { GitRepoOptions } from "src/gittools-base/gittools-base";
-import { OBA } from "src/oba-base/globals";
+import { addObaCommand } from "src/oba-base/commands";
 import { getObaConfig } from "src/oba-base/obaconfig";
 import { getCurrNotePath, getVaultDir } from "src/tools-base/obsidian-tools";
-import { SequentialAsyncScheduler } from "src/tools-base/schedule-tools";
 import { INTERVAL1_ID } from "./callbacks-base";
-import { ObaChannelConfig, ObaSyncRepoConfig, setObaSyncFlag } from "./obasync-base";
-import { Notice } from "obsidian";
-import { addObaCommand } from "src/oba-base/commands";
+import { ObaChannelConfig, setObaSyncFlag } from "./obasync-base";
 
 /*
     /TODO/ add actions when clicking a notice
@@ -23,8 +20,6 @@ import { addObaCommand } from "src/oba-base/commands";
     Main module to handle syncronization with other vaults
 */
 
-export const ObaSyncScheduler = new SequentialAsyncScheduler();
-
 export function onload() {
     console.log("ObaSync:onload");
 
@@ -33,8 +28,6 @@ export function onload() {
     // Order matter?
     // _serviceCommands()
     // _serviceCallbacks()
-    
-    ObaSyncScheduler.run()
 
     // MARK: gitSyncDown ping file
     addObaCommand({
@@ -218,7 +211,6 @@ export function onload() {
 }
 
 export function onunload() {
-    ObaSyncScheduler.stop()
 
     if (INTERVAL1_ID) {
         window.clearInterval(INTERVAL1_ID);

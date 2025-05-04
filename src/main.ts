@@ -1,15 +1,15 @@
 // TODO/DOING: mobe servises to modules
 
 import { Plugin } from 'obsidian';
-import { globals } from './oba-base/0-oba-modules';
-import { tools } from './tools-base/0-tools-modules';
-import { backends, callbacks, commands, dev, git, intervals, markerpdf, mdjson, obanotes, obaup, obauri, pdfrepo, replacer, scihub, statusbar, tagnotices, vscode } from './services-base/0-servises-modules';
 import { biblio } from './biblio-base/0-biblio-modules';
-import { obaconfig } from './oba-base/0-oba-modules';
 import { citnotes } from './citnotes-base/0-citnotes-modules';
-import { tests } from './tests-base/0-tests-modules';
-import { obasync} from './obasync-base/0-obasync-modules';
 import { gittools } from './gittools-base/0-gittools-modules';
+import { obaconfig } from './oba-base/0-oba-modules';
+import { ObaScheduler, setOba } from './oba-base/globals';
+import { obasync } from './obasync-base/0-obasync-modules';
+import { backends, callbacks, commands, dev, git, intervals, markerpdf, mdjson, obanotes, obaup, obauri, pdfrepo, replacer, scihub, statusbar, tagnotices, vscode } from './services-base/0-servises-modules';
+import { tests } from './tests-base/0-tests-modules';
+import { tools } from './tools-base/0-tools-modules';
 
 // NOTES
 
@@ -38,8 +38,9 @@ export default class ObAPlugin extends Plugin {
 		console.clear()
 		console.log("ObAPlugin:onload")
 
-		// Set globals
-		globals.setOba(this);
+		// Setup globals
+		setOba(this);
+		ObaScheduler.run();
 
 		// init modules
 		callbacks.onload()
@@ -71,6 +72,7 @@ export default class ObAPlugin extends Plugin {
 
 	onunload() {
 		console.log('ObAPlugin:onunload');
+		ObaScheduler.stop()
 		statusbar.onunload();
 		obasync.onunload();
 	}

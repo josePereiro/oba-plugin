@@ -1,12 +1,11 @@
 import { Notice } from "obsidian"
 import { addObaCommand } from "src/oba-base/commands"
-import { OBA } from "src/oba-base/globals"
+import { OBA, ObaScheduler } from "src/oba-base/globals"
 import { getObaConfig } from "src/oba-base/obaconfig"
 import { getCurrNotePath } from "src/tools-base/obsidian-tools"
 import { TaskState, TriggerManager } from "src/tools-base/schedule-tools"
 import { _justPush } from "./git-cli-base"
 import { publishModifiedFileSignal } from "./modifiedFileSignal-base"
-import { ObaSyncScheduler } from "./obasync"
 import { getObaSyncFlag, setObaSyncFlag } from "./obasync-base"
 import { getNoteObaSyncScope } from "./scope-base"
 import { resolveSignalEventsAllChannles } from "./signals-base"
@@ -35,7 +34,7 @@ export function _serviceCommands() {
             const vaultFile = getCurrNotePath()
             if (!vaultFile) { return; }
 
-            ObaSyncScheduler.spawn({
+            ObaScheduler.spawn({
                 id: `oba-obasync-spawnModifiedFileSignal:${vaultFile}`,
                 deltaGas: 1,
                 taskFun: async (task: TaskState) => {
@@ -77,7 +76,7 @@ export function _serviceCommands() {
         commandName: "spawn resolve vault signal events",
         serviceName: ["ObaSync"],
         async commandCallback({ commandID, commandFullName }) {
-            ObaSyncScheduler.spawn({
+            ObaScheduler.spawn({
                 id: `oba-obasync-spawnResolveVaultSignalEvents`,
                 deltaGas: 1,
                 taskFun: async (task: TaskState) => {
@@ -106,13 +105,14 @@ export function _serviceCommands() {
         },
     })
 
-    // MARK: Dev: log ObaSyncScheduler
+    // MARK: Dev: log ObaScheduler
+    // TODO/ Move out
     addObaCommand({
-        commandName: "log ObaSyncScheduler",
+        commandName: "log ObaScheduler",
         serviceName: ["ObaSync", "Dev"],
         async commandCallback({ commandID, commandFullName }) {
-            console.log("ObaSyncScheduler")
-            console.log(ObaSyncScheduler)
+            console.log("ObaScheduler")
+            console.log(ObaScheduler)
         },
     })
 
@@ -122,7 +122,7 @@ export function _serviceCommands() {
         serviceName: ["ObaSync"],
         async commandCallback({ commandID, commandFullName }) {
             // spawn push
-            ObaSyncScheduler.spawn({
+            ObaScheduler.spawn({
                 id: `oba-obasync-push-all`,
                 deltaGas: 100,
                 taskFun: async (task: TaskState) => {

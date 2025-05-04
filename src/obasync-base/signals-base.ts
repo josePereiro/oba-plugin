@@ -5,11 +5,11 @@ import { TaskState } from "src/tools-base/schedule-tools"
 import { hash64Chain } from "src/tools-base/utils-tools"
 import { _addDummyAndCommit, _addDummyAndCommitAndPush, _fetchCheckoutPull, _justPush } from "./git-cli-base"
 import { checkPusher, manifestJsonIO, modifyObaSyncManifest, ObaSyncManifest, ObaSyncManifestIder } from "./manifests-base"
-import { ObaSyncScheduler } from "./obasync"
 import { utcTimeTag } from "./utils-base"
 import { getObaConfig } from "src/oba-base/obaconfig"
 import { getVaultDir } from "src/tools-base/obsidian-tools"
 import { JsonIO } from "src/tools-base/jsonio-base"
+import { ObaScheduler } from "src/oba-base/globals"
 
 // MARK: ObaSyncSignal
 export type HandlingStatus = "handler.ok" | "unhandled" | "unknown" | "error" | null
@@ -488,12 +488,88 @@ type SignalHandlerType = (arg: SignalHandlerArgs) =>
     (HandlingStatus | Promise<HandlingStatus>)
 
 // MARK: registerSignalEventHandler
+async function _signalEventHandlerTaskFun(task: TaskState) {
+    
+    const context = task["args"]["context"] as ObaSyncCallbackContext
+    const eventID = task["args"]["eventID"] as ObaSyncEventID
+    const handler = task["args"]["handler"] as SignalHandlerType
+
+    const status = await handler({context, eventID, task})
+
+    if (status == "handler.ok") {
+
+        // extract
+        const vaultDepot = context0["vaultDepot"]
+        const pushDepot = context0["pushDepot"]
+        const manIder = context0["manIder"]
+        const pulledSignal = context0["pulledSignal"]
+        
+        const signalTemplate: ObaSyncSignal = {
+            ...pulledSignal,
+            // add handler section
+            // 'handler.name'?: string
+            'handler.name': handlerName,
+            // 'handler.callback'?: string
+            "handler.callback": callbackID,
+            // 'handler.timestamp'?: string,
+            "handler.timestamp": utcTimeTag(),
+            // 'handler.handlingStatus'?: HandlingStatus
+            'handler.handlingStatus': status,
+            // 'handler.channelName'?: string
+            'handler.channelName': manIder["channelName"],
+        }
+
+        // record signal in vault manifest
+        await publishSignal({
+            vaultDepot,
+            pushDepot,
+            committerName: handlerName,
+            manIder,
+            signalTemplate,
+            hashDig: [],
+            commitPushRepo: true,
+            commitVaultRepo: true,
+            pushPushRepo: true,
+            notify: true
+        })
+
+        // notice
+        const msg = [
+            `Signal processed succesfully`,
+            ` - type: ${signalTemplate["type"]}`,
+            ` - handler.name: ${signalTemplate["handler.name"]}`,
+            ` - handler.channelName: ${signalTemplate["handler.channelName"]}`,
+            ` - creator.hashKey: ${signalTemplate["creator.hashKey"]}`,
+            ` - creator.name: ${signalTemplate["creator.name"]}`,
+            ` - creator.channelName: ${signalTemplate["creator.channelName"]}`,
+            ` - creator.timestamp: ${signalTemplate["creator.timestamp"]}`,
+            ` - eventID: ${eventID}`,
+        ].join("\n")
+        new Notice(msg, 1 * 60 * 1000)
+        console.log(msg)
+        
+    }
+    if (status == "unhandled") {
+    }
+    if (status == "unknown") {
+        console.warn(`Signal status 'error': ${eventID}:${signalType}`)
+    }
+    if (status == "error") {
+        console.error(`Signal status 'error': ${eventID}:${signalType}`)
+    }
+}
+
+/*
+    Register a callback that will spawn a task for handling 
+    a signal event... 
+*/ 
 export function registerSignalEventHandler({
     handler,
     handlerName,
     eventID,
     signalType, 
     deltaGas = 1,
+    priority = 10,
     taskIDDigFun = (() => [])
 }: {
     handler: SignalHandlerType,
@@ -501,6 +577,7 @@ export function registerSignalEventHandler({
     eventID: ObaSyncEventID, 
     signalType: string, 
     deltaGas?: number,
+    priority?: number,
     taskIDDigFun?: (context: ObaSyncCallbackContext) => string[]
 }) {
     const callbackID = `${eventID}:${signalType}`
@@ -511,80 +588,18 @@ export function registerSignalEventHandler({
             const context0 = args["context"]
             const eventID0 = args["eventID"]
             if (eventID != eventID0) {
-                console.error(`Nonmatching eventIDs, ${eventID} != ${eventID0}`)
+                console.error(`Non-matching eventIDs, ${eventID} != ${eventID0}`)
                 return;
             }
 
             const taskIDDig = taskIDDigFun(context0)
             const taskID = hash64Chain(callbackID, ...taskIDDig)
-            ObaSyncScheduler.spawn({
+
+            ObaScheduler.spawn({
                 id: taskID, 
-                deltaGas,
-                taskFun: async (task: TaskState) => {
-                    const status = await handler({context: context0, eventID, task})
-
-                    if (status == "handler.ok") {
-
-                        // extract
-                        const vaultDepot = context0["vaultDepot"]
-                        const pushDepot = context0["pushDepot"]
-                        const manIder = context0["manIder"]
-                        const pulledSignal = context0["pulledSignal"]
-                        
-                        const signalTemplate: ObaSyncSignal = {
-                            ...pulledSignal,
-                            // add handler section
-                            // 'handler.name'?: string
-                            'handler.name': handlerName,
-                            // 'handler.callback'?: string
-                            "handler.callback": callbackID,
-                            // 'handler.timestamp'?: string,
-                            "handler.timestamp": utcTimeTag(),
-                            // 'handler.handlingStatus'?: HandlingStatus
-                            'handler.handlingStatus': status,
-                            // 'handler.channelName'?: string
-                            'handler.channelName': manIder["channelName"],
-                        }
-
-                        // record signal in vault manifest
-                        await publishSignal({
-                            vaultDepot,
-                            pushDepot,
-                            committerName: handlerName,
-                            manIder,
-                            signalTemplate,
-                            hashDig: [],
-                            commitPushRepo: true,
-                            commitVaultRepo: true,
-                            pushPushRepo: true,
-                            notify: true
-                        })
-
-                        // notice
-                        const msg = [
-                            `Signal processed succesfully`,
-                            ` - type: ${signalTemplate["type"]}`,
-                            ` - handler.name: ${signalTemplate["handler.name"]}`,
-                            ` - handler.channelName: ${signalTemplate["handler.channelName"]}`,
-                            ` - creator.hashKey: ${signalTemplate["creator.hashKey"]}`,
-                            ` - creator.name: ${signalTemplate["creator.name"]}`,
-                            ` - creator.channelName: ${signalTemplate["creator.channelName"]}`,
-                            ` - creator.timestamp: ${signalTemplate["creator.timestamp"]}`,
-                            ` - eventID: ${eventID}`,
-                        ].join("\n")
-                        new Notice(msg, 1 * 60 * 1000)
-                        console.log(msg)
-                        
-                    }
-                    if (status == "unhandled") {
-                    }
-                    if (status == "unknown") {
-                        console.warn(`Signal status 'error': ${eventID}:${signalType}`)
-                    }
-                    if (status == "error") {
-                        console.error(`Signal status 'error': ${eventID}:${signalType}`)
-                    }
-                }
+                deltaGas, priority,
+                args: {...args, handler, handlerName},
+                taskFun: _signalEventHandlerTaskFun
             })
         }
     })

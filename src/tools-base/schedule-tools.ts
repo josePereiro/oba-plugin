@@ -3,44 +3,52 @@
     Ensure a given task to be called only is a previous one is finished
 */
 
-import { shuffledKeys } from "./utils-tools";
 
 export interface TaskState {
     "taskFun": ((t:TaskState) => any),
-    "args": any,
-    "gas": number
+    "args": {[keys: string]: any},
+    "gas": number,
+    "priority": number
 }
 
 export class SequentialAsyncScheduler {
+    private MIN_PRIORITY = 0;
+    private MAX_PRIORITY = 20;
+    private DFLT_PRIORITY = 10;
+    private idle: boolean = false;
+    private running: boolean = false;
+    private wt = 100 // ms
+    private tasksStack: {[keys: string]: TaskState} = {}
 
-    constructor(
-        private tasksStack: {[keys: string]: TaskState} = {},
-        private running = false,
-        private wt = 100,
-    ) {}
+    constructor() {}
 
     public spawn({
         id, 
         taskFun,
         args = {},
         deltaGas = 1,
+        priority = this.DFLT_PRIORITY
     }: {
         id: string,
         taskFun: ((t:TaskState) => any),
         args?: any,
         deltaGas?: number,
+        priority?: number
     }) {
+        // new task
         this.tasksStack[id] = {
-            "taskFun": taskFun, 
-            "args": args,
-            "gas": this.tasksStack?.[id]?.["gas"] || 0
+            taskFun, args,
+            gas: this.tasksStack?.[id]?.["gas"] || 0, 
+            priority: this.tasksStack?.[id]?.["priority"] || this.DFLT_PRIORITY, 
         }
         this.addGas(id, deltaGas)
+        this.setPriority(id, priority)
+        this.idle = false;
         this.run()
         return this
     }
 
-    public addGas(
+    private addGas(
         id: string, 
         deltaGas: number = 1
     ) {
@@ -50,27 +58,62 @@ export class SequentialAsyncScheduler {
         return this
     }
 
-    public async run(wt: number | null = null) {
-        if (wt) {this.wt = wt}
+    private setPriority(
+        id: string, 
+        priority: number = this.DFLT_PRIORITY
+    ) {
+        priority = Math.clamp(priority, 
+            this.MIN_PRIORITY, this.MAX_PRIORITY
+        )
+        const task = this.tasksStack?.[id]
+        if (!task) { return this; }
+        task["priority"] = priority
+        return this
+    }
+
+    private unregister(
+        id: string
+    ) {
+        if (this.tasksStack.hasOwnProperty(id)) {
+            delete this.tasksStack[id]
+        }
+    }   
+
+    public async run() {
         if (this.running) { return this; }
         this.running = true
         while (this.running) {
-            let idle = true
-            const taskIds = shuffledKeys(this.tasksStack)
-            for (const taskId of taskIds) {
-                // console.log("taskId:", taskId)
-                const task = this.tasksStack[taskId]
-                if (task["gas"] < 1) { continue; }
-                idle = false
-                task["gas"] = task["gas"] - 1
-                await task["taskFun"](task)
+            this.idle = true  
+            for (
+                let priority0 = this.MIN_PRIORITY; 
+                priority0 < this.MAX_PRIORITY; 
+                priority0++
+            ) {
+                for (const taskId in this.tasksStack) {
+                    // console.log("taskId:", taskId)
+                    const task = this.tasksStack[taskId]
+                    const priority = task?.["priority"] || this.DFLT_PRIORITY
+                    if (priority > priority0) { continue; }
+                    const gas = task["gas"]
+                    if (gas < 1) { this.unregister(taskId) }
+                    this.addGas(taskId, -1)
+
+                    await task["taskFun"](task)
+                    this.idle = false 
+                }
             }
-            if (idle) { await sleep(this.wt); }
+            // TODO/ implement increasing wt if idle presist
+            while (this.idle) {
+                await sleep(this.wt);
+                // break to avoid deadends
+                if (Math.random() > 0.9) { break; }
+            }
         }
         return this
     }
 
     public stop() {
+        this.idle = false;
         this.running = false;
         return this
     }

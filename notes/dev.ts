@@ -1,4 +1,11 @@
 /*
+    TODO/
+    - Improve scheduler
+        - All oba commands must be scheduled
+        - Set a priority loop
+*/ 
+
+/*
 TODO/TAI:
     - Some signals needs to be republished
         - This is important to comunicate signal in the intersection of two subvaults
