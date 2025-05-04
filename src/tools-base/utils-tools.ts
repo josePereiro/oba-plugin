@@ -1,7 +1,7 @@
 import { ChildProcessWithoutNullStreams, exec, spawn, SpawnOptionsWithoutStdio } from "child_process";
-import { tools } from "./0-tools-modules";
-import * as _ from 'lodash'
+import * as _ from 'lodash';
 import { promisify } from "util";
+import { tools } from "./0-tools-modules";
 
 export function uriToFilename(url: string): string {
     // 

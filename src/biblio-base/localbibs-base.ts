@@ -1,13 +1,11 @@
-import { tools } from '../tools-base/0-tools-modules';
 import * as bibparser from '@retorquere/bibtex-parser';
-import * as readline from 'readline';
 import { existsSync } from 'fs';
 import { readFile, rm } from 'fs/promises';
 import { join } from 'path';
-import { BiblIOAuthor, BiblIOData, BiblIODate, BiblIOIder } from './biblio-data';
-import { obaconfig, filesys } from 'src/oba-base/0-oba-modules';
-import { createReadStream } from 'fs';
+import { filesys, obaconfig } from 'src/oba-base/0-oba-modules';
 import { statusbar } from 'src/services-base/0-servises-modules';
+import { tools } from 'src/tools-base/0-tools-modules';
+import { BiblIOAuthor, BiblIOData, BiblIODate, BiblIOIder } from './biblio-data';
 
 interface BibTexData {
     comments?: any[],

@@ -1,10 +1,3 @@
-import { exec, spawn } from "child_process";
-import { Notice } from "obsidian";
-import * as path from "path";
-import { dirname } from "path";
-import { buildObaDirPath } from "src/oba-base/filesys";
-import { OBA } from "src/oba-base/globals";
-
 /*
     Listen a signal and trigger an Oba update
     /TODO make it work...

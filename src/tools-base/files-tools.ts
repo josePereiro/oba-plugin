@@ -1,8 +1,8 @@
 import { createReadStream, existsSync, mkdirSync } from "fs";
 import { readdir, stat } from "fs/promises";
-import * as path from "path";
 import * as jsyaml from 'js-yaml';
 import { Notice } from "obsidian";
+import * as path from "path";
 import * as readline from 'readline';
 
 export function mkdirParent(filePath: string): void {

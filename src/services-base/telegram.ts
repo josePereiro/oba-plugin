@@ -1,14 +1,14 @@
-import * as obaconfig from './oba-base/obaconfig'
+
 
 /*
     Add a few utils for interfacing with Telegram
 */
-export class Telegram {
+// export class Telegram {
 
-    constructor(private oba: ObA) {
-        console.log("Telegram:onload");
-    }
-}
+//     constructor(private oba: ObA) {
+//         console.log("Telegram:onload");
+//     }
+// }
 
 // import { App, Plugin } from 'obsidian';
 // // import { config } from 'dotenv';

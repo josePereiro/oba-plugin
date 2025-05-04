@@ -1,5 +1,4 @@
 import { existsSync, mkdirSync } from "fs";
-import { rm } from "fs/promises";
 import { Notice } from "obsidian";
 import { SpawnResult } from "src/tools-base/utils-tools";
 import { gitCloneHard, GitRepoOptions, isGitValidRepo, runGitCommand } from "./gittools-base";

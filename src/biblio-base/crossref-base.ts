@@ -5,11 +5,11 @@
     // Include the interface to Biblio.
 */
 
+import { existsSync } from "fs";
+import { join } from "path";
+import { filesys } from "src/oba-base/0-oba-modules";
 import { tools } from "src/tools-base/0-tools-modules";
 import { BiblIOAuthor, BiblIOData, BiblIODate, BiblIOIder, RefBiblIOIderMap } from "./biblio-data";
-import { filesys } from "src/oba-base/0-oba-modules";
-import { join } from "path";
-import { existsSync} from "fs";
 
 
 

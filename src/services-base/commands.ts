@@ -1,8 +1,5 @@
 import { obaconfig } from "src/oba-base/0-oba-modules";
 import { addObaCommand } from "src/oba-base/commands";
-import { OBA } from "src/oba-base/globals";
-import { checkEnable } from "src/tools-base/oba-tools";
-import { callbacks } from "./0-servises-modules";
 import { runObaEventCallbacks } from "src/scheduler-base/event-callbacks";
 
 /*

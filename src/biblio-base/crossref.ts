@@ -1,7 +1,5 @@
 import { addObaCommand } from 'src/oba-base/commands';
-import { OBA } from 'src/oba-base/globals';
 import { getSelectedText } from 'src/tools-base/obsidian-tools';
-import * as tools from '../tools-base/0-tools-modules';
 import { biblio } from './0-biblio-modules';
 import * as crossrefbase from './crossref-base';
 import { getBiblIO } from './crossref-base';

@@ -1,14 +1,11 @@
-import { Notice, TFile } from 'obsidian';
-import { join } from 'path';
 import { exec } from 'child_process';
-import { platform } from "os";
 import { existsSync } from 'fs';
-import { OBA } from 'src/oba-base/globals';
-import { checkEnable, tools } from 'src/tools-base/0-tools-modules';
+import { Notice, TFile } from 'obsidian';
+import { platform } from "os";
+import { join } from 'path';
 import { obaconfig } from 'src/oba-base/0-oba-modules';
-import { BiblIOIder } from 'src/biblio-base/biblio-data';
-import { getCurrNote, getSelectedText } from 'src/tools-base/obsidian-tools';
 import { addObaCommand } from 'src/oba-base/commands';
+import { getCurrNote, getSelectedText } from 'src/tools-base/obsidian-tools';
 
 /*
     Given a path, open a pdf related with the note.

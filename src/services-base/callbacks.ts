@@ -1,9 +1,7 @@
 import { Notice } from 'obsidian';
-import { checkEnable } from 'src/tools-base/0-tools-modules';
-import { openNoteAtLine } from 'src/tools-base/obsidian-tools';
-import { backends, commands, git, replacer } from './0-servises-modules';
-import { ObaSchedulerExecutionBlock, ObaSchedulerTask } from 'src/scheduler-base/scheduler-base';
 import { registerObaEventCallback } from 'src/scheduler-base/event-callbacks';
+import { ObaSchedulerExecutionBlock, ObaSchedulerTask } from 'src/scheduler-base/scheduler-base';
+import { backends, commands, git, replacer } from './0-servises-modules';
 
 /*
     TODO/ Make it an Scheduler or use ObaScheduler itself

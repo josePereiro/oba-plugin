@@ -2,8 +2,6 @@ import { MarkdownView, Notice } from 'obsidian';
 import { obaconfig } from 'src/oba-base/0-oba-modules';
 import { addObaCommand } from 'src/oba-base/commands';
 import { OBA } from 'src/oba-base/globals';
-import { checkEnable, tools } from 'src/tools-base/0-tools-modules';
-import { SimilarityModal } from '../tools-base/modals-tools';
 
 /*
     TODO/ Make a log system controlable by a flag

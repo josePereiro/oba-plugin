@@ -3,8 +3,7 @@ import { Notice } from 'obsidian';
 import { join } from 'path';
 import { filesys } from 'src/oba-base/0-oba-modules';
 import { addObaCommand } from 'src/oba-base/commands';
-import { OBA } from 'src/oba-base/globals';
-import { checkEnable, tools } from 'src/tools-base/0-tools-modules';
+import { tools } from 'src/tools-base/0-tools-modules';
 import { getCurrNotePath, getCursorPosition, getSelectedText, getSelectionRange } from 'src/tools-base/obsidian-tools';
 import { callbacks } from './0-servises-modules';
 

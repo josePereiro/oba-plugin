@@ -1,8 +1,8 @@
 import { citnotes } from "src/citnotes-base/0-citnotes-modules";
-import { crossref, localbibs } from "./0-biblio-modules";
 import { BiblIOAuthor, BiblIOData, BiblIODate, BiblIOIder } from "./biblio-data";
 import { tools } from "src/tools-base/0-tools-modules";
 import { statusbar } from "src/services-base/0-servises-modules";
+import { crossref, localbibs } from "./0-biblio-modules";
 
 // MARK: consensus
 /*
@@ -20,6 +20,7 @@ export async function consensusBiblIO(id: BiblIOIder) {
     // - If not, it will try to download them all the time, it is time consumming
     //  - A simple flag in the Oba.state for disabling crossref fetching would be useful
     const rc_biblIO = await crossref.getBiblIO(id); 
+    
     const lb_biblIO = await localbibs.getBiblIO(id);
     
     const biblio: BiblIOData = {

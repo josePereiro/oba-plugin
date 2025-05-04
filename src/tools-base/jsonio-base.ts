@@ -2,8 +2,8 @@ import { existsSync, readFileSync, writeFileSync } from "fs";
 import { readFile, writeFile } from "fs/promises";
 import * as _ from 'lodash';
 import path from "path";
-import { ErrVersionCallerOptions, mkdirParent, tools } from "./0-tools-modules";
 import stripJsonComments from "strip-json-comments";
+import { ErrVersionCallerOptions, mkdirParent, tools } from "./0-tools-modules";
 
 // MARK: JsonIO
 

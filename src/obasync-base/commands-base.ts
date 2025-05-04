@@ -1,6 +1,6 @@
 import { Notice } from "obsidian"
 import { addObaCommand } from "src/oba-base/commands"
-import { OBA, ObaScheduler } from "src/oba-base/globals"
+import { ObaScheduler } from "src/oba-base/globals"
 import { getObaConfig } from "src/oba-base/obaconfig"
 import { getCurrNotePath } from "src/tools-base/obsidian-tools"
 import { TaskState, TriggerManager } from "src/tools-base/schedule-tools"

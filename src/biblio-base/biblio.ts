@@ -1,9 +1,4 @@
-import { addObaCommand } from "src/oba-base/commands";
-import { OBA } from "src/oba-base/globals";
-import { checkEnable } from "src/tools-base/0-tools-modules";
-import { getSelectedText } from "src/tools-base/obsidian-tools";
-import { crossref, localbibs } from "./0-biblio-modules";
-import { consensusBiblIO } from "./biblio-base";
+import { localbibs } from "./0-biblio-modules";
 export * from "./biblio-base";
 export * from "./biblio-data";
 

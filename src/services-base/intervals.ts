@@ -1,6 +1,3 @@
-import { obaconfig } from "src/oba-base/0-oba-modules";
-import { OBA } from "../oba-base/globals";
-import { runObaCallbacks } from "./callbacks";
 import { runObaEventCallbacks } from "src/scheduler-base/event-callbacks";
 
 let INTERVAL_ID: number | null = null;
