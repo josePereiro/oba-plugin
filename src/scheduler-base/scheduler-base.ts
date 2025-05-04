@@ -18,16 +18,17 @@ export interface ObaSchedulerTask {
 // Register here all blockID
 export type ObaSchedulerExecContext = {[keys: string]: any}
 
-export type ObaSchedulerTaskFunReturn = | 
-    void | null | 'abort'  
-    | Promise<void | null | 'abort'>
 
-export type ObaSchedulerTaskFunArg = {
+export type ObaSchedulerTaskFunReturn = 
+    'abort' | void | Promise<'abort' | void>
+
+export type ObaSchedulerTaskFunArgs = {
     task:ObaSchedulerTask, 
     execBlock: ObaSchedulerExecutionBlock
 }
 export type ObaSchedulerTaskFun = 
-    (arg: ObaSchedulerTaskFunArg) => ObaSchedulerTaskFunReturn
+    (arg: ObaSchedulerTaskFunArgs) => 
+        ObaSchedulerTaskFunReturn
 
 
 export type ObaSchedulerExecBlockType = 
@@ -115,6 +116,7 @@ export function _registerObaTask({
     if (blockGas) {
         block["blockGas"] = blockGas
     }
+    console.log("_registerObaTask:block: ", block)
     OBA_SCHEDULER_REGISTRY[blockID] = block
 
     // format task

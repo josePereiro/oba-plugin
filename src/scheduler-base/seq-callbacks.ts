@@ -27,8 +27,8 @@ export async function spawnObaSeqCallback({
     callback: ObaSchedulerTaskFun,
     taskPriority?: number,
     context: ObaSchedulerExecContext | null,
-    blockPriority?: number | null,
-    blockGas?: number | null,
+    blockPriority: number | null,
+    blockGas: number | null,
     regMode?: ObaSchedulerTaskRegMode
 }) {
     ObaSeqCallbackState["running"] = true
@@ -68,6 +68,8 @@ export async function _onePassObaSeqCallbackLoop() {
 }
 
 export async function startObaSeqCallbackLoop() {
+    if (ObaSeqCallbackState["running"]) { return; }
+    
     ObaSeqCallbackState["running"] = true
     while(ObaSeqCallbackState["running"]) {
         // run
@@ -89,7 +91,7 @@ export async function startObaSeqCallbackLoop() {
 }
 
 // NOTE: This must be run at plugin onunload
-export async function stopObaSeqCallbackLoop() {
+export function stopObaSeqCallbackLoop() {
     ObaSeqCallbackState["running"] = false
     ObaSeqCallbackState["idle"] = true
 }
