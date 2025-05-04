@@ -10,6 +10,7 @@ import { obasync } from './obasync-base/0-obasync-modules';
 import { backends, callbacks, commands, dev, git, intervals, markerpdf, mdjson, obanotes, obaup, obauri, pdfrepo, replacer, scihub, statusbar, tagnotices, vscode } from './services-base/0-servises-modules';
 import { tests } from './tests-base/0-tests-modules';
 import { tools } from './tools-base/0-tools-modules';
+import { obascheduler } from './scheduler-base/0-scheduler-module';
 
 // NOTES
 
@@ -40,7 +41,7 @@ export default class ObAPlugin extends Plugin {
 
 		// Setup globals
 		setOba(this);
-		ObaScheduler.run();
+		// ObaScheduler.run();
 
 		// init modules
 		callbacks.onload()
@@ -67,12 +68,13 @@ export default class ObAPlugin extends Plugin {
 		obaup.onload()
 		obasync.onload()
 		gittools.onload()
-	
+		obascheduler.onload()
 	}
 
 	onunload() {
 		console.log('ObAPlugin:onunload');
 		ObaScheduler.stop()
+		obascheduler.onunload()
 		statusbar.onunload();
 		obasync.onunload();
 	}

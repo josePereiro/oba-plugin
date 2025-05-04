@@ -2,6 +2,8 @@ import { Notice } from 'obsidian';
 import { checkEnable } from 'src/tools-base/0-tools-modules';
 import { openNoteAtLine } from 'src/tools-base/obsidian-tools';
 import { backends, commands, git, replacer } from './0-servises-modules';
+import { ObaSchedulerExecutionBlock, ObaSchedulerTask } from 'src/scheduler-base/scheduler-base';
+import { registerObaEventCallback } from 'src/scheduler-base/event-callbacks';
 
 /*
     TODO/ Make it an Scheduler or use ObaScheduler itself
@@ -24,31 +26,31 @@ export function onload() {
     // - Inspire in vscode.snnipets  
     //  - "callback.oba-signal" : ["signalBackendCmd", "gitCommitCmd"]
     //      - You can just use bracket notation
-    const callbackID = commands.getCommandCallbackId(1);
-    registerObaCallback({
-        callbackID, 
-        calls: [
-            // Order is relevant
-            async () => await backends.signalBackend(),
-            async () => await replacer.runReplacer(),
-            async () => await git.gitCommitCmd(),
-            // async () => await localbibs.parseOnDemandLocalBibAll(),
-            // async () => await citnotes.downloadAllLocalReferences(),
-        ]
-    })
-
-    registerObaCallback({
-        callbackID: "callbacks.obauri.action", 
-        async call() {
-            if (!checkEnable("obauri", {err: false, notice: true})) { return; }
-            console.clear()
-            const params = getCallbackArgs()?.[0]
-            if (!params) { return; }
-            console.log("obauri.params:\n", params?.[0])
-            // open "obsidian://oba-uri?vault=MetXVault&_file=2_notes%2F%40edwardsEscherichiaColiMG16552000.md&_line=13"
-            await openNoteAtLine(params?.["_file"], params?.["_line"])
+    const blockID = commands.getCommandCallbackId(1);
+    registerObaEventCallback({
+        blockID, 
+        async callback(
+            task: ObaSchedulerTask, 
+            execBlock: ObaSchedulerExecutionBlock
+        ) {
+            await backends.signalBackend()
+            await replacer.runReplacer()
+            await git.gitCommitCmd()
         }
     })
+
+    // registerObaCallback({
+    //     callbackID: "callbacks.obauri.action", 
+    //     async call() {
+    //         if (!checkEnable("obauri", {err: false, notice: true})) { return; }
+    //         console.clear()
+    //         const params = getCallbackArgs()?.[0]
+    //         if (!params) { return; }
+    //         console.log("obauri.params:\n", params?.[0])
+    //         // open "obsidian://oba-uri?vault=MetXVault&_file=2_notes%2F%40edwardsEscherichiaColiMG16552000.md&_line=13"
+    //         await openNoteAtLine(params?.["_file"], params?.["_line"])
+    //     }
+    // })
 
     // console.log("registry:\n", CALLBACKS_REGISTRY)
 

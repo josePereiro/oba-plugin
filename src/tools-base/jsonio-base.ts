@@ -6,16 +6,6 @@ import { ErrVersionCallerOptions, mkdirParent, tools } from "./0-tools-modules";
 import stripJsonComments from "strip-json-comments";
 
 // MARK: JsonIO
-// // TOOD: implement jsonio as a class
-// const io = new JsonIO()
-// io.read(path) // load depot
-// .getf(key, () => {
-//     return 3
-// }) // get opperation with function
-// .set(key, val2) // set operation with val
-// .write() // write to depot
-// .ans() // return answer
-// | .depot() // return object
 
 // DESIGN: Most operations should be "atomic"
 

@@ -3,6 +3,7 @@ import { addObaCommand } from "src/oba-base/commands";
 import { OBA } from "src/oba-base/globals";
 import { checkEnable } from "src/tools-base/oba-tools";
 import { callbacks } from "./0-servises-modules";
+import { runObaEventCallbacks } from "src/scheduler-base/event-callbacks";
 
 /*
     General purpose commands.
@@ -22,8 +23,8 @@ export function onload() {
             commandName: getCommandName(i),
             serviceName: ["Commands"],
             async commandCallback({ commandID, commandFullName }) {
-                const callbackID = getCommandCallbackId(i);
-                await callbacks.runObaCallbacks({ callbackID });
+                const blockID = getCommandCallbackId(i);
+                runObaEventCallbacks({ blockID, context: null })
             },
         })
     }

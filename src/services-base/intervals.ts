@@ -1,6 +1,7 @@
 import { obaconfig } from "src/oba-base/0-oba-modules";
 import { OBA } from "../oba-base/globals";
 import { runObaCallbacks } from "./callbacks";
+import { runObaEventCallbacks } from "src/scheduler-base/event-callbacks";
 
 let INTERVAL_ID: number | null = null;
 
@@ -28,6 +29,9 @@ function startBackgroundTask() {
     // const interval = obaconfig.getObaConfig("interval1.period", 3000);
     const interval = 3000;
     INTERVAL_ID = window.setInterval(() => {
-        runObaCallbacks("oba-interval-1", interval);
+        runObaEventCallbacks({ 
+            blockID: "oba-interval-1", 
+            context: { interval }
+        })
     }, interval);
 }

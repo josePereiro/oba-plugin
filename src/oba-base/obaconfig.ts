@@ -1,17 +1,15 @@
-import { statSync } from 'fs';
-import { join } from 'path';
-import { vscode } from 'src/services-base/0-servises-modules';
-import { getVaultDir } from 'src/tools-base/obsidian-tools';
-import { checkEnable, JsonIO, tools } from '../tools-base/0-tools-modules';
-import { addObaCommand } from './commands';
-import { OBA } from './globals';
-import { vscodeGotoFile } from 'src/services-base/vscode';
+import { statSync } from "fs";
+import { join } from "path";
+import { vscodeGotoFile } from "src/services-base/vscode";
+import { tools } from "src/tools-base/0-tools-modules";
+import { JsonIO } from "src/tools-base/jsonio-base";
+import { getVaultDir } from "src/tools-base/obsidian-tools";
+import { addObaCommand } from "./commands";
 
 /*
     Handle Oba confg file
 */
 
-// export let CONFIG: { [key: string]: any } = {};
 export let CONFIG: JsonIO = new JsonIO();
 
 export function onload() {

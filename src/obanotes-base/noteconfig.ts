@@ -1,8 +1,7 @@
-import { JsonIO } from "src/tools-base/0-tools-modules";
-import { ensureObaNoteID, getObaNotesDir } from "./obanotes-base";
-import { join } from "path";
-import { existsSync } from "fs";
 import { TFile } from "obsidian";
+import { join } from "path";
+import { JsonIO } from "src/tools-base/jsonio-base";
+import { ensureObaNoteID, getObaNotesDir } from "./obanotes-base";
 
 
 // MARK: note config

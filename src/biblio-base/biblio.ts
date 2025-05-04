@@ -14,20 +14,20 @@ export * from "./biblio-data";
 
 export function onload() {
     // modules onload
-    crossref.onload()
+    // crossref.onload()
     localbibs.onload()
 
-    // MARK: commands
-    addObaCommand({
-        commandName: "Dev: log selection's consensus biblIO",
-        serviceName: ["BiblIO"],
-        async commandCallback({ commandID, commandFullName }) {
-            console.clear();
-            const sel = getSelectedText();
-            console.log("sel: ", sel);
-            const data = await consensusBiblIO({"query": sel});
-            console.log("data: ", data);
-        },
-    })
+    // // MARK: commands
+    // addObaCommand({
+    //     commandName: "Dev: log selection's consensus biblIO",
+    //     serviceName: ["BiblIO"],
+    //     async commandCallback({ commandID, commandFullName }) {
+    //         console.clear();
+    //         const sel = getSelectedText();
+    //         console.log("sel: ", sel);
+    //         const data = await consensusBiblIO({"query": sel});
+    //         console.log("data: ", data);
+    //     },
+    // })
 }
 

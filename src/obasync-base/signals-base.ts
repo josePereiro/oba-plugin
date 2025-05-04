@@ -1,15 +1,14 @@
 import { copyFileSync } from "fs"
 import { Notice } from "obsidian"
-import { registerObaCallback, runObaCallbacks } from "src/services-base/callbacks"
+import { getObaConfig } from "src/oba-base/obaconfig"
+import { registerObaEventCallback, runObaEventCallbacks } from "src/scheduler-base/event-callbacks"
+import { ObaSchedulerExecutionBlock, ObaSchedulerTask } from "src/scheduler-base/scheduler-base"
+import { getVaultDir } from "src/tools-base/obsidian-tools"
 import { TaskState } from "src/tools-base/schedule-tools"
 import { hash64Chain } from "src/tools-base/utils-tools"
-import { _addDummyAndCommit, _addDummyAndCommitAndPush, _fetchCheckoutPull, _justPush } from "./git-cli-base"
+import { _addDummyAndCommit, _fetchCheckoutPull, _justPush } from "./git-cli-base"
 import { checkPusher, manifestJsonIO, modifyObaSyncManifest, ObaSyncManifest, ObaSyncManifestIder } from "./manifests-base"
 import { utcTimeTag } from "./utils-base"
-import { getObaConfig } from "src/oba-base/obaconfig"
-import { getVaultDir } from "src/tools-base/obsidian-tools"
-import { JsonIO } from "src/tools-base/jsonio-base"
-import { ObaScheduler } from "src/oba-base/globals"
 
 // MARK: ObaSyncSignal
 export type HandlingStatus = "handler.ok" | "unhandled" | "unknown" | "error" | null
@@ -44,6 +43,7 @@ export interface ObaSyncCallbackContext {
     "manIder": ObaSyncManifestIder,
     "pulledSignalKey": string,
     "pulledSignal": ObaSyncSignal | null,
+    "eventID"?: string,
     "args"?: {[keys: string]: any} | null
 }
 
@@ -290,7 +290,7 @@ export async function resolveSignalEvents({
     console.log("pulledManSignals: ", pulledManSignals)
     
     // handle issued signals
-    let callbackID;
+    let blockID;
     let eventID: ObaSyncEventID;
 
     for (const pulledSignalKey in pulledManSignals) {
@@ -318,24 +318,15 @@ export async function resolveSignalEvents({
         // callback
         if (!vaultSignal) {
             // run callbacks
-            eventID = `obasync.vault.signal.missing`
-            callbackID = `${eventID}:${pulledSignalType}`
-            await runObaCallbacks({
-                callbackID, 
-                args: {context, eventID}
-            })
-            eventID = `obasync.vault.signal.ctimetag.missing.or.newer`
-            callbackID = `${eventID}:${pulledSignalType}`
-            await runObaCallbacks({
-                callbackID, 
-                args: {context, eventID}
-            })
-            eventID = `obasync.vault.signal.ctimetag.missing.or.older`
-            callbackID = `${eventID}:${pulledSignalType}`
-            await runObaCallbacks({
-                callbackID, 
-                args: {context, eventID}
-            })
+            eventID = context["eventID"] = `obasync.vault.signal.missing`
+            blockID = `${eventID}:${pulledSignalType}`
+            runObaEventCallbacks({ blockID, context})
+            eventID = context["eventID"] = `obasync.vault.signal.ctimetag.missing.or.newer`
+            blockID = `${eventID}:${pulledSignalType}`
+            runObaEventCallbacks({ blockID, context})
+            eventID = context["eventID"] = `obasync.vault.signal.ctimetag.missing.or.older`
+            blockID = `${eventID}:${pulledSignalType}`
+            runObaEventCallbacks({ blockID, context})
         }
 
         const vaultCTimeStampStr = vaultSignal?.['creator.timestamp']
@@ -349,94 +340,58 @@ export async function resolveSignalEvents({
             console.log("resolveSignalEvents:vaultCTimeStamp: ", vaultCTimeStamp)
 
             // callback
-            eventID = `obasync.signals.both.ctimetags.present`
-            callbackID = `${eventID}:${pulledSignalType}`
-            await runObaCallbacks({
-                callbackID, 
-                args: {context, eventID},
-                _verbose: true
-            })
+            eventID = context["eventID"] = `obasync.signals.both.ctimetags.present`
+            blockID = `${eventID}:${pulledSignalType}`
+            runObaEventCallbacks({ blockID, context})
 
             // callback
             if (vaultCTimeStamp < pulledCTimeStamp) {
                 // mine.newer
-                eventID = `obasync.vault.signal.ctimetag.older`
-                callbackID = `${eventID}:${pulledSignalType}`
-                await runObaCallbacks({
-                    callbackID, 
-                    args: {context, eventID},
-                    _verbose: true
-                })
-                eventID = `obasync.vault.signal.ctimetag.missing.or.older`
-                callbackID = `${eventID}:${pulledSignalType}`
-                await runObaCallbacks({
-                    callbackID, 
-                    args: {context, eventID},
-                    _verbose: true
-                })
+                eventID = context["eventID"] = `obasync.vault.signal.ctimetag.older`
+                blockID = `${eventID}:${pulledSignalType}`
+                runObaEventCallbacks({ blockID, context})
+                eventID = context["eventID"] = `obasync.vault.signal.ctimetag.missing.or.older`
+                blockID = `${eventID}:${pulledSignalType}`
+                runObaEventCallbacks({ blockID, context})
             }
             // callback
             if (vaultCTimeStamp == pulledCTimeStamp) {
                 // both.equal
-                eventID = `obasync.signals.both.ctimetags.equal`
-                callbackID = `${eventID}:${pulledSignalType}`
-                await runObaCallbacks({
-                    callbackID, 
-                    args: {context, eventID},
-                    _verbose: true
-                })
+                eventID = context["eventID"] = `obasync.signals.both.ctimetags.equal`
+                blockID = `${eventID}:${pulledSignalType}`
+                runObaEventCallbacks({ blockID, context})
             }
             // callback
             if (vaultCTimeStamp > pulledCTimeStamp) {
                 // both.equal
-                eventID = `obasync.vault.signal.ctimetag.newer`
-                callbackID = `${eventID}:${pulledSignalType}`
-                await runObaCallbacks({
-                    callbackID, 
-                    args: {context, eventID},
-                    _verbose: true
-                })
-                eventID = `obasync.vault.signal.ctimetag.missing.or.newer`
-                callbackID = `${eventID}:${pulledSignalType}`
-                await runObaCallbacks({
-                    callbackID, 
-                    args: {context, eventID},
-                    _verbose: true
-                })
+                eventID = context["eventID"] = `obasync.vault.signal.ctimetag.newer`
+                blockID = `${eventID}:${pulledSignalType}`
+                runObaEventCallbacks({ blockID, context})
+                eventID = context["eventID"] = `obasync.vault.signal.ctimetag.missing.or.newer`
+                blockID = `${eventID}:${pulledSignalType}`
+                runObaEventCallbacks({ blockID, context})
             }
         }
 
         // callback
         if (!vaultCTimeStampStr && pulledCTimeStampStr) {
-            eventID = `obasync.vault.signal.ctimetag.missing`
-            callbackID = `${eventID}:${pulledSignalType}`
-            await runObaCallbacks({
-                callbackID, 
-                args: {context, eventID},
-                _verbose: true
-            })
+            eventID = context["eventID"] = `obasync.vault.signal.ctimetag.missing`
+            blockID = `${eventID}:${pulledSignalType}`
+            runObaEventCallbacks({ blockID, context})
         }
 
             // callback
             if (vaultCTimeStampStr && !pulledCTimeStampStr) {
-                eventID = `obasync.pulled.signal.ctimetag.missing`
-                callbackID = `${eventID}:${pulledSignalType}`
-                await runObaCallbacks({
-                    callbackID, 
-                    args: {context, eventID},
-                    _verbose: true
-                })
+                eventID = context["eventID"] = `obasync.pulled.signal.ctimetag.missing`
+                blockID = `${eventID}:${pulledSignalType}`
+                runObaEventCallbacks({ blockID, context})
             }
 
         // callback
         if (!vaultCTimeStampStr && !pulledCTimeStampStr) {
-            eventID = `obasync.signals.both.ctimetags.missing`
-            callbackID = `${eventID}:${pulledSignalType}`
-            await runObaCallbacks({
-                callbackID, 
-                args: {context, eventID},
-                _verbose: true
-            })
+            eventID = context["eventID"] = `obasync.signals.both.ctimetags.missing`
+            blockID = `${eventID}:${pulledSignalType}`
+            runObaEventCallbacks({ blockID, context})
         }
     } // for (const pulledSignalKey in man1Issued)
 
@@ -491,7 +446,7 @@ type SignalHandlerType = (arg: SignalHandlerArgs) =>
 async function _signalEventHandlerTaskFun(task: TaskState) {
     
     const context = task["args"]["context"] as ObaSyncCallbackContext
-    const eventID = task["args"]["eventID"] as ObaSyncEventID
+    const eventID = context["eventID"] =task["args"]["eventID"] as ObaSyncEventID
     const handler = task["args"]["handler"] as SignalHandlerType
 
     const status = await handler({context, eventID, task})
@@ -510,7 +465,7 @@ async function _signalEventHandlerTaskFun(task: TaskState) {
             // 'handler.name'?: string
             'handler.name': handlerName,
             // 'handler.callback'?: string
-            "handler.callback": callbackID,
+            "handler.callback": blockID,
             // 'handler.timestamp'?: string,
             "handler.timestamp": utcTimeTag(),
             // 'handler.handlingStatus'?: HandlingStatus
@@ -580,27 +535,30 @@ export function registerSignalEventHandler({
     priority?: number,
     taskIDDigFun?: (context: ObaSyncCallbackContext) => string[]
 }) {
-    const callbackID = `${eventID}:${signalType}`
+    const blockID = `${eventID}:${signalType}`
     
-    registerObaCallback({
-        callbackID, 
-        async call(args: SignalEventCallbackArgs) {
-            const context0 = args["context"]
-            const eventID0 = args["eventID"]
+    registerObaEventCallback({
+        blockID, 
+        async callback(
+            task:ObaSchedulerTask, 
+            execBlock: ObaSchedulerExecutionBlock
+        ) {
+            const context = execBlock["context"]
+            const eventID0 = context["eventID"]
             if (eventID != eventID0) {
                 console.error(`Non-matching eventIDs, ${eventID} != ${eventID0}`)
                 return;
             }
 
-            const taskIDDig = taskIDDigFun(context0)
-            const taskID = hash64Chain(callbackID, ...taskIDDig)
+            const taskIDDig = taskIDDigFun(context as ObaSyncCallbackContext)
+            const taskID = hash64Chain(blockID, ...taskIDDig)
 
-            ObaScheduler.spawn({
-                id: taskID, 
-                deltaGas, priority,
-                args: {...args, handler, handlerName},
-                taskFun: _signalEventHandlerTaskFun
-            })
+            // ObaScheduler.spawn({
+            //     id: taskID, 
+            //     deltaGas, priority,
+            //     args: {...args, handler, handlerName},
+            //     taskFun: _signalEventHandlerTaskFun
+            // })
         }
     })
 }

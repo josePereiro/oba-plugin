@@ -1,8 +1,9 @@
 import { Notice } from "obsidian";
 import { OBA, ObaScheduler } from "src/oba-base/globals";
 import { getObaConfig } from "src/oba-base/obaconfig";
+import { registerObaEventCallback, runObaEventCallbacks } from "src/scheduler-base/event-callbacks";
+import { ObaSchedulerExecutionBlock, ObaSchedulerTask } from "src/scheduler-base/scheduler-base";
 import { registerObaCallback, runObaCallbacks } from "src/services-base/callbacks";
-import { checkEnable } from "src/tools-base/oba-tools";
 import { getCurrNotePath } from "src/tools-base/obsidian-tools";
 import { TaskState, TriggerManager } from "src/tools-base/schedule-tools";
 import { _justPush, _spawnAddDummyAndCommitAndPush, _spawnFetchCheckoutPull } from "./git-cli-base";
@@ -25,10 +26,10 @@ export function _serviceCallbacks() {
 // MARK: _resolveAtANyMove
 function _resolveAtANyMove() {
     {
-        const callbackID = `obasync.obsidian.anymove`
-        registerObaCallback({
-            callbackID, 
-            async call() {
+        registerObaEventCallback({
+            blockID: `obasync.obsidian.anymove`, 
+            taskPriority: 3,
+            async callback() {
                 await _resolveVaultAtAnyMove()
             }
         })
@@ -72,61 +73,33 @@ function _autoSyncOninterval() {
     );
 }
 
-// MARK: _registerAutoSyncOnAnyMove
-function _registerAutoSyncOnAnyMove() {
-    // auto sync
-    {
-        const callbackID = `obasync.obsidian.anymove`
-        registerObaCallback({
-            callbackID, 
-            async call() {
-                const channelsConfig = getObaConfig("obasync.channels", {})
-                for (const channelName in channelsConfig) {
-                    console.log("channelName: ", channelName)
-                    const channelConfig = channelsConfig?.[channelName] || {}
-                    const pushDepot = channelConfig?.["push.depot"] || null
-                    if (pushDepot) {
-                        await _spawnAddDummyAndCommitAndPush(
-                            pushDepot, "manual.pushing", "123", 
-                            { tout: 10 }
-                        )
-                    }
-                    const pullDepots = channelConfig?.["pull.depots"] || []
-                    for (const pullDepot of pullDepots) {
-                        await _spawnFetchCheckoutPull(pullDepot, { tout: 10 })
-                    }
-                }
-            }
-        })
-    }
-}
-
 // MARK: _registerAnyMove
 const ANYMOVE_DELAY = new TriggerManager() 
 function _registerAnyMove() {
     {
-        const callbackID = '__obasync.obsidian.anymove';
+        const blockID = '__obasync.obsidian.anymove';
         OBA.registerDomEvent(window.document, "mousemove", () => {
-            runObaCallbacks({callbackID})
+            runObaEventCallbacks({blockID, context: null})
         });
         OBA.registerDomEvent(window.document, "click", () => {
-            runObaCallbacks({callbackID})
+            runObaEventCallbacks({blockID, context: null})
         });
         OBA.registerDomEvent(window.document, "keyup", async () => {
-            runObaCallbacks({callbackID})
+            runObaEventCallbacks({blockID, context: null})
         });
 
-        registerObaCallback({
-            callbackID, 
-            async call() {
+        
+        registerObaEventCallback({
+            blockID, 
+            async callback() {
                 await ANYMOVE_DELAY.manage({
                     delayTime: -1,
                     ignoreTime: 300,
                     sleepTime: 50,
                     async ongo() {
-                        await runObaCallbacks({
-                            callbackID: 'obasync.obsidian.anymove',
-                            _verbose: true
+                        runObaEventCallbacks({
+                            blockID: 'obasync.obsidian.anymove', 
+                            context: null
                         })
                     },
                 })
