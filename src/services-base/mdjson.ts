@@ -28,7 +28,7 @@ export function onload() {
 
 // MARK: parseKVOnelines
 function _formatKey(key0: string) {
-    return tools.fixPoint(key0, keyi => {
+    return tools.fixPoint(key0, (keyi: string) => {
         return keyi.trim().
             replace(/^-/, '').
             replace(/-$/, '').
@@ -45,7 +45,7 @@ function _formatValue(value: string) {
     return value.trim()
 }
 
-function _parseKVOneline(line: string, kvs) {
+function _parseKVOneline(line: string, kvs: {[keys: string]: string}) {
     // Remove >
             
     // Split the line into key and value based on the first occurrence of '**'

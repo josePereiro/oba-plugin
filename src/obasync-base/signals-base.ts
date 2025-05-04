@@ -445,73 +445,73 @@ type SignalHandlerType = (arg: SignalHandlerArgs) =>
 // MARK: registerSignalEventHandler
 async function _signalEventHandlerTaskFun(task: TaskState) {
     
-    const context = task["args"]["context"] as ObaSyncCallbackContext
-    const eventID = context["eventID"] =task["args"]["eventID"] as ObaSyncEventID
-    const handler = task["args"]["handler"] as SignalHandlerType
+    // const context = task["args"]["context"] as ObaSyncCallbackContext
+    // const eventID = context["eventID"] =task["args"]["eventID"] as ObaSyncEventID
+    // const handler = task["args"]["handler"] as SignalHandlerType
 
-    const status = await handler({context, eventID, task})
+    // const status = await handler({context, eventID, task})
 
-    if (status == "handler.ok") {
+    // if (status == "handler.ok") {
 
-        // extract
-        const vaultDepot = context0["vaultDepot"]
-        const pushDepot = context0["pushDepot"]
-        const manIder = context0["manIder"]
-        const pulledSignal = context0["pulledSignal"]
+    //     // extract
+    //     const vaultDepot = context0["vaultDepot"]
+    //     const pushDepot = context0["pushDepot"]
+    //     const manIder = context0["manIder"]
+    //     const pulledSignal = context0["pulledSignal"]
         
-        const signalTemplate: ObaSyncSignal = {
-            ...pulledSignal,
-            // add handler section
-            // 'handler.name'?: string
-            'handler.name': handlerName,
-            // 'handler.callback'?: string
-            "handler.callback": blockID,
-            // 'handler.timestamp'?: string,
-            "handler.timestamp": utcTimeTag(),
-            // 'handler.handlingStatus'?: HandlingStatus
-            'handler.handlingStatus': status,
-            // 'handler.channelName'?: string
-            'handler.channelName': manIder["channelName"],
-        }
+    //     const signalTemplate: ObaSyncSignal = {
+    //         ...pulledSignal,
+    //         // add handler section
+    //         // 'handler.name'?: string
+    //         'handler.name': handlerName,
+    //         // 'handler.callback'?: string
+    //         "handler.callback": blockID,
+    //         // 'handler.timestamp'?: string,
+    //         "handler.timestamp": utcTimeTag(),
+    //         // 'handler.handlingStatus'?: HandlingStatus
+    //         'handler.handlingStatus': status,
+    //         // 'handler.channelName'?: string
+    //         'handler.channelName': manIder["channelName"],
+    //     }
 
-        // record signal in vault manifest
-        await publishSignal({
-            vaultDepot,
-            pushDepot,
-            committerName: handlerName,
-            manIder,
-            signalTemplate,
-            hashDig: [],
-            commitPushRepo: true,
-            commitVaultRepo: true,
-            pushPushRepo: true,
-            notify: true
-        })
+    //     // record signal in vault manifest
+    //     await publishSignal({
+    //         vaultDepot,
+    //         pushDepot,
+    //         committerName: handlerName,
+    //         manIder,
+    //         signalTemplate,
+    //         hashDig: [],
+    //         commitPushRepo: true,
+    //         commitVaultRepo: true,
+    //         pushPushRepo: true,
+    //         notify: true
+    //     })
 
-        // notice
-        const msg = [
-            `Signal processed succesfully`,
-            ` - type: ${signalTemplate["type"]}`,
-            ` - handler.name: ${signalTemplate["handler.name"]}`,
-            ` - handler.channelName: ${signalTemplate["handler.channelName"]}`,
-            ` - creator.hashKey: ${signalTemplate["creator.hashKey"]}`,
-            ` - creator.name: ${signalTemplate["creator.name"]}`,
-            ` - creator.channelName: ${signalTemplate["creator.channelName"]}`,
-            ` - creator.timestamp: ${signalTemplate["creator.timestamp"]}`,
-            ` - eventID: ${eventID}`,
-        ].join("\n")
-        new Notice(msg, 1 * 60 * 1000)
-        console.log(msg)
+    //     // notice
+    //     const msg = [
+    //         `Signal processed succesfully`,
+    //         ` - type: ${signalTemplate["type"]}`,
+    //         ` - handler.name: ${signalTemplate["handler.name"]}`,
+    //         ` - handler.channelName: ${signalTemplate["handler.channelName"]}`,
+    //         ` - creator.hashKey: ${signalTemplate["creator.hashKey"]}`,
+    //         ` - creator.name: ${signalTemplate["creator.name"]}`,
+    //         ` - creator.channelName: ${signalTemplate["creator.channelName"]}`,
+    //         ` - creator.timestamp: ${signalTemplate["creator.timestamp"]}`,
+    //         ` - eventID: ${eventID}`,
+    //     ].join("\n")
+    //     new Notice(msg, 1 * 60 * 1000)
+    //     console.log(msg)
         
-    }
-    if (status == "unhandled") {
-    }
-    if (status == "unknown") {
-        console.warn(`Signal status 'error': ${eventID}:${signalType}`)
-    }
-    if (status == "error") {
-        console.error(`Signal status 'error': ${eventID}:${signalType}`)
-    }
+    // }
+    // if (status == "unhandled") {
+    // }
+    // if (status == "unknown") {
+    //     console.warn(`Signal status 'error': ${eventID}:${signalType}`)
+    // }
+    // if (status == "error") {
+    //     console.error(`Signal status 'error': ${eventID}:${signalType}`)
+    // }
 }
 
 /*

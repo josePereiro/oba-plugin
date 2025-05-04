@@ -1,8 +1,6 @@
+import { _execBlockTasks, _registerObaTask, DEFT_PRIORITY, OBA_SCHEDULER_REGISTRY, ObaSchedulerExecContext, ObaSchedulerTaskFun } from "./scheduler-base"
 
 // MARK: ObaCallback
-
-import { _execBlockTasks, _registerObaTask, DEFT_PRIORITY, MAX_PRIORITY, MIN_PRIORITY, OBA_SCHEDULER_REGISTRY, ObaSchedulerExecContext, ObaSchedulerTaskFun } from "./scheduler-base"
-
 /*
 TODO/ recover as much as possible previous callback interface
 */ 

@@ -3,7 +3,11 @@ import { obanotes } from "src/services-base/0-servises-modules";
 import { spawnCommand, tools, TriggerManager } from "./0-tools-modules";
 import { getCurrNote, getNoteYamlHeader, getSelectedText, getVaultDir, modifyNoteYamlHeader } from "./obsidian-tools";
 
-const TestTriggerManager = new TriggerManager(5000, 500, 5000)
+const TestTriggerManager = new TriggerManager({
+        sleepTime: 500, 
+        delayTime: 5000,
+        ignoreTime: 5000
+    })
 
 export function onload() {
         

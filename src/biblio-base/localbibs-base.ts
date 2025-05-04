@@ -423,13 +423,13 @@ export async function parseBibFileStream(
     const entries0 = lb_data['entries']
     const errors0 = lb_data['errors']
     
-    statusbar.setText(`parsing bibtex`, 5)
+    statusbar.setText(`parsing bibtex`, true)
     await _parseBibFileStream(
         filePath, 
         async (bibDataPromise: any) => {
 
             const bibData = await bibDataPromise
-            statusbar.setText(`parsed ${parsed} entries!`, -1)
+            statusbar.setText(`parsed ${parsed} entries!`, false)
             const entries = bibData?.['entries']
             if (entries) { entries0.push(...entries) } 
             const comments = bibData?.['comments']

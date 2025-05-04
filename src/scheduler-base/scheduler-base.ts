@@ -6,9 +6,9 @@
         - spawn: The task will be placed on a execution list
 */ 
 
-export const MIN_PRIORITY = 0
-export const DEFT_PRIORITY = 3
-export const MAX_PRIORITY = 5
+export const MIN_PRIORITY = 0;
+export const DEFT_PRIORITY = 3;
+export const MAX_PRIORITY = 5;
 
 export interface ObaSchedulerTask {
     callback: ObaSchedulerTaskFun,
@@ -17,8 +17,11 @@ export interface ObaSchedulerTask {
 
 // Register here all blockID
 export type ObaSchedulerExecContext = {[keys: string]: any}
+
 export type ObaSchedulerTaskFunReturn = void | null | 'abort' 
-export type ObaSchedulerTaskFun = (task:ObaSchedulerTask, execBlock: ObaSchedulerExecutionBlock) => ObaSchedulerTaskFunReturn | Promise<ObaSchedulerTaskFunReturn>
+
+export type ObaSchedulerTaskFun = (task:ObaSchedulerTask, execBlock: ObaSchedulerExecutionBlock) => (ObaSchedulerTaskFunReturn | Promise<ObaSchedulerTaskFunReturn>)
+
 export type ObaSchedulerExecBlockType = 
     | 'manual.exec.block' 
     | 'auto.sequencial.exec.block'

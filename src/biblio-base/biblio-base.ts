@@ -150,7 +150,9 @@ function extractExtras(...sources: any[]): any {
 }
 
 // MARK: ider
-export async function resolveBiblIOIderDOI(id: BiblIOIder) {
+export async function resolveBiblIOIderDOI(
+    id: BiblIOIder
+): Promise<boolean> {
     if (id?.["doi"]) { return true; } 
     if (id?.["citekey"]) {
         const lb_biblIO = await localbibs.findByCiteKey(id["citekey"])

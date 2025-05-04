@@ -30,7 +30,7 @@
     "_DEPRECATED"
   ],
   "include": [
-    "**/*.ts",
+    "src/**/*",
     "types/**/*"
   ]
 }
