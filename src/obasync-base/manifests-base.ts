@@ -4,6 +4,7 @@ import path from "path";
 import { JsonIO } from "src/tools-base/jsonio-base";
 import { ObaSyncSignal } from "./signals-base";
 import { getObsSyncDir, utcTimeTag } from "./utils-base";
+import { _showErrorReport } from "src/gittools-base/gittools-base";
 
 /*
     Each channel will have a manifest with signals and report of actions. 
@@ -88,9 +89,7 @@ export function checkPusher(
     const pusher1: ObaSyncManifestIder | null = man1?.["meta"]?.["pusher"] || null
     if (!pusher1) { return true; }
     if (pusher1 && !isEqual(pusher0, pusher1)) {
-        const msg = `Invalid pusher, pusher0 ${JSON.stringify(pusher0)}, pusher1 ${JSON.stringify(pusher1)}`
-        console.error(msg)
-        new Notice(msg, 10000)
+        _showErrorReport('Invalid pusher!', {pusher0, pusher1})
         return false
     }
     return true

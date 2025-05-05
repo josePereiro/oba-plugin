@@ -1,13 +1,13 @@
 import path from "path";
 import { randstring, SpawnResult } from "src/tools-base/utils-tools";
-import { gitCloneHard, gitHead, GitRepoOptions, isGitDirty, isGitValidRepo, runGitCommand, touchGitDummy } from "./gittools-base";
+import { _showErrorReport, gitCloneHard, gitHead, GitRepoOptions, isGitDirty, isGitValidRepo, runGitCommand, touchGitDummy } from "./gittools-base";
 import { existsSync, mkdirSync, writeFileSync } from "fs";
 import { Notice } from "obsidian";
 import { utcTimeTag } from "src/obasync-base/utils-base";
 
 
 function _defaultCommitMsg(preffix: string) {
-    return `${gitSyncUp} - ${utcTimeTag()}`
+    return `${preffix} - ${utcTimeTag()}`
 }
 
 // MARK: gitSyncDown 
@@ -70,14 +70,8 @@ export async function gitSyncUp({
     const head = await gitHead({repoOps})
     const branchName = repoOps?.["branchName"] || 'main'
     if (head != branchName) {
-        const msg = [
-            'head misplaced!', '\n',
-            `- head: `, head, '\n',
-            `- repoOps: `, JSON.stringify(repoOps, null, 2), '\n',
-            `- res: `, JSON.stringify(res, null, 2)
-        ].join()
-        new Notice(msg, 0)
-        console.error(msg)
+        // Add head
+        _showErrorReport('head misplaced!', {head, res, repoOps})
         return false; // fatal
     }
 
@@ -98,13 +92,7 @@ export async function gitSyncUp({
         })
         // check res
         if (res?.["code"] != 0) {
-            const msg = [
-                'git add failed', '\n',
-                `- repoOps: `, JSON.stringify(repoOps, null, 2), '\n',
-                `- res: `, JSON.stringify(res, null, 2)
-            ].join()
-            new Notice(msg, 0)
-            console.error(msg)
+            _showErrorReport('git add failed', {res, repoOps})
         }    
     }
 
@@ -114,18 +102,12 @@ export async function gitSyncUp({
         // git commit -m "Data update: $(date)"
         const res = await runGitCommand({
             repoOps,
-            args: [ 'commit', '-m', `"${commitMsg}"` ],
+            args: [ 'commit',  '-m', `"${commitMsg}"` ],
             timeoutMs: 120 * 1000, // TODO: make it an argument
         })
         // check res
         if (res?.["code"] != 0) {
-            const msg = [
-                'git commit failed', '\n',
-                `- repoOps: `, JSON.stringify(repoOps, null, 2), '\n',
-                `- res: `, JSON.stringify(res, null, 2)
-            ].join()
-            new Notice(msg, 0)
-            console.error(msg)
+            _showErrorReport('git commit failed', {res, repoOps})
         }
     }
     
@@ -134,18 +116,12 @@ export async function gitSyncUp({
         // git push --force origin $branchName
         const res = await runGitCommand({
             repoOps,
-            args: ['push', '--force', 'origin', branchName],
+            args: ['push', '--force', '--progress', 'origin', branchName],
             timeoutMs: 120 * 1000, // TODO: make it an argument
         })
         // check res
         if (res?.["code"] != 0) {
-            const msg = [
-                'git push failed', '\n',
-                `- repoOps: `, JSON.stringify(repoOps, null, 2), '\n',
-                `- res: `, JSON.stringify(res, null, 2)
-            ].join()
-            new Notice(msg, 0)
-            console.error(msg)
+            _showErrorReport('git push failed', {res, repoOps})
         }
     }
 

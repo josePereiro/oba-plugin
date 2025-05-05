@@ -1,7 +1,8 @@
-import { mkdirSync } from "fs"
+import { mkdirSync, writeFileSync } from "fs"
 import { rm } from "fs/promises"
 import { Notice } from "obsidian"
-import { randstring, spawnCommand } from "src/tools-base/utils-tools"
+import path from "path"
+import { randstring, spawnCommand, SpawnResult } from "src/tools-base/utils-tools"
 
 export interface GitRepoOptions {
     repodir: string,
@@ -18,14 +19,17 @@ export async function runGitCommand({
     args = [],
     timeoutMs = -1,
     rollTimeOut = false,
+    logLimit = 100,
 }: {
     args: string[]
     repoOps: GitRepoOptions,
     timeoutMs?: number
     rollTimeOut?: boolean
+    logLimit?: number
 }) {
     // check git repo
     console.log(`\$ git ${args.join(' ')}`)
+    let logCount = 0;
     const res = await spawnCommand({
         cmdstr: "git", // force to use system resolved git
         args: args,
@@ -36,7 +40,13 @@ export async function runGitCommand({
         timeoutMs,
         rollTimeOut,
         onAnyData({ chunck } : {chunck: string}) {
-            console.log(chunck)
+            if (logCount > logLimit) { return; }
+            if (logCount == logLimit) {
+                console.log("\nLOG LIMIT RACHED...")
+            } else { 
+                console.log(chunck.replace(/\r/g, '\n'))
+            }
+            logCount++;
         },
     })
     return res
@@ -85,22 +95,17 @@ export async function gitCloneHard({
 
     const repodir = repoOps["repodir"]
 
-    // reset repodir
+    // MARK: ....reset repodir
     if (rmRepoEnable) await rm(repodir, { recursive: true, force: true })
     if (mkRepoDirEnable) mkdirSync(repodir, { recursive: true })
     
-    // clone
+    // MARK: ....clone
     if (!cloneEnable) return true
 
     const branchName = repoOps?.["branchName"] || 'main'
     const cloneRemoteUrl = repoOps?.["cloneRemoteUrl"] 
     if (!cloneRemoteUrl) {
-        const msg = [
-            'cloneRemoteUrl missing', '\n',
-            '- repoOps: ', JSON.stringify(repoOps, null, 2)
-        ].join()
-        new Notice(msg, 0)
-        console.error(msg)
+        _showErrorReport('cloneRemoteUrl missing!', {repoOps})
         return false; // fatal
     }
 
@@ -109,6 +114,7 @@ export async function gitCloneHard({
         repoOps,
         args: [
             'clone', 
+                '--progress', 
                 '--depth=1', 
                 "--branch", branchName,
                 cloneRemoteUrl, 
@@ -120,13 +126,7 @@ export async function gitCloneHard({
 
     // check res
     if (res?.["code"] != 0) {
-        const msg = [
-            'git clone failed', '\n',
-            `- repoOps: `, JSON.stringify(repoOps, null, 2), '\n',
-            `- res: `, JSON.stringify(res, null, 2)
-        ].join()
-        new Notice(msg, 0)
-        console.error(msg)
+        _showErrorReport('git clone failed', {res, repoOps})
         return false;  // fatal
     }
     return true;
@@ -147,13 +147,7 @@ export async function gitHead({
     })
     // check res
     if (res?.["code"] != 0) {
-        const msg = [
-            'git symbolic-ref failed', '\n',
-            `- repoOps: `, JSON.stringify(repoOps, null, 2), '\n',
-            `- res: `, JSON.stringify(res, null, 2)
-        ].join()
-        new Notice(msg, 0)
-        console.error(msg)
+        _showErrorReport('git symbolic-ref failed', {res, repoOps})
         return '';  // fatal
     }
     return res?.["stdout"]?.[0]?.trim() || ''
@@ -174,13 +168,7 @@ export async function gitHEADBranch({
     })
     // check res
     if (res?.["code"] != 0) {
-        const msg = [
-            'git rev-parse --abbrev-ref HEAD', '\n',
-            `- repoOps: `, JSON.stringify(repoOps, null, 2), '\n',
-            `- res: `, JSON.stringify(res, null, 2)
-        ].join()
-        new Notice(msg, 0)
-        console.error(msg)
+        _showErrorReport('git rev-parse --abbrev-ref HEAD', {res, repoOps})
         return '';  // fatal
     }
     return res?.["stdout"]?.[0]?.trim() || ''
@@ -200,4 +188,21 @@ export function touchGitDummy({
     if (!repodir) { return; }
     const dummyFile = path.join(repodir, ...dummyRelPath)
     writeFileSync(dummyFile, txt)
+}
+
+export function _showErrorReport(
+    msg: string, 
+    objs: {[keys: string]: any}
+) {
+    const reportv: string[] = [`⚠️ ${msg}`]
+
+    for (const key in objs) {
+        const obj = objs[key]
+        const objstr = JSON.stringify(obj, null, 2).slice(0, 100)
+        reportv.push(`- ${key}: ${objstr}`)
+    }
+    
+    const report = reportv.join("\n")
+    new Notice(report, 0)
+    console.error(report)
 }

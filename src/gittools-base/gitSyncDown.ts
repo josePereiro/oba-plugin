@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync } from "fs";
 import { Notice } from "obsidian";
 import { SpawnResult } from "src/tools-base/utils-tools";
-import { gitCloneHard, GitRepoOptions, isGitValidRepo, runGitCommand } from "./gittools-base";
+import { _showErrorReport, gitCloneHard, GitRepoOptions, isGitValidRepo, runGitCommand } from "./gittools-base";
 
 
 // MARK: gitSyncDown >>>>>>>>>>>>>
@@ -59,19 +59,17 @@ export async function gitSyncDown({
         // git fetch origin $branchName --prune --depth=1 
         const res = await runGitCommand({
             repoOps,
-            args: [ 'fetch', 'origin', branchName, '--prune', '--depth=1' ],
+            args: [ 
+                'fetch', 'origin', branchName, 
+                    '--prune', '--depth=1', 
+                    '--progress'
+            ],
             rollTimeOut: true,
             timeoutMs: 10 * 1000, // TODO: make it an argument
         })
         // check res
         if (res?.["code"] != 0) {
-            const msg = [
-                'git fetch failed', '\n',
-                `- repoOps: `, JSON.stringify(repoOps, null, 2), '\n',
-                `- res: `, JSON.stringify(res, null, 2)
-            ].join()
-            new Notice(msg, 0)
-            console.error(msg)
+            _showErrorReport('git fetch failed', {res, repoOps})
         }
     }
 
@@ -86,13 +84,7 @@ export async function gitSyncDown({
         })
         // check res
         if (res?.["code"] != 0) {
-            const msg = [
-                'git reset failed', '\n',
-                `- repoOps: `, JSON.stringify(repoOps, null, 2), '\n',
-                `- res: `, JSON.stringify(res, null, 2)
-            ].join()
-            new Notice(msg, 0)
-            console.error(msg)
+            _showErrorReport('git reset failed', {res, repoOps})
         }
     }
 
@@ -106,13 +98,7 @@ export async function gitSyncDown({
         })
         // check res
         if (res?.["code"] != 0) {
-            const msg = [
-                'git gc failed', '\n',
-                `- repoOps: `, JSON.stringify(repoOps, null, 2), '\n',
-                `- res: `, JSON.stringify(res, null, 2)
-            ].join()
-            new Notice(msg, 0)
-            console.error(msg)
+            _showErrorReport('git gc failed', {res, repoOps})
         }
     }
 
@@ -126,13 +112,7 @@ export async function gitSyncDown({
         })
         // check res
         if (res?.["code"] != 0) {
-            const msg = [
-                'git clean failed', '\n',
-                `- repoOps: `, JSON.stringify(repoOps, null, 2), '\n',
-                `- res: `, JSON.stringify(res, null, 2)
-            ].join()
-            new Notice(msg, 0)
-            console.error(msg)
+            _showErrorReport('git clean failed', {res, repoOps})
         }
     }
     return true
