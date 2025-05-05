@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync } from "fs";
-import { Notice } from "obsidian";
+import { _showErrorReport } from "src/tools-base/err-handling";
 import { SpawnResult } from "src/tools-base/utils-tools";
-import { _showErrorReport, gitCloneHard, GitRepoOptions, isGitValidRepo, runGitCommand } from "./gittools-base";
+import { gitCloneHard, GitRepoOptions, isGitValidRepo, runGitCommand } from "./gittools-base";
 
 
 // MARK: gitSyncDown >>>>>>>>>>>>>

@@ -1,9 +1,8 @@
-import path from "path";
-import { randstring, SpawnResult } from "src/tools-base/utils-tools";
-import { _showErrorReport, gitCloneHard, gitHead, GitRepoOptions, isGitDirty, isGitValidRepo, runGitCommand, touchGitDummy } from "./gittools-base";
-import { existsSync, mkdirSync, writeFileSync } from "fs";
-import { Notice } from "obsidian";
+import { existsSync, mkdirSync } from "fs";
 import { utcTimeTag } from "src/obasync-base/utils-base";
+import { _showErrorReport } from "src/tools-base/err-handling";
+import { SpawnResult } from "src/tools-base/utils-tools";
+import { gitCloneHard, gitHead, GitRepoOptions, isGitDirty, isGitValidRepo, runGitCommand, touchGitDummy } from "./gittools-base";
 
 
 function _defaultCommitMsg(preffix: string) {

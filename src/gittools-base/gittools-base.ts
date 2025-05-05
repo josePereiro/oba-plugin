@@ -1,8 +1,8 @@
 import { mkdirSync, writeFileSync } from "fs"
 import { rm } from "fs/promises"
-import { Notice } from "obsidian"
 import path from "path"
-import { randstring, spawnCommand, SpawnResult } from "src/tools-base/utils-tools"
+import { _showErrorReport } from "src/tools-base/err-handling"
+import { randstring, spawnCommand } from "src/tools-base/utils-tools"
 
 export interface GitRepoOptions {
     repodir: string,
@@ -190,19 +190,4 @@ export function touchGitDummy({
     writeFileSync(dummyFile, txt)
 }
 
-export function _showErrorReport(
-    msg: string, 
-    objs: {[keys: string]: any}
-) {
-    const reportv: string[] = [`⚠️ ${msg}`]
 
-    for (const key in objs) {
-        const obj = objs[key]
-        const objstr = JSON.stringify(obj, null, 2).slice(0, 100)
-        reportv.push(`- ${key}: ${objstr}`)
-    }
-    
-    const report = reportv.join("\n")
-    new Notice(report, 0)
-    console.error(report)
-}

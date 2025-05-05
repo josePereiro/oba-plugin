@@ -1,10 +1,9 @@
 import { isEqual } from "lodash";
-import { Notice } from "obsidian";
 import path from "path";
+import { _showErrorReport } from "src/tools-base/err-handling";
 import { JsonIO } from "src/tools-base/jsonio-base";
 import { ObaSyncSignal } from "./signals-base";
 import { getObsSyncDir, utcTimeTag } from "./utils-base";
-import { _showErrorReport } from "src/gittools-base/gittools-base";
 
 /*
     Each channel will have a manifest with signals and report of actions. 
