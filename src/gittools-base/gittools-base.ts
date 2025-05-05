@@ -1,7 +1,7 @@
 import { mkdirSync } from "fs"
 import { rm } from "fs/promises"
 import { Notice } from "obsidian"
-import { spawnCommand } from "src/tools-base/utils-tools"
+import { randstring, spawnCommand } from "src/tools-base/utils-tools"
 
 export interface GitRepoOptions {
     repodir: string,
@@ -132,7 +132,7 @@ export async function gitCloneHard({
     return true;
 }
 
-
+// MARK: gitHead
 export async function gitHead({
     repoOps
 }: {
@@ -157,4 +157,47 @@ export async function gitHead({
         return '';  // fatal
     }
     return res?.["stdout"]?.[0]?.trim() || ''
+}
+
+// MARK: gitHEADBranch
+export async function gitHEADBranch({
+    repoOps
+}: {
+    repoOps: GitRepoOptions
+}) {
+    // git rev-parse --abbrev-ref HEAD
+    const res = await runGitCommand({
+        repoOps,
+        args: [
+            'rev-parse', '--abbrev-ref', 'HEAD'
+        ]
+    })
+    // check res
+    if (res?.["code"] != 0) {
+        const msg = [
+            'git rev-parse --abbrev-ref HEAD', '\n',
+            `- repoOps: `, JSON.stringify(repoOps, null, 2), '\n',
+            `- res: `, JSON.stringify(res, null, 2)
+        ].join()
+        new Notice(msg, 0)
+        console.error(msg)
+        return '';  // fatal
+    }
+    return res?.["stdout"]?.[0]?.trim() || ''
+}
+
+// MARK: touchGitDummy
+export function touchGitDummy({
+    repoOps,
+    txt = randstring()
+}: {
+    repoOps: GitRepoOptions
+    txt: string
+}) {
+    // TODO/ Add to interface
+    const dummyRelPath = (repoOps as any)?.["dummyRelPath"] || [".dummy"]
+    const repodir = repoOps?.["repodir"]
+    if (!repodir) { return; }
+    const dummyFile = path.join(repodir, ...dummyRelPath)
+    writeFileSync(dummyFile, txt)
 }

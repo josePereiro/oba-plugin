@@ -1,19 +1,16 @@
 import path from "path";
 import { randstring, SpawnResult } from "src/tools-base/utils-tools";
-import { gitCloneHard, gitHead, GitRepoOptions, isGitDirty, isGitValidRepo, runGitCommand } from "./gittools-base";
+import { gitCloneHard, gitHead, GitRepoOptions, isGitDirty, isGitValidRepo, runGitCommand, touchGitDummy } from "./gittools-base";
 import { existsSync, mkdirSync, writeFileSync } from "fs";
 import { Notice } from "obsidian";
+import { utcTimeTag } from "src/obasync-base/utils-base";
 
 
-function touchDummy(
-    dir: string,
-    txt: string = randstring()
-) {
-    const dummyFile = path.join(dir, ".dummy")
-    writeFileSync(dummyFile, txt)
+function _defaultCommitMsg(preffix: string) {
+    return `${gitSyncUp} - ${utcTimeTag()}`
 }
 
-// MARK: gitSyncDown >>>>>>>>>>>>>
+// MARK: gitSyncDown 
 export async function gitSyncUp({
     repoOps,
     cloneEnable = false,
@@ -21,6 +18,7 @@ export async function gitSyncUp({
     rmRepoEnable = false,
     addEnable = false,
     commitEnable = false,
+    commitMsg = _defaultCommitMsg("gitSyncUp"),
     pushEnable = false,
     touchEnable = false,
     cloneForce = false,
@@ -33,6 +31,7 @@ export async function gitSyncUp({
     addEnable?: boolean,
     pushEnable?: boolean,
     commitEnable?: boolean,
+    commitMsg?: string,
     touchEnable?: boolean,
     mkRepoDirEnable?: boolean,
     cloneForce?: boolean,
@@ -86,7 +85,7 @@ export async function gitSyncUp({
     const ret = callback()
     if (ret == 'abort') { return false; }
 
-    if (touchEnable) touchDummy(repodir, dummyText)
+    if (touchEnable) touchGitDummy({repoOps, txt: dummyText})
 
     // TODO/ extract an addCommit method. 
     // MARK: .... git add
@@ -115,7 +114,7 @@ export async function gitSyncUp({
         // git commit -m "Data update: $(date)"
         const res = await runGitCommand({
             repoOps,
-            args: [ 'commit', '-m', '"sync Up"' ],
+            args: [ 'commit', '-m', `"${commitMsg}"` ],
             timeoutMs: 120 * 1000, // TODO: make it an argument
         })
         // check res

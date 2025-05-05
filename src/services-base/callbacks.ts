@@ -1,7 +1,7 @@
 import { Notice } from 'obsidian';
 import { registerObaEventCallback } from 'src/scheduler-base/event-callbacks';
-import { ObaSchedulerExecutionBlock, ObaSchedulerTask } from 'src/scheduler-base/scheduler-base';
-import { backends, commands, vaultgit, replacer } from './0-servises-modules';
+import { ObaSchedulerTaskFunArgs } from 'src/scheduler-base/scheduler-base';
+import { backends, commands, replacer, vaultgit } from './0-servises-modules';
 
 /*
     TODO/ Make it an Scheduler or use ObaScheduler itself
@@ -22,18 +22,17 @@ export function onload() {
 
     // TODO: make an interface with config file
     // - Inspire in vscode.snnipets  
-    //  - "callback.oba-signal" : ["signalBackendCmd", "gitCommitCmd"]
+    //  - "callback.oba-signal" : ["signalBackendCmd", "vaultGitCommit"]
     //      - You can just use bracket notation
     const blockID = commands.getCommandCallbackId(1);
     registerObaEventCallback({
         blockID, 
         async callback(
-            task: ObaSchedulerTask, 
-            execBlock: ObaSchedulerExecutionBlock
+            args: ObaSchedulerTaskFunArgs
         ) {
             await backends.signalBackend()
             await replacer.runReplacer()
-            await vaultgit.commitVaultGit()
+            await vaultgit.vaultGitCommit()
         }
     })
 
