@@ -11,13 +11,18 @@ export type ExecMode =
     | 'throw.error.and.report'
     | 'throw.error.and.log'
 
+/*
+    TAI/ Use this
+    - The question is to define 'ALL' functions to have this flexibility oor too use 'ALL' funtionsmwith   this flexibilities....
+*/ 
+
 export async function executerAsync<T>({
     fun, 
     execMode,
     dflt = null,
     errMsg = "Error: ",
 }: {
-    fun: () => any,
+    fun: () => any,ZXzCsdcdddddddddddd
     execMode: ExecMode,
     dflt?: T,
     errMsg?: string,

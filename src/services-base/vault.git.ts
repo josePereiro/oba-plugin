@@ -27,7 +27,12 @@ export function onload() {
         serviceName: ["VaultGit"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear()
-            await vaultGitCommit();
+            const vaultGitOps: GitRepoOptions = getVaultGitConfig()
+            if (!vaultGitOps) {
+                new Notice(`Vault git not setup. See Oba.jsonc "vault.git.repo" documentation`)
+                return;
+            }        
+            await commitGiVault({vaultGitOps});
         },
     })
 } 
@@ -41,37 +46,35 @@ export function getVaultGitConfig() {
 }
 
 // TODO/ Move to use gittools
-export async function vaultGitCommit() {
+export async function commitGiVault({
+    vaultGitOps,
+}: {
+    vaultGitOps: GitRepoOptions,
+}) {
 
-    const vaultRepoConfig: GitRepoOptions = getVaultGitConfig()
-    if (!vaultRepoConfig) {
-        new Notice(`Vault git not setup. See Oba.jsonc "vault.git.repo" documentation`)
-        return;
-    }
-
-    const isValid = isGitValidRepo({repoOps: vaultRepoConfig})
+    const isValid = isGitValidRepo({repoOps: vaultGitOps})
     if (!isValid) {
         new Notice(`Vault is not a valid git repo. You must manually 'git init' it.`)
         return;
     }
 
-    const targetBranch = vaultRepoConfig?.["branchName"]
+    const targetBranch = vaultGitOps?.["branchName"]
     if (!targetBranch) {
         new Notice(`Target branch not setup. See Oba.jsonc "vault.git.repo" documentation`)
         return;
     }
     
-    const currBranch = await gitHEADBranch({repoOps: vaultRepoConfig})
+    const currBranch = await gitHEADBranch({repoOps: vaultGitOps})
     if (currBranch != targetBranch) {
         new Notice(`Target branch != current branch. target: ${targetBranch}, current: ${currBranch}`);
         return;
     }
 
-    const isdirty = await isGitDirty({repoOps: vaultRepoConfig})
+    const isdirty = await isGitDirty({repoOps: vaultGitOps})
     console.log(`isRepoDirty() = ${isdirty}`)
     if (isdirty) {
         await gitSyncUp({
-            repoOps: vaultRepoConfig,
+            repoOps: vaultGitOps,
             cloneEnable: false,
             mkRepoDirEnable: false,
             rmRepoEnable: false,

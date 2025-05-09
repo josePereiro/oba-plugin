@@ -1,3 +1,4 @@
+import { getObaConfig } from "src/oba-base/obaconfig"
 
 export interface ObaSyncRepoConfig {
     "repodir": string,
@@ -9,11 +10,21 @@ export interface ObaSyncRepoConfig {
     "extraEnv"?: NodeJS.ProcessEnv
 }
 
-export interface ObaChannelConfig {
+export interface ObaSyncOneChannelConfig {
     "push.depot": ObaSyncRepoConfig,
     "pull.depots": ObaSyncRepoConfig[],
     "include.content.regexs"?: string[]
+    "include.path.regexs"?: string[]
 }
+
+export interface ObaSyncAllChannelsConfig {
+    [keys: string]: ObaSyncOneChannelConfig
+}
+
+export function getObaSyncAllChannelsConfig(dflt: any = null) {
+    return getObaConfig("obasync.channels", dflt) as ObaSyncAllChannelsConfig
+}
+
 
 
 // TODO? DEPRECATE. Use oba.state, or oba.flags if you want.

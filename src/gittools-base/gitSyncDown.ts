@@ -14,6 +14,8 @@ export async function gitSyncDown({
     gcEnable = false,
     cleanEnable = false,
     rmRepoEnable = false,
+    timeoutMs = 20 * 1000,
+    rollTimeOut = true,
     cloneForce = false
 }: {
     repoOps: GitRepoOptions
@@ -24,6 +26,8 @@ export async function gitSyncDown({
     resetEnable?: boolean,
     gcEnable?: boolean,
     cleanEnable?: boolean,
+    timeoutMs?: number,
+    rollTimeOut?: boolean,
     cloneForce?: boolean,
 }) {
 
@@ -64,8 +68,8 @@ export async function gitSyncDown({
                     '--prune', '--depth=1', 
                     '--progress'
             ],
-            rollTimeOut: true,
-            timeoutMs: 10 * 1000, // TODO: make it an argument
+            rollTimeOut,
+            timeoutMs
         })
         // check res
         if (res?.["code"] != 0) {
@@ -80,7 +84,8 @@ export async function gitSyncDown({
         const res = await runGitCommand({
             repoOps,
             args: [ 'reset', '--hard', `origin/${branchName}` ],
-            timeoutMs: 120 * 1000, // TODO: make it an argument
+            rollTimeOut,
+            timeoutMs
         })
         // check res
         if (res?.["code"] != 0) {
@@ -94,7 +99,8 @@ export async function gitSyncDown({
         const res = await runGitCommand({
             repoOps,
             args: [ 'gc', '--prune' ],
-            timeoutMs: 120 * 1000, // TODO: make it an argument
+            rollTimeOut,
+            timeoutMs
         })
         // check res
         if (res?.["code"] != 0) {
@@ -108,7 +114,8 @@ export async function gitSyncDown({
         const res = await runGitCommand({
             repoOps,
             args: ['clean', "-fdx"],
-            timeoutMs: 120 * 1000, // TODO: make it an argument
+            rollTimeOut,
+            timeoutMs
         })
         // check res
         if (res?.["code"] != 0) {

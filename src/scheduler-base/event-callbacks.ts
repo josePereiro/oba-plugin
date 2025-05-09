@@ -1,3 +1,4 @@
+import { TagLogger } from "src/tools-base/dev-tools"
 import { _execBlockTasks, _registerObaTask, DEFT_PRIORITY, OBA_SCHEDULER_REGISTRY, ObaSchedulerExecContext, ObaSchedulerTaskFun } from "./scheduler-base"
 
 // MARK: ObaCallback
@@ -34,9 +35,11 @@ export async function runObaEventCallbacks({
     blockID: string,
     context: ObaSchedulerExecContext | null,
 }){
+    const taglogger = new TagLogger(["Scheduler", "runObaEventCallbacks"])
+
     const block = OBA_SCHEDULER_REGISTRY?.[blockID] || null
     if (!block) {
-        console.error("missing block,\nblockID: ", blockID, ", context: ", context)
+        taglogger.warn("missing block", {blockID, context})
         return; 
     }
     if (context) { block["context"] = context }

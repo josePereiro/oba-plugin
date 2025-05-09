@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync } from "fs";
 import { utcTimeTag } from "src/obasync-base/utils-base";
 import { _showErrorReport } from "src/tools-base/err-handling";
-import { SpawnResult } from "src/tools-base/utils-tools";
+import { addDefaults, SpawnResult } from "src/tools-base/utils-tools";
 import { gitCloneHard, gitHead, GitRepoOptions, isGitDirty, isGitValidRepo, runGitCommand, touchGitDummy } from "./gittools-base";
 
 
@@ -10,21 +10,17 @@ function _defaultCommitMsg(preffix: string) {
 }
 
 // MARK: gitSyncDown 
-export async function gitSyncUp({
-    repoOps,
-    cloneEnable = false,
-    mkRepoDirEnable = false,
-    rmRepoEnable = false,
-    addEnable = false,
-    commitEnable = false,
-    commitMsg = _defaultCommitMsg("gitSyncUp"),
-    pushEnable = false,
-    touchEnable = false,
-    cloneForce = false,
-    dummyText = 'Hello Oba',
-    callback = () => null
-}: {
-    repoOps: GitRepoOptions
+
+// TODO/ Add a 'fast' internet check command
+
+export type gitSyncUpCallbackReturn = 
+    'abort' | void | Promise<'abort' | void>
+
+export async function gitSyncUp(
+    gitSyncUpArgs
+: {
+    repoOps: GitRepoOptions,
+
     cloneEnable?: boolean,
     rmRepoEnable?: boolean,
     addEnable?: boolean,
@@ -35,8 +31,28 @@ export async function gitSyncUp({
     mkRepoDirEnable?: boolean,
     cloneForce?: boolean,
     dummyText?: string,
-    callback?: () => any
+    timeoutMs?: number,
+    rollTimeOut?: boolean,
+    callback?: () => gitSyncUpCallbackReturn
 }) {
+
+    // defaults
+    const {
+        repoOps,
+        cloneEnable = false,
+        mkRepoDirEnable = false,
+        rmRepoEnable = false,
+        addEnable = false,
+        commitEnable = false,
+        commitMsg = _defaultCommitMsg("gitSyncUp"),
+        pushEnable = false,
+        touchEnable = false,
+        cloneForce = false,
+        dummyText = 'Hello Oba',
+        timeoutMs = 20 * 1000,
+        rollTimeOut = true,
+        callback = () => null
+    } = gitSyncUpArgs
 
     let res: SpawnResult;
     
@@ -56,11 +72,14 @@ export async function gitSyncUp({
     // clone is need it
     const doClone = !isValidGit || cloneForce
     if (doClone) {
+        
         const flag = await gitCloneHard({
             repoOps,
             cloneEnable,
             mkRepoDirEnable,
             rmRepoEnable,
+            timeoutMs,
+            rollTimeOut
         })
         if (!flag) { return false; } // fatal
     }
@@ -116,7 +135,8 @@ export async function gitSyncUp({
         const res = await runGitCommand({
             repoOps,
             args: ['push', '--force', '--progress', 'origin', branchName],
-            timeoutMs: 120 * 1000, // TODO: make it an argument
+            timeoutMs,
+            rollTimeOut
         })
         // check res
         if (res?.["code"] != 0) {

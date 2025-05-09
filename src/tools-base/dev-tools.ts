@@ -2,14 +2,44 @@
     Handle console logging so it is actually useful
 */ 
 
-export function _log(tag: string, dat0: any, ...dats: string[]) {
-    console.log(tag, dat0, ...dats)
+function _objKV(obj: any) {
+    const kv = []
+    for (const key in obj) {
+        kv.push(`${key}: `)
+        kv.push(obj[key])
+    }
+    return kv
 }
 
-export function _warn(tag: string, dat0: any, ...dats: string[]) {
-    console.warn(tag, dat0, ...dats)
-}
+export class TagLogger {
 
-export function _error(tag: string, dat0: any, ...dats: string[]) {
-    console.error(tag, dat0, ...dats)
+    constructor(
+        private tags: string[] = []
+    ) {}
+
+    public log(...args: any[]) {
+        console.log(
+            this.tags.join(":"), ": ",
+            ...args
+        )
+    }
+
+    public loginit() {
+        console.log("-----------------")
+        this.log("init")
+    }
+
+    public error(...args: any[]) {
+        console.error(
+            this.tags.join(":"), ": ",
+            ...args
+        )
+    }
+
+    public warn(...args: any[]) {
+        console.warn(
+            this.tags.join(":"), ": ",
+            ...args
+        )
+    }
 }

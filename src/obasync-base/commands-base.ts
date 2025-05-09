@@ -44,7 +44,7 @@
 //                     const block = args["execBlock"]
 //                     const committerName = getObaConfig("obasync.me", null)
 //                     if (!committerName) { return; }
-//                     const channelsConfig = getObaConfig("obasync.channels", {})
+//                     const channelsConfig = getObaSyncAllChannelsConfig({})
 //                     console.log("channelsConfig: ", channelsConfig)
 //                     const scope = await getNoteObaSyncScope(vaultFile, channelsConfig) || []
 //                     console.log("scope: ", scope)
@@ -133,7 +133,7 @@
 //                         return
 //                     }
                         
-//                     const channelsConfig = getObaConfig("obasync.channels", {})
+//                     const channelsConfig = getObaSyncAllChannelsConfig({})
 //                     for (const channelName in channelsConfig) {
 //                         const pushDepot = channelsConfig[channelName]["push.depot"]
 //                         await _justPush(pushDepot, {tout: 30})

@@ -12,14 +12,3 @@ export function getObsSyncDir(
 export function utcTimeTag() {
     return new Date().toISOString();
 }
-
-// export function getSyncChannelsConfigVal(
-//     channelName: string,
-//     key: string,
-//     dflt: any = null
-// ) {
-//     const subVaultsConfig = obaconfig.getObaConfig("obasync.channels", {})
-//     const subVaultConf = subVaultsConfig?.[channelName] ?? {}
-//     return subVaultConf?.[key] ?? dflt
-// }
-

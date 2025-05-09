@@ -431,3 +431,45 @@ export function shuffledKeys(obj: any) {
     }
     return keys
 }
+
+
+//  MARK: Parameter Utils
+export type FirstParam<T> = 
+    T extends (arg: infer P, ...args: any[]) => any 
+    ? P 
+    : never;
+
+export type UnionParam<T> = 
+    T extends (...args: infer P) => any 
+    ? P[number] 
+    : never;
+
+export type Override<T, U> = Omit<T, keyof U> & U;
+
+// type Type1 = { a: string; b: number };
+// type Type2 = { a: number; c: boolean };
+// type Type3 = { b: string; d: Date };
+
+// type Combined = OverrideLeft<[Type1, Type2, Type3]>;
+// /* Result:
+// {
+//   a: number;  // From Type2
+//   b: string;  // From Type3
+//   c: boolean; // From Type2
+//   d: Date;    // From Type3
+// }
+// */
+export type OverrideLeft<Types extends any[]> = 
+  Types extends [infer First, ...infer Rest]
+    ? Override<First, OverrideLeft<Rest>>
+    : {};
+
+
+export function addDefaults<T>(
+    base:T,
+    defaults: Partial<T>,
+){
+    for (const key in defaults) {
+        base[key] = base?.[key] ?? defaults[key]
+    }
+}

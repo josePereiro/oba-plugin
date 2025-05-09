@@ -85,12 +85,16 @@ export async function gitCloneHard({
     repoOps,
     cloneEnable = false,
     mkRepoDirEnable = false,
-    rmRepoEnable = false
+    rmRepoEnable = false, 
+    timeoutMs = 20 * 1000,
+    rollTimeOut = true
 }: {
     repoOps: GitRepoOptions,
     cloneEnable?: boolean,
     mkRepoDirEnable?: boolean,
-    rmRepoEnable?: boolean
+    rmRepoEnable?: boolean,
+    timeoutMs?: number,
+    rollTimeOut?: boolean
 }) {
 
     const repodir = repoOps["repodir"]
@@ -120,8 +124,8 @@ export async function gitCloneHard({
                 cloneRemoteUrl, 
                 repodir
         ],
-        rollTimeOut: true,
-        timeoutMs: 40 * 1000, // TODO: make it an argument
+        rollTimeOut,
+        timeoutMs,
     })
 
     // check res
@@ -190,4 +194,27 @@ export function touchGitDummy({
     writeFileSync(dummyFile, txt)
 }
 
-
+// TODO/ Add command
+export async function gitCheckInternet({
+    repoOps,
+    timeoutMs = 20 * 1000
+}: {
+    repoOps: GitRepoOptions
+    timeoutMs?: number
+}) {
+    // git ls-remote ${remoteUrl}
+    const remoteUrl = repoOps["pullRemoteUrl"]
+    const res = await runGitCommand({
+        repoOps,
+        timeoutMs,
+        args: [
+            'ls-remote', remoteUrl
+        ]
+    })
+    // check res
+    if (res?.["code"] != 0) {
+        _showErrorReport('git ls-remote ${remoteUrl}', {res, repoOps})
+        return false;  // fatal
+    }
+    return res?.["stdout"].length > 0
+}

@@ -7,7 +7,7 @@
 // import { _handleDownloadFile, publishModifiedFileSignal } from "./modifiedFileSignal-base";
 // import { getObaSyncFlag } from "./obasync-base";
 // import { getNoteObaSyncScope } from "./scope-base";
-// import { HandlingStatus, ObaSyncCallbackContext, pushAllChannels, registerSignalEventHandler, resolveSignalEventsAllChannles, SignalHandlerArgs } from "./signals-base";
+// import { HandlingStatus, ObaSyncEventCallbackContext, syncUpAllChannels, registerSignalEventHandler, resolveSignalEventsAllChannles, SignalHandlerArgs } from "./signals-base";
 // import { spawnObaSeqCallback } from "src/scheduler-base/seq-callbacks";
 // import { ObaSchedulerTaskFunArgs } from "src/scheduler-base/scheduler-base";
 
@@ -19,7 +19,9 @@
 //     // _registerAnyMove()
 //     // _registerAutoSyncOnAnyMove()
 //     // _autoSyncOninterval()
-//     _registerModifiedFilesHandler()
+    // _registerModifiedFilesSignalHandler({
+    //     eventID: "obasync.vault.signal.ctimetag.missing.or.older"
+    // })
 // }
 
 // // MARK: _resolveAtANyMove
@@ -51,7 +53,7 @@
 
 //                     // push
 //                     new Notice(`Auto pushing`, 1000)
-//                     await pushAllChannels({
+//                     await syncUpAllChannels({
 //                         commitMsg: "auto.commit.push",
 //                         commitPushRepo: true,
 //                         pushPushRepo: getObaSyncFlag(`online.mode`, false),
@@ -109,52 +111,6 @@
 //     }
 // }
 
-// // MARK: _registerModifiedFilesHandler
-// function _registerModifiedFilesHandler(
-// ) {
-//     const handlerName = getObaConfig("obasync.me", null)
-//     console.log("_registerModifiedFilesHandler:handlerName", handlerName)
-//     if (!handlerName) { return; }
-//     registerSignalEventHandler({
-//         eventID: "obasync.vault.signal.ctimetag.missing.or.older",  // new signal available,
-//         handlerName,
-//         signalType: "modified.file", 
-//         deltaGas: 1,
-//         taskIDDigFun: (
-//             context: ObaSyncCallbackContext
-//         ) => {
-//             // For doing unique the taskID
-//             const channelName = context["manIder"]["channelName"]
-//             const manType = context["manIder"]["manType"]
-//             const pulledSignalKey = context["pulledSignalKey"]
-//             return [channelName, manType, pulledSignalKey] as string[]
-//         },
-//         handler: async (arg: SignalHandlerArgs ): Promise<HandlingStatus> => {
-//             console.log("_registerModifiedFilesHandler:handler")
-//             const context = arg["context"]
-//             console.log("_registerModifiedFilesHandler:context", context)
-//             const channelsConfig = getObaConfig("obasync.channels", {})
-//             console.log("_registerModifiedFilesHandler:channelsConfig", channelsConfig)
-            
-//             // handle gas
-//             const task = arg["task"]
-//             task["gas"] = 0 // Do once
-//             console.log("_registerModifiedFilesHandler:task", task)
-
-//             return await _handleDownloadFile({
-//                 context,
-//                 channelsConfig,
-//                 controlArgs: {
-//                     commitPushRepo: true,
-//                     commitVaultRepo: true,
-//                     pushPushRepo: getObaSyncFlag(`online.mode`, false),
-//                     notify: true
-//                 }
-//             })
-//         }
-//     })
-// }
-
 
 // // MARK: _handleModFileOnChange
 // const ONEDIT_SPAWN_MOD_FILE_TIME = new TriggerManager()
@@ -183,7 +139,7 @@
 //                     const block = args["execBlock"]
 //                     const committerName = getObaConfig("obasync.me", null)
 //                     if (!committerName) { return; }
-//                     const channelsConfig = getObaConfig("obasync.channels", {})
+//                     const channelsConfig = getObaSyncAllChannelsConfig({})
 //                     const scope = await getNoteObaSyncScope(vaultFile, channelsConfig) || []
 //                     // commit all
 //                     for (const channelName of scope) {

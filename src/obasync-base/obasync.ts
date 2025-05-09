@@ -1,4 +1,8 @@
-import { _gittools_devCommands } from "./dev-commands";
+import { _obasync_dev_commands } from "./dev-commands";
+import { _gittools_devCommands } from "./gittools-commands";
+import { _modifiedFileSignal_commands } from "./modifiedFileSignal-commands";
+import { _modifiedFileSignal_events_callbacks } from "./modifiedFileSignal-ev-callbacks";
+import { _obasync_signals_commands } from "./signals-commands";
 
 /*
     /TODO/ add actions when clicking a notice
@@ -20,7 +24,12 @@ export function onload() {
     // _serviceCommands()
     // _serviceCallbacks()
 
+    _modifiedFileSignal_events_callbacks();
+
+    _obasync_dev_commands()
+    _modifiedFileSignal_commands()
     _gittools_devCommands()
+    _obasync_signals_commands()
 
 }
 
