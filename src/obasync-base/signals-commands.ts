@@ -9,7 +9,7 @@ export function _obasync_signals_commands() {
 
     addObaCommand({
         commandName: "resolve signals",
-        serviceName: ["ObaSync"],
+        serviceName: ["ObaSync", "Signals"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear()
             const channelsConfig = getObaSyncAllChannelsConfig({})

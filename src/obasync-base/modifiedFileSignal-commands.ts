@@ -5,6 +5,7 @@ import { getCurrNotePath, getVaultDir } from "src/tools-base/obsidian-tools"
 import { getNoteObaSyncScope } from "./scope-base"
 import { getObaConfig } from "src/oba-base/obaconfig"
 import { utcTimeTag } from "./utils-base"
+import path from "path"
 
 export function _modifiedFileSignal_commands() {
 
@@ -18,6 +19,7 @@ export function _modifiedFileSignal_commands() {
             const vaultFile = getCurrNotePath()
             console.log({vaultFile})
             if (!vaultFile) { return; }
+            const vaultFileName = path.basename(vaultFile)
             
             const channelsConfig = getObaSyncAllChannelsConfig({})
             console.log({channelsConfig})
@@ -44,7 +46,7 @@ export function _modifiedFileSignal_commands() {
                             commitEnable: true, 
                             cloneEnable: true,
                             cloneForce: false, 
-                            commitMsg: `publish current file - ${utcTimeTag()}`,
+                            commitMsg: `publish current file - ${vaultFileName} - ${utcTimeTag()}`,
                             pushEnable: true, 
                             dummyText: '',
                             touchEnable: false, 
