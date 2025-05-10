@@ -34,7 +34,7 @@ export function onload() {
         async commandCallback({ commandID, commandFullName }) {
             console.clear()
             loadObaConfigOnDemand()
-            console.log({config: io.retDepot()})
+            console.log({config: CONFIG.retDepot()})
         },
     })
 }
