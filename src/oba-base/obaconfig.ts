@@ -27,6 +27,16 @@ export function onload() {
             vscodeGotoFile(path)
         },
     })
+
+    addObaCommand({
+        commandName: "log Oba.jsonc",
+        serviceName: ["ObaConfig", "Dev"],
+        async commandCallback({ commandID, commandFullName }) {
+            console.clear()
+            loadObaConfigOnDemand()
+            console.log({config: io.retDepot()})
+        },
+    })
 }
 
 export function loadObaConfigOnDemand() : boolean {

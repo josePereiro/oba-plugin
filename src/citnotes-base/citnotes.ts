@@ -88,7 +88,7 @@ export function onload() {
             const citnote = getCurrNote()
             const template = getState(
                 'citnotes.citation.current.template', 
-                `[[@citekey]]`
+                `[[@{{citekey}}]]`
             )
             await copySelectedCitationFromList(citnote, sel0, template)
         },
@@ -182,7 +182,7 @@ export function expandTemplateFromBiblIO(
 ) {
     // expand biblio
     return expandTemplateFromObject({
-        "shortAuthors": _shortAuthorsStr(biblIO, 2),
+        "shortAuthors": _shortAuthorsStr(biblIO, 5),
         "title": biblIO?.["title"] || "No title",
         "citekey": biblIO?.["citekey"] || "No Citekey",
         "year": biblIO?.["published-date"]?.["year"]?.toString() || "No Year",
@@ -220,7 +220,7 @@ async function copySelectedCitationFromList(
     const refBiblIOs = await citNoteReferenceBiblIOs(note0) || []
     for (let citenum = 0; citenum < refBiblIOs.length; citenum++) {
         const refBiblIO = refBiblIOs[citenum]
-        extrasAll.push({suffix: ' #ref', citenum: `${citenum}`})
+        extrasAll.push({suffix: ' #ref', citenum: `${citenum+1}`})
         biblIOs.push(refBiblIO)
     }
     
