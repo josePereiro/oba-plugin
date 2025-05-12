@@ -7,6 +7,7 @@ import { ObaSyncManifestIder, manifestJsonIO, modifyObaSyncManifest, ObaSyncMani
 import { getObaSyncAllChannelsConfig, ObaSyncOneChannelConfig } from "./obasync-base"
 import { _signalHashKey, ObaSyncSignal } from "./signals-base"
 import { utcTimeTag } from "./utils-base"
+import { TagLogger } from "src/tools-base/dev-tools"
 
 
 /*
@@ -44,7 +45,8 @@ export async function publishSignal(
     notifyEnable?: boolean
     callback?: (() => any)
 
-    gitSyncUpArgs: UnionParam<typeof gitSyncUp>,
+    gitSyncUpArgs: UnionParam<typeof gitSyncUp>, // rename to pushRepoSyncUpArgs
+    vaultRepoSyncUpArgs?: UnionParam<typeof gitSyncUp>,
 }) {   
 
     // publishSignalArgs only
@@ -52,6 +54,30 @@ export async function publishSignal(
         hashDig: [],
         notifyEnable: true
     })
+
+    const taglogger = new TagLogger(["ObaSync", "publishSignal"])
+    taglogger.loginit()
+
+    // vault sync up
+    const { vaultRepoSyncUpArgs } = publishSignalArgs
+    if (vaultRepoSyncUpArgs) {
+        addDefaults(vaultRepoSyncUpArgs, {
+            addEnable: true,
+            commitEnable: true,
+            commitMsg: `before.publishSignal - ${utcTimeTag()}`,
+            rmRepoEnable: false,
+            pushEnable: false,
+            touchEnable: false,
+            dummyText: "123",
+            cloneEnable: false,
+            cloneForce: false,
+            mkRepoDirEnable: true,
+            timeoutMs: 20 * 1000,
+            rollTimeOut: true
+        })
+        await gitSyncUp(vaultRepoSyncUpArgs)
+    }
+    taglogger.log({vaultRepoSyncUpArgs})
 
     // gitSyncUpArgs only
     const { gitSyncUpArgs } = publishSignalArgs

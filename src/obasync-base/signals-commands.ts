@@ -12,6 +12,7 @@ export function _obasync_signals_commands() {
         serviceName: ["ObaSync", "Signals"],
         async commandCallback({ commandID, commandFullName }) {
             console.clear()
+            // TODO/ make an scoped version... Only pull thescope of the file...
             const channelsConfig = getObaSyncAllChannelsConfig({})
             const vaultRepoOps = getVaultGitConfig()
             let vaultRepoSyncUpArgs;

@@ -6,6 +6,7 @@ import { getNoteObaSyncScope } from "./scope-base"
 import { getObaConfig } from "src/oba-base/obaconfig"
 import { utcTimeTag } from "./utils-base"
 import path from "path"
+import { getVaultGitConfig } from "src/services-base/vault.git"
 
 export function _modifiedFileSignal_commands() {
 
@@ -27,6 +28,16 @@ export function _modifiedFileSignal_commands() {
             const scope = await getNoteObaSyncScope({path: vaultFile, channelsConfig}) || []
             const userName = getObaConfig("obasync.me", 'jonhDoe')
             const vaultDepot = getVaultDir()
+            const vaultRepoOps = getVaultGitConfig()
+            let vaultRepoSyncUpArgs;
+            if (vaultRepoOps) {
+                vaultRepoSyncUpArgs = { 
+                    repoOps: vaultRepoOps,
+                    commitMsg: `before.publishModifiedFileSignal - ${vaultFileName} - ${utcTimeTag()}` 
+                }
+            } else {
+                vaultRepoSyncUpArgs = null
+            }
             for (const channelName of scope) {
                 // TODO/ Think how to include man type in configuration
                 // or think how to discover them from disk...
@@ -40,6 +51,7 @@ export function _modifiedFileSignal_commands() {
                         vaultDepot,
                         committerName: userName,
                         manIder,
+                        vaultRepoSyncUpArgs,
                         gitSyncUpArgs: {
                             repoOps: pushRepoOps,
                             addEnable: true,

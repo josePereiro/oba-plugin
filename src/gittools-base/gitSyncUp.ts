@@ -124,7 +124,10 @@ export async function gitSyncUp(
             timeoutMs: 120 * 1000, // TODO: make it an argument
         })
         // check res
-        if (res?.["code"] != 0) {
+        while (true) {
+            if (res?.["code"] == 0) { break; }
+            const ntc_flag = res?.["stdout"]?.join("")?.contains("nothing to commit")
+            if (ntc_flag == true) { break; }
             _showErrorReport('git commit failed', {res, repoOps})
         }
     }
