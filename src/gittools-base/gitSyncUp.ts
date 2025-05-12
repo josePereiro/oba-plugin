@@ -129,7 +129,7 @@ export async function gitSyncUp(
             const ntc_flag = res?.["stdout"]?.join("")?.contains("nothing to commit")
             if (ntc_flag == true) { break; }
             _showErrorReport('git commit failed', {res, repoOps})
-            break;
+            return false; // fatal
         }
     }
     
